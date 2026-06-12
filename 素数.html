@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Prime Studio — 強調・大規模対応版</title>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fbfdff;--card:#fff;--muted:#6b7280;--primary:#4f46e5;--accent:#06b6d4;--good:#16a34a}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto;background:var(--bg);color:#0b1220}
+.container{max-width:1100px;margin:28px auto;padding:18px}
+.header{display:flex;gap:14px;align-items:center}
+.logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:24px}
+h1{margin:0;font-size:1.25rem}
+.lead{color:var(--muted);margin-top:6px;font-size:0.95rem}
+.card{background:var(--card);border-radius:12px;padding:14px;margin-top:12px;box-shadow:0 10px 32px rgba(2,6,23,0.06)}
+.controls{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end}
+label{font-size:0.9rem;color:var(--muted)}
+input[type=number], input[type=text], select{padding:8px;border-radius:8px;border:1px solid #e6eef6;background:#fbfeff}
+input[type=range]{width:100%}
+.small-mono{font-family:'JetBrains Mono',monospace}
+.btn{padding:10px 14px;border-radius:10px;border:0;font-weight:700;cursor:pointer}
+.btn-primary{background:linear-gradient(90deg,var(--primary),var(--accent));color:#fff}
+.btn-ghost{background:transparent;border:1px solid #e6eef6}
+.tabs{display:flex;gap:8px;margin-top:12px}
+.tab{padding:8px 12px;border-radius:10px;background:#f1f5f9;cursor:pointer;color:var(--muted)}
+.tab.active{background:linear-gradient(90deg,#c7d2fe,#bbf7d0);color:#041027;font-weight:700}
+.table-wrap{overflow:auto;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.04);background:linear-gradient(180deg,#fff,#fbfdff)}
+#primeTable{font-family:'JetBrains Mono',monospace;border-collapse:collapse;width:100%}
+#primeTable td{padding:6px 8px;text-align:right;white-space:pre;font-variant-numeric:tabular-nums}
+.prime{font-weight:700;color:#0b1220}
+.composite{color:#cbd5e1}
+.highlight{background:linear-gradient(90deg,#fff7ed,#fff0f6);border-radius:6px}
+.spinner{display:inline-block;width:18px;height:18px;border-radius:50%;border:3px solid rgba(0,0,0,0.08);border-top-color:var(--primary);animation:spin .9s linear infinite;margin-left:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.status{margin-top:8px;color:var(--muted)}
+.controls-rows{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.small{font-size:0.9rem;color:var(--muted)}
+.note{color:var(--muted);font-size:0.9rem;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="logo">π</div>
+    <div>
+      <h1>素数表生成サイト</h1>
+      <div class="lead">エラトステネスの篩・グラフ描画・Miller–Rabin による大数判定まで対応。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="controls">
+      <div>
+        <label>上限 n を指定（初期 100）</label>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+          <input id="nInput" type="number" min="2" max="1000000000" value="100" class="small-mono" style="width:140px">
+          <input id="nRange" type="range" min="10" max="1000000" step="1" value="100" style="flex:1">
+        </div>
+        <div class="status" id="nHint">スライダーは最大 1,000,000。手入力でさらに大きな n を指定できます（最大 1,000,000,000）。</div>
+      </div>
+
+      <div>
+        <label>1行あたりの表示数（列数）</label>
+        <input id="colsInput" type="number" value="10" min="1" max="500" class="small-mono" style="width:120px">
+        <div style="margin-top:8px">
+          <label><input id="showTwin" type="checkbox"> ツイン素数をハイライト</label>
+          &nbsp;&nbsp;<label><input id="useSegments" type="checkbox" checked> 大きな n はセグメント化で生成</label>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+        <div class="controls-rows">
+          <button class="btn btn-primary" id="btnTable">表を生成</button>
+          <button class="btn btn-primary" id="btnGraph">グラフ描画</button>
+          <button class="btn btn-ghost" id="btnDownload">CSV</button>
+          <button class="btn btn-ghost" id="btnCopy">コピー</button>
+        </div>
+        <div style="margin-top:6px" class="small">素数個数: <span id="piCount">—</span></div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px">
+      <label>強調する素数（カンマ・範囲で指定 — 例: <code>2,3,17,1009-1013</code>）</label>
+      <div style="display:flex;gap:8px;margin-top:6px;align-items:center">
+        <input id="highlightInput" type="text" placeholder="例: 2,3,17,1009-1013" style="flex:1;padding:8px;border-radius:8px;border:1px solid #e6eef6">
+        <input id="highlightColor" type="color" value="#ffd166" title="Highlight color" style="width:48px;height:38px;border-radius:8px;border:0">
+        <button class="btn btn-primary" id="btnHighlight">強調して描画</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" id="tabA">表</div>
+      <div class="tab" id="tabB">グラフ</div>
+    </div>
+
+    <div id="tableSection" style="margin-top:12px" class="card">
+      <div class="table-wrap" id="tableArea"></div>
+    </div>
+
+    <div id="graphSection" style="margin-top:12px;display:none" class="card">
+      <div id="graph" style="min-height:360px"></div>
+    </div>
+
+    <div class="note">
+      大きな n を扱うときはブラウザリソースを消費します。<strong>50,000,000</strong>（50M）未満なら完全生成が現実的です。それ以上は「強調だけ BigInt 判定」などの使い分けを推奨します。
+    </div>
+  </div>
+</div>
+
+<script>
+/* ----------------- 設定 ----------------- */
+const MAX_SAFE_FULL_SIEVE = 50_000_000; // フル生成の推奨上限（ブラウザのメモリ次第）
+const SLIDER_MAX = 1_000_000; // スライダーの上限
+/* ---------------------------------------- */
+
+const nInput = document.getElementById('nInput');
+const nRange = document.getElementById('nRange');
+const colsInput = document.getElementById('colsInput');
+const btnTable = document.getElementById('btnTable');
+const btnGraph = document.getElementById('btnGraph');
+const btnDownload = document.getElementById('btnDownload');
+const btnCopy = document.getElementById('btnCopy');
+const tableArea = document.getElementById('tableArea');
+const graphDiv = document.getElementById('graph');
+const piCountEl = document.getElementById('piCount');
+const highlightInput = document.getElementById('highlightInput');
+const btnHighlight = document.getElementById('btnHighlight');
+const highlightColor = document.getElementById('highlightColor');
+const showTwin = document.getElementById('showTwin');
+const useSegments = document.getElementById('useSegments');
+const tabA = document.getElementById('tabA');
+const tabB = document.getElementById('tabB');
+const tableSection = document.getElementById('tableSection');
+const graphSection = document.getElementById('graphSection');
+
+let primesGlobal = [];
+let isPrimeGlobal = null; // Uint8Array
+let lastN = 0;
+let worker = null;
+
+/* スライダーと数値を同期 */
+nRange.addEventListener('input', ()=>{ nInput.value = nRange.value; });
+nInput.addEventListener('input', ()=>{
+  let v = Number(nInput.value) || 2;
+  if (v < 2) v = 2;
+  if (v > 1_000_000_000) v = 1_000_000_000;
+  nInput.value = v;
+  if (v <= SLIDER_MAX) nRange.value = v;
+});
+
+/* タブ切替 */
+tabA.addEventListener('click', ()=>{ showSection('table'); });
+tabB.addEventListener('click', ()=>{ showSection('graph'); });
+function showSection(name){
+  if(name==='table'){ tableSection.style.display='block'; graphSection.style.display='none'; tabA.classList.add('active'); tabB.classList.remove('active'); }
+  else { tableSection.style.display='none'; graphSection.style.display='block'; tabB.classList.add('active'); tabA.classList.remove('active'); }
+}
+
+/* 状態表示 */
+function setStatus(msg, busy=false){
+  const hint = document.querySelector('.status') || document.createElement('div');
+  hint.className = 'status';
+  hint.innerHTML = msg + (busy? '<span class="spinner"></span>':'');
+  if(!document.querySelector('.status')) document.querySelector('.card').appendChild(hint);
+}
+
+/* -------------------------
+   Miller-Rabin (BigInt 対応)
+   - 64-bit 決定的 base set を使用
+   ------------------------*/
+function modPowBig(a, e, m){
+  // BigInt powmod
+  a = BigInt(a) % BigInt(m);
+  e = BigInt(e);
+  m = BigInt(m);
+  let res = 1n;
+  while(e>0n){
+    if(e & 1n) res = (res * a) % m;
+    a = (a * a) % m;
+    e >>= 1n;
+  }
+  return res;
+}
+function isProbablePrime(n){
+  // accepts number or BigInt
+  const bn = BigInt(n);
+  if(bn < 2n) return false;
+  const smallPrimes = [2n,3n,5n,7n,11n,13n,17n,19n,23n,29n,31n];
+  for(const p of smallPrimes){ if(bn === p) return true; if(bn % p === 0n) return false; }
+  // write n-1 = d * 2^s
+  let d = bn - 1n; let s = 0n;
+  while((d & 1n) === 0n){ d >>= 1n; s += 1n; }
+  // bases: deterministic for 64-bit
+  const bases64 = [2n,325n,9375n,28178n,450775n,9780504n,1795265022n];
+  const bases = (bn < (1n<<64n)) ? bases64 : [2n,3n,5n,7n,11n]; // for huge numbers fallback probabilistic
+  for(const a of bases){
+    if(a % bn === 0n) continue;
+    let x = modPowBig(a, d, bn);
+    if(x === 1n || x === bn-1n) continue;
+    let composite = true;
+    for(let r=1n; r<s; r++){
+      x = (x * x) % bn;
+      if(x === bn-1n){ composite = false; break; }
+    }
+    if(composite) return false;
+  }
+  return true;
+}
+
+/* -------------------------
+   simple sieve (main thread) for small n
+   ------------------------*/
+function simpleSieve(n){
+  const arr = new Uint8Array(n+1);
+  arr.fill(1);
+  if(n>=0) arr[0]=0; if(n>=1) arr[1]=0;
+  const lim = Math.floor(Math.sqrt(n));
+  for(let p=2;p<=lim;p++){
+    if(arr[p]){
+      for(let q=p*p;q<=n;q+=p) arr[q]=0;
+    }
+  }
+  const primes = [];
+  for(let i=2;i<=n;i++) if(arr[i]) primes.push(i);
+  return {primes, arr};
+}
+
+/* -------------------------
+   segmented sieve in worker (dynamic creation)
+   returns {primes:Array, buffer:Uint8Array.buffer}
+   ------------------------*/
+function ensureWorker(){
+  if(worker) return worker;
+  const code = `
+    self.onmessage = function(e){
+      const n = e.data.n;
+      const segmentSize = e.data.segmentSize || 1_000_000;
+      // small primes up to sqrt(n)
+      const lim = Math.floor(Math.sqrt(n));
+      const isSmall = new Uint8Array(lim+1);
+      isSmall.fill(1);
+      if(lim>=0) isSmall[0]=0; if(lim>=1) isSmall[1]=0;
+      for(let p=2;p*p<=lim;p++){
+        if(isSmall[p]) for(let q=p*p;q<=lim;q+=p) isSmall[q]=0;
+      }
+      const smallPrimes = [];
+      for(let i=2;i<=lim;i++) if(isSmall[i]) smallPrimes.push(i);
+      const primes = [];
+      // segmented
+      const sieve = new Uint8Array(segmentSize);
+      for(let low=2; low<=n; low += segmentSize){
+        const high = Math.min(n, low + segmentSize - 1);
+        const len = high - low + 1;
+        sieve.fill(1);
+        for(let i=0;i<smallPrimes.length;i++){
+          const p = smallPrimes[i];
+          let start = Math.ceil(low / p) * p;
+          if(start < p*p) start = p*p;
+          for(let x = start; x<=high; x += p){
+            sieve[x - low] = 0;
+          }
+        }
+        for(let i=0;i<len;i++){
+          if(sieve[i]) primes.push(low + i);
+        }
+      }
+      self.postMessage({primes:primes, n:n});
+    };
+  `;
+  const blob = new Blob([code], {type:'application/javascript'});
+  const url = URL.createObjectURL(blob);
+  worker = new Worker(url);
+  return worker;
+}
+
+/* -------------------------
+   computePrimes: 自動で worker or main を選ぶ
+   ------------------------*/
+function computePrimes(n){
+  return new Promise((resolve,reject)=>{
+    setStatus(`n=${n} の素数を生成中…`, true);
+    // safety checks
+    if(n <= 2_000_000){
+      // small: main-thread fast
+      setTimeout(()=> {
+        const res = simpleSieve(n);
+        primesGlobal = res.primes;
+        isPrimeGlobal = res.arr;
+        lastN = n;
+        setStatus(`完了 — ${primesGlobal.length} 個`); piCountEl.textContent = primesGlobal.length;
+        resolve({primes:primesGlobal, isPrime:isPrimeGlobal});
+      }, 10);
+      return;
+    }
+    if(n <= MAX_SAFE_FULL_SIEVE && useSegments.checked){
+      // use worker segmented sieve
+      const w = ensureWorker();
+      w.onmessage = function(ev){
+        primesGlobal = ev.data.primes;
+        // rebuild isPrimeGlobal only if not too big
+        if(n <= 5_000_000){
+          const arr = new Uint8Array(n+1);
+          arr.fill(0);
+          primesGlobal.forEach(p=>arr[p]=1);
+          isPrimeGlobal = arr;
+        } else {
+          isPrimeGlobal = null;
+        }
+        lastN = n;
+        setStatus(`完了 — ${primesGlobal.length} 個`); piCountEl.textContent = primesGlobal.length;
+        resolve({primes:primesGlobal, isPrime:isPrimeGlobal});
+      };
+      w.postMessage({n:n, segmentSize:1_000_000});
+      return;
+    }
+    if(n > MAX_SAFE_FULL_SIEVE){
+      // very large: warn and offer partial approach
+      if(!confirm(`指定 n = ${n} は大きすぎます（推奨上限 ${MAX_SAFE_FULL_SIEVE}）。\nフル生成は止め、\n・(A) 部分生成（最初の 5,000,000 まで）＋強調だけ Miller–Rabin、\n・(B) フル生成（強行）\nどちらを実行しますか？「OK」で (A)、キャンセルで (B) を実行します。`)){
+        // user chose (B) — attempt full segmented (might crash)
+        const w = ensureWorker();
+        w.onmessage = function(ev){
+          primesGlobal = ev.data.primes;
+          isPrimeGlobal = null;
+          lastN = n;
+          setStatus(`完了 — ${primesGlobal.length} 個`); piCountEl.textContent = primesGlobal.length;
+          resolve({primes:primesGlobal, isPrime:isPrimeGlobal});
+        };
+        w.postMessage({n:n, segmentSize:5_000_000});
+      } else {
+        // (A) do partial up to sampleLimit
+        const sampleLimit = 5_000_000;
+        setTimeout(()=> {
+          const res = simpleSieve(sampleLimit);
+          primesGlobal = res.primes;
+          isPrimeGlobal = res.arr;
+          lastN = sampleLimit;
+          setStatus(`部分生成 完了 — ${primesGlobal.length} 個（x ≤ ${sampleLimit}）`); piCountEl.textContent = primesGlobal.length;
+          resolve({primes:primesGlobal, isPrime:isPrimeGlobal});
+        }, 10);
+      }
+      return;
+    }
+    // fallback
+    const res = simpleSieve(n);
+    primesGlobal = res.primes;
+    isPrimeGlobal = res.arr;
+    lastN = n;
+    setStatus(`完了 — ${primesGlobal.length} 個`); piCountEl.textContent = primesGlobal.length;
+    resolve({primes:primesGlobal, isPrime:isPrimeGlobal});
+  });
+}
+
+/* -------------------------
+   テーブル描画（チャンク化）
+   ------------------------*/
+async function renderTable(n, cols, highlightsSet, color){
+  tableArea.innerHTML = '';
+  const width = String(n).length;
+  const tbl = document.createElement('table');
+  tbl.id = 'primeTable';
+  const tbody = document.createElement('tbody');
+  tbl.appendChild(tbody);
+  tableArea.appendChild(tbl);
+
+  const chunk = 5000; // numbers per batch
+  let row;
+  for(let start=1; start<=n; start+=chunk){
+    const end = Math.min(n, start+chunk-1);
+    for(let i=start;i<=end;i++){
+      if((i-1)%cols === 0){ row = document.createElement('tr'); tbody.appendChild(row); }
+      const td = document.createElement('td');
+      td.textContent = String(i).padStart(width,' ');
+      const isPrime = (isPrimeGlobal && isPrimeGlobal[i]) || (!isPrimeGlobal && primesGlobal.includes(i));
+      if(isPrime) td.className = 'prime';
+      else td.className = 'composite';
+      if(highlightsSet && highlightsSet.has(String(i))){
+        td.classList.add('highlight');
+        td.style.background = color;
+      }
+      row.appendChild(td);
+    }
+    await new Promise(r=>requestAnimationFrame(r));
+  }
+
+  // twin highlight if requested
+  if(showTwin.checked && primesGlobal.length>1){
+    const s = new Set();
+    for(let i=1;i<primesGlobal.length;i++) if(primesGlobal[i]-primesGlobal[i-1]===2){ s.add(primesGlobal[i-1]); s.add(primesGlobal[i]); }
+    if(s.size){
+      const tds = tbl.querySelectorAll('td');
+      tds.forEach(td=>{
+        const v = Number(td.textContent.trim());
+        if(s.has(v)) { td.style.boxShadow = 'inset 0 0 0 2px rgba(99,102,241,0.12)'; }
+      });
+    }
+  }
+  setStatus('表を描画しました');
+}
+
+/* -------------------------
+   グラフ描画（サンプリング・ハイライト描画）
+   ------------------------*/
+function drawGraph(n, highlightsSet, color){
+  setStatus('グラフ用データを生成中…', true);
+  if(!isPrimeGlobal && lastN < n){
+    // if we don't have isPrime up to n, we still can sample using primesGlobal (if primesGlobal covers at least part)
+    // for very large n, we will sample up to lastN and use approximation for further x
+  }
+  const maxPoints = 4000;
+  const step = Math.max(1, Math.floor(n / maxPoints));
+  const xs = [];
+  const pis = [];
+  const approx = [];
+  let count = 0;
+  let pIdx = 0;
+  for(let x=1;x<=n;x++){
+    if(isPrimeGlobal){
+      if(isPrimeGlobal[x]) count++;
+    } else {
+      while(pIdx < primesGlobal.length && primesGlobal[pIdx] <= x){ count++; pIdx++; }
+    }
+    if(x%step===0 || x===n || x===1){
+      xs.push(x); pis.push(count); approx.push(x / Math.log(Math.max(2, x)));
+    }
+  }
+  const traces = [
+    {x: xs, y: pis, mode:'lines', name:'π(x)', line:{color:'#0b1220'}},
+    {x: xs, y: approx, mode:'lines', name:'x / log x', line:{dash:'dash', color:'#06b6d4'}}
+  ];
+
+  // highlight markers: for each highlighted prime p, compute y = π(p)
+  const markersX = [], markersY = [], labels = [];
+  if(highlightsSet && highlightsSet.size){
+    highlightsSet.forEach(s=>{
+      try{
+        const pBig = BigInt(s);
+        if(pBig <= 0n) return;
+        // if p within computed range and we have actual isPrime => exact
+        const pNum = Number(pBig);
+        let isP = false;
+        if(pNum <= lastN && isPrimeGlobal){
+          isP = Boolean(isPrimeGlobal[pNum]);
+        } else {
+          // big: Miller-Rabin
+          isP = isProbablePrime(pBig);
+        }
+        if(isP){
+          // y: compute exact pi(p) if p <= lastN (we counted), else approximate
+          let y;
+          if(pNum <= lastN && (isPrimeGlobal || primesGlobal.length>0)){
+            // count primes <= pNum using primesGlobal (binary search)
+            const idx = pNum <= primesGlobal[primesGlobal.length-1] ? upperBound(primesGlobal, pNum) : primesGlobal.length;
+            y = idx;
+          } else {
+            y = Math.round(Number(pNum /  (BigInt(Math.floor(Math.log(Number(pNum)||2))+1))) || Math.round(Number(pNum/Math.log(Number(pNum)||2))));
+            // fallback approximate: x/log x (coarse)
+            y = Math.max(1, Math.round(Number(pNum) / Math.log(Number(pNum))));
+          }
+          markersX.push(Number(pNum));
+          markersY.push(y);
+          labels.push((isP? 'prime ':'') + s);
+        } else {
+          // not prime — mark in red at approx location
+          const pVal = Number(pBig);
+          const y = Math.round(pVal / Math.log(Math.max(2,pVal)));
+          markersX.push(pVal);
+          markersY.push(y);
+          labels.push('composite '+s);
+        }
+      }catch(e){
+        // ignore
+      }
+    });
+    if(markersX.length){
+      traces.push({x: markersX, y: markersY, mode:'markers+text', name:'強調', marker:{size:10,color:color||'#ffd166'}, text:labels, textposition:'top center'});
+    }
+  }
+
+  Plotly.newPlot(graphDiv, traces, {margin:{t:30}, xaxis:{title:'x'}, yaxis:{title:'count'}});
+  setStatus('グラフを描画しました');
+  showSection('graph');
+}
+
+/* upperBound helper */
+function upperBound(arr, target){
+  let lo = 0, hi = arr.length;
+  while(lo < hi){
+    const mid = (lo+hi)>>1;
+    if(arr[mid] <= target) lo = mid+1; else hi = mid;
+  }
+  return lo;
+}
+
+/* parse highlight list like "2,3,17,1009-1013" */
+function parseHighlightList(text){
+  const set = new Set();
+  if(!text) return set;
+  text.split(',').map(s=>s.trim()).forEach(token=>{
+    if(!token) return;
+    const m = token.match(/^(\d+)\s*-\s*(\d+)$/);
+    if(m){
+      const a = BigInt(m[1]), b = BigInt(m[2]);
+      if(a > b) return;
+      for(let x=a; x<=b; x++){ set.add(String(x)); if(set.size>5000) break; } // cap avoid explosion
+    } else {
+      if(/^\d+$/.test(token)) set.add(String(BigInt(token)));
+    }
+  });
+  return set;
+}
+
+/* ----------------- イベント ----------------- */
+btnTable.addEventListener('click', async ()=>{
+  const n = Math.max(2, Math.min(1_000_000_000, Number(nInput.value)||100));
+  if(n > MAX_SAFE_FULL_SIEVE){
+    if(!confirm(`n = ${n} は大きすぎます（推奨上限 ${MAX_SAFE_FULL_SIEVE}）。フル生成しますか？（メモリ大量使用の可能性あり）`)) return;
+  }
+  await computePrimes(n);
+  const highlights = parseHighlightList(highlightInput.value);
+  await renderTable(n, Number(colsInput.value)||10, highlights, highlightColor.value);
+  piCountEl.textContent = primesGlobal.length;
+  showSection('table');
+});
+
+btnGraph.addEventListener('click', async ()=>{
+  const n = Math.max(2, Math.min(1_000_000_000, Number(nInput.value)||100));
+  // ensure some primes data exists (partial is fine)
+  await computePrimes(n);
+  const highlights = parseHighlightList(highlightInput.value);
+  drawGraph(n, highlights, highlightColor.value);
+});
+
+btnHighlight.addEventListener('click', async ()=>{
+  const n = Math.max(2, Math.min(1_000_000_000, Number(nInput.value)||100));
+  // ensure compute (partial allowed)
+  await computePrimes(Math.min(n, Math.max(n, lastN)));
+  const highlights = parseHighlightList(highlightInput.value);
+  // update both table and graph decorations
+  if(lastN >= n){
+    await renderTable(n, Number(colsInput.value)||10, highlights, highlightColor.value);
+  } else {
+    // partial: highlight those within lastN in table
+    await renderTable(lastN, Number(colsInput.value)||10, highlights, highlightColor.value);
+    setStatus(`表は x ≤ ${lastN} まで。強調は個別判定を含めグラフに表示します。`);
+  }
+  drawGraph(n, highlights, highlightColor.value);
+});
+
+btnDownload.addEventListener('click', ()=>{
+  if(!primesGlobal || primesGlobal.length===0){ alert('まず表かグラフを生成してください'); return; }
+  const csv = 'prime\n' + primesGlobal.join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'primes.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+});
+
+btnCopy.addEventListener('click', async ()=>{
+  if(!primesGlobal || primesGlobal.length===0){ alert('まず表かグラフを生成してください'); return; }
+  try{ await navigator.clipboard.writeText(primesGlobal.join(', ')); alert('コピー完了'); } catch(e){ alert('コピー不可: ' + e.message); }
+});
+
+/* 初期起動: n=100 で部分生成 */
+document.addEventListener('DOMContentLoaded', async ()=>{
+  const n0 = 100;
+  nInput.value = n0; if(n0 <= SLIDER_MAX) nRange.value = n0;
+  await computePrimes(n0);
+  await renderTable(n0, Number(colsInput.value)||10, new Set(), highlightColor.value);
+  piCountEl.textContent = primesGlobal.length;
+});
+</script>
+</body>
+</html>

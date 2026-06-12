@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>数学認証</title>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    <style>
+        #AlertElement, #ConfirmElement, #PromptElement {
+            width: 50vw;
+            min-width: 250px;
+            max-width: 500px;
+            min-height: 100px;
+            border: none;
+            border-radius: 10px;
+            filter: drop-shadow(2px 2px 2px rgb(96, 96, 96));
+            background-color: white;
+        }
+        #AlertText, #ConfirmText, #PromptText {
+            font-size: 12px;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            text-align: justify;
+        }
+        :is(#AlertElement, #ConfirmElement, #PromptElement) > form[method="dialog"] {
+            text-align: right;
+        }
+        :is(#AlertElement, #ConfirmElement, #PromptElement) > h1 {
+            font-size: 17px;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            font-weight: bold;
+        }
+        #PromptElement > form[method="dialog"]  input {
+            width: -webkit-fill-available;
+        }
+        .ACPDialogOK {
+            width: 90px;
+            height: 30px;
+            border: solid 1px darkgray;
+            border-radius: 3px;
+            font-size: 12px;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            padding: 0;
+            margin: 3px 5px;
+            background-color: rgb(67 133 245);
+            color: white;
+        }
+        .ACPDialogCancel {
+            width: 90px;
+            height: 30px;
+            border: solid 1px darkgray;
+            border-radius: 3px;
+            font-size: 12px;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            padding: 0;
+            margin: 3px 5px;
+            background-color: white;
+            color: black;
+        }
+    </style>
+</head>
+<body style="display: flex;justify-content: center;align-items: center;">
+    <dialog id="AlertElement">
+        <h1>このページの内容</h1>
+        <p id="AlertText"></p>
+        <form method="dialog">
+            <button class="ACPDialogOK">閉じる</button>
+        </form>
+    </dialog>
+    <canvas id="canvas"></canvas>
+    <div class="box">
+        <p id="Q"></p>
+        <div id="main">
+            <label><input type="checkbox" value="b1" name="btn"><span></span></label>
+            <label><input type="checkbox" value="b2" name="btn"><span></span></label>
+            <label><input type="checkbox" value="b3" name="btn"><span></span></label>
+            <label><input type="checkbox" value="b4" name="btn"><span></span></label>
+            <label><input type="checkbox" value="b5" name="btn"><span></span></label>
+            <label><input type="checkbox" value="b6" name="btn"><span></span></label>
+        </div>
+        <div style="white-space: nowrap;margin-bottom: 4vmin;">
+            <button onclick="reload()" style="background-color: rgba(255, 255, 255, 0);color: black;font-weight: bold;border-color: #a1a1a1;">更新</button>
+            <button onclick="reset()" style="background-color: rgb(180, 180, 180);">リセット</button>
+            <button onclick="next()" id="kakunin">確認</button>
+        </div>
+    </div>
+    <footer style="height: 40px;"></footer>
+</body>
+<style>
+    #main {
+        width: 96vmin;
+        height: 72vmin;
+        border: double;
+        border-width: 5px;
+        border-color: seagreen;
+        display: flex;
+        flex-wrap: wrap;
+        margin: 1vmin;
+        font-size: xx-large;
+    }
+
+    #Q {
+        font-size: 3.5vmin;
+        font-weight: bold;
+        align-items: baseline;
+        justify-content: center;
+        color: white;
+        background-color: #4a91e3;
+        border-radius: 0.3vmin;
+        width: 99.5vmin;
+        height: 6.5vmin;
+        margin: 0;
+        display: flex;
+        padding: 3vmin 0 1vmin 0;
+    }
+
+    .box {
+        background-color: snow;
+        border-radius: 0.3vmin;
+        width: 99.5vmin;
+        height: fit-content;
+        text-align: center;
+        box-shadow: 2px 2px 6px 1px gray;
+        position: absolute;
+    }
+
+    button {
+        background-color: #4a91e3;
+        color: #fff;
+        padding: 1.5vmin 4vmin;
+        text-decoration: none;
+        font-size: 3vmin;
+        margin: 0 6.66%;
+        border-radius: 1vmin;
+        width: 20%;
+        text-align: center;
+    }
+    button:hover {
+        color: #fff;
+        opacity: 0.8;
+    }
+
+    body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+
+    label {
+        margin-right: 0px; /* ボタン同士の間隔 */
+        width: 50%;
+        height: 33.33%;
+    }
+    label input {
+        display: none; /* デフォルトのinputは非表示にする */
+    }
+    label span {
+        color: #333; /* 文字色を黒に */
+        font-size: 14px; /* 文字サイズを14pxに */
+        border: 1px solid #6a6a6a; /* 淵の線を指定 */
+        border-radius: 5px; /* 角丸を入れて、左右が丸いボタンにする */
+        display: block;
+        width: 100%;
+        height: 100%;
+        text-align: center;
+        align-content: center;
+        font-size: 3vmin;
+        background-color: white;
+    }
+    label input:checked + span {
+        color: #494949; /* 文字色を白に */
+        background: rgba(213, 213, 213, 0.514);
+        border: 1px solid #6a6a6a;
+    }
+
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    #canvas {
+        width: 100vw;
+        height: 100vh;
+        background: #73efff;
+        position: absolute;
+    }
+</style>
+<script>
+    function DialogAlert(HTMLtext) {
+        document.getElementById('AlertText').innerHTML = String(HTMLtext)
+        document.getElementById('AlertElement').showModal()
+    }
+
+    const main_element = document.getElementById('main');
+    let q_arr = [],
+        q_snt = ['収束するものをすべて選んでください','10以下になるものをすべて選んでください','実数全体で狭義単調増加であるものをすべて選んでください','\\(\\pi\\)になるものをすべて選んでください','必ず無理数になるものをすべて選んでください','素数をすべて選んでください','超越数をすべて選んでください','1であるものをすべて選んでください','可算無限集合をすべて選んでください'],
+        cho1 = [['\\(\\displaystyle\\sum_{k=1}^\\infty\\dfrac{1}{2^k}\\)',1],['\\(\\displaystyle\\sum_{k=1}^\\infty\\dfrac{1}{k}\\)',0],['\\(\\displaystyle\\int_0^\\infty e^{-x}\\sin x\\,dx\\)',1],['\\(\\displaystyle\\int_{-\\infty}^\\infty \\dfrac{1}{x^2}\\,dx\\)',0],['\\(\\displaystyle\\sum_{k=1}^\\infty\\dfrac{1}{k^2}\\)',1],['\\(\\displaystyle\\lim_{x\\to\\infty}\\dfrac{x!}{e^x}\\)',0],['\\(\\displaystyle\\lim_{x\\to\\infty}\\dfrac{x!}{\\sqrt{2\\pi x}\\left(\\frac{x}{e}\\right)^x}\\)',1],['\\(\\displaystyle\\sum_{k=1}^\\infty\\dfrac{1}{\\log(k+e)^k}\\)',1],['\\(\\displaystyle\\sum_{k=0}^\\infty\\dfrac{e^{\\sin k}}{\\log(k+e)}\\)']],
+        cho2 = [['\\(\\pi^2\\)',1],['\\(\\displaystyle\\int_1^{3e} \\log x\\,dx\\)',1],['\\(\\displaystyle\\int_e^29 \\dfrac{1}{\\log x}\\,dx\\)',0],['\\(e^{\\sqrt[5]{65}}\\)',0],['\\(e^{\\pi-1}\\)',1],['\\(\\tan\\dfrac{4}{e}\\)',0],['\\(\\log22000\\)',1],['\\(\\left(\\dfrac{e}{2}\\right)^{e^2}\\)',1],['\\(\\displaystyle\\sum_{k=1}^\\infty\\dfrac{\\pi^2\\sin k}{\\sqrt{k}}\\)',0],['\\(\\displaystyle\\int_0^\\pi\\dfrac{e^x-\\cos x}{x}\\,dx\\)',0]],
+        cho3 = [['\\(x+\\sin x\\)',1],['\\(x^3\\)',1],['\\(x^2+2x+1\\)',0],['\\(x^3-x\\)',0],['\\(e^x\\)',1],['\\(\\lfloor x\\rfloor\\)',0],['\\(e^x+\\sin x\\)',0],['\\(\\lvert x\\rvert^x\\)',0],['\\(\\dfrac{e^x-e^{-x}}{e^x+e^{-x}}\\)',1],['\\(x\\lvert x\\rvert\\)',1]],
+        cho4 = [['\\(\\displaystyle\\int_{-\\infty}^\\infty\\dfrac{\\sin x}{x}\\,dx\\)',1],['\\(2\\displaystyle\\int_{-\\infty}^\\infty e^{-x^2}\\,dx\\)',0],['\\(\\displaystyle\\int_{-\\infty}^\\infty\\dfrac{1}{1+x^2}\\,dx\\)',1],['\\(\\displaystyle\\sum_{k=1}^\\infty\\dfrac{-4(-1)^k}{2k-1}\\)',1],['\\(\\sqrt{\\displaystyle\\sum_{k=1}^\\infty\\dfrac{1}{k^2}}\\)',0],['\\(\\displaystyle\\int_{-\\infty}^\\infty\\prod_{k=1}^7\\dfrac{(2k-1)\\sin\\frac{x}{2k-1}}{x}\\,dx\\)',1],['\\(\\displaystyle\\int_{-\\infty}^\\infty\\prod_{k=1}^8\\dfrac{(2k-1)\\sin\\frac{x}{2k-1}}{x}\\,dx\\)',0],['\\(\\dfrac{22}{7}\\)',0],['\\(\\left(\\dfrac{1}{3}-\\displaystyle\\sum_{k=1}^\\infty\\dfrac{8k}{e^{2\\pi k}-1}\\right)^{-1}\\)',1],['\\(2\\displaystyle\\prod_{k=1}^\\infty\\dfrac{(2k)^2}{(2k-1)(2k+1)}\\)',1]],
+        cho5 = [['\\(\\sqrt{2}\\)',1],['\\(\\pi\\)',1],['\\(e^{\\pi\\sqrt{163}}\\)',1],['\\((\\text{無理数})+(\\text{無理数})\\)',0],['\\((\\text{無理数})^{(\\text{無理数})}\\)',0],['\\(e^{i\\pi}\\)',0],['\\(\\displaystyle\\sum_{k=1}^\\infty\\dfrac{1}{k^2}\\)',1],['\\(\\displaystyle\\sum_{k=1}^\\infty\\dfrac{1}{k^3}\\)',1],['\\(\\sin\\left(\\dfrac{\\text{自然数}}{\\text{自然数}}\\right)\\)',1],['\\(\\cos(\\text{有理数})\\)',0],['\\(\\log_23\\)',1],['\\(\\tan1^\\circ\\)',1],['\\(\\displaystyle\\sum_{k=1}^\\infty10^{-k!}\\)',1]],
+        cho6 = [['\\(1\\)',0],['\\(57\\)',0],['\\(91\\)',0],['\\(2021\\)',0],['\\(333337\\)',1],['\\(2^{2^4}+1\\)',1],['\\(2^{89}-1\\)',1],['\\(1001\\)',0],['\\(2^{10403}-1\\)',0],['\\(\\dfrac{10^{19}-1}{9}\\)',1],['\\(1111111\\)',0],['\\(\\displaystyle\\sum_{k=1}^\\infty\\dfrac{k}{2^k}\\)',1]],
+        cho7 = [['\\(\\pi\\)',1],['\\(e\\)',1],['\\(i\\)',0],['\\(\\text{有理数}\\)',0],['\\(e^\\pi\\)',1],['\\(\\log2\\)',1],['\\(\\sin(\\text{有理数})\\)',0],['\\(\\displaystyle\\sum_{k=1}^\\infty\\dfrac{1}{k^4}\\)',1],['\\(\\displaystyle\\sum_{k=1}^\\infty7^{-k!}\\)',1],['\\(e^{i\\pi}\\)',0],['\\(2^\\sqrt{2}\\)',1],['\\(\\displaystyle\\sum_{k=1}^\\infty\\dfrac{1}{2^{2^k}-1}\\)',1],['\\(\\displaystyle\\int_0^\\infty x^{\\frac{1}{2}}e^{-x}\\,dx\\)',1]],
+        cho8 = [['\\(\\displaystyle\\sum_{k=1}^\\infty\\dfrac{1}{2^k}\\)',1],['\\(\\tan\\dfrac{\\pi}{4}\\)',1],['\\(\\displaystyle\\int_0^\\frac{\\pi}{3}\\cos\\dfrac{x}{2}\\,dx\\)',1],['\\(\\pi^0\\)',1],['\\(\\displaystyle\\int_0^\\pi2e^{-x}\\sin x\\,dx\\)',0],['\\(\\displaystyle\\sum_{k=1}^\\infty\\dfrac{(-1)^{k-1}}{3k-2}\\)',0],['\\(-\\cos\\log(\\pi+20)\\)',0],['\\(\\displaystyle\\sum_{k=2}^\\infty\\dfrac{(-1)^k}{\\log k}\\)',0],['\\(\\displaystyle\\int_{-1}^1\\dfrac{1}{4\\sqrt{\\lvert x\\rvert}}\\,dx\\)',1],['\\(\\displaystyle\\int_{-\\pi^{-1}}^{\\pi^{-1}}\\dfrac{1}{\\cos x}\\,dx\\)',0]],
+        cho9 = [['\\(\\mathbb{N}\\)',1],['\\(\\mathbb{Z}\\)',1],['\\(2\\mathbb{N}\\)',1],['\\(\\mathbb{Q}\\)',1],['\\(\\mathbb{N}^2\\)',1],['\\(\\mathbb{R}\\)',0],['\\(2^\\mathbb{N}\\)',0],['\\(\\text{代数的数の集合}\\)',1],['\\(\\text{超越数の集合}\\)',0],['\\(\\mathbb{N}\\times\\mathbb{Q}\\)',1],['\\((0,1]\\text{の実数}\\)',0],['\\(\\mathbb{C}\\)',0]],
+        rum = Math.floor(Math.random()*8),
+        score = 0,
+        err = 0;
+    
+    Choices = [cho1,cho2,cho3,cho4,cho5,cho6,cho7,cho8,cho9]
+    document.getElementById('Q').textContent = q_snt[rum]
+
+    function arrayShuffle(array) {
+    for(let i = (array.length - 1); 0 < i; i--){
+
+        // 0〜(i+1)の範囲で値を取得
+        let r = Math.floor(Math.random() * (i + 1));
+
+        // 要素の並び替えを実行
+        let tmp = array[i];
+        array[i] = array[r];
+        array[r] = tmp;
+    }
+    return array;
+    }
+
+    // 配列を5回シャッフルする
+    for(let i=0; i < 10; i++) {
+        Choices[rum] = arrayShuffle(Choices[rum]);
+    }
+    for (let j = 0; j < 6; j++) {
+        main_element.children[j].children[1].textContent = Choices[rum][j][0]
+    }
+
+    function reset() {
+        for (let j = 0; j < 6; j++) {
+            main_element.children[j].children[0].checked = false
+        }
+    }
+
+    function next() {
+        score = 0
+        for (let j = 0; j < 6; j++) {
+            if ((main_element.children[j].children[0].checked == true)&&(Choices[rum][j][1] == 1)) {
+                score++
+            }else{
+                if ((main_element.children[j].children[0].checked == false)&&(Choices[rum][j][1] == 0)) {
+                    score++
+                }
+            }
+        }
+        if (score==6) {
+            let ans = confirm('認証に成功しました．\nこのページを閉じてください．')
+            if (ans == true) {
+                window.close()
+            }
+            document.getElementById('kakunin').disabled = true
+            main_element.innerHTML = '<span style="width:100%;display:flex;justify-content:center;align-items:center;font-size:7vmin;line-height:300%;">認証に成功しました．<br>ページを更新してください．</span>'
+        }else{
+            if (err<3) {
+                err++
+                alert('確認できませんでした．\nもう一度やり直してください．\n'+err+'/3')
+            }else{
+                alert('間違えた回数が多すぎます．\nページを更新してください．')
+                document.getElementById('kakunin').disabled = true
+            }
+        }
+    }
+
+</script>
+</html>

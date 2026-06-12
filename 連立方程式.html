@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>連立方程式ソルバー — 分数 & 高精度対応</title>
+
+<!-- KaTeX (LaTeX 表示) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+
+<!-- Fraction.js (有理数) -->
+<script src="https://cdn.jsdelivr.net/npm/fraction.js@4.2.0/fraction.min.js"></script>
+
+<!-- Decimal.js (高精度) -->
+<script src="https://cdn.jsdelivr.net/npm/decimal.js@10.4.3/decimal.min.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fbfdff; --card:#ffffff; --muted:#475569; --accent:#0ea5a4; --accent-2:#06b6d4;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP",sans-serif;background:linear-gradient(180deg,var(--bg),#ffffff);color:#071125;padding:18px}
+.container{max-width:1100px;margin:0 auto}
+header{display:flex;gap:12px;align-items:center;margin-bottom:14px}
+.logo{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:22px}
+h1{margin:0;font-size:1.15rem}
+.sub{color:var(--muted);font-size:0.95rem;margin-top:6px}
+.card{background:var(--card);padding:14px;border-radius:12px;border:1px solid rgba(7,17,37,0.04);box-shadow:0 6px 20px rgba(7,17,37,0.03)}
+.topbar{display:flex;gap:12px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+input[type="number"], input[type="text"], select, textarea{padding:8px;border-radius:8px;border:1px solid rgba(7,17,37,0.06);font-family:monospace}
+.btn{padding:8px 12px;border-radius:999px;border:1px solid rgba(7,17,37,0.06);cursor:pointer;background:transparent}
+.btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;border:none;font-weight:600}
+.grid{display:grid;grid-template-columns:1fr 360px;gap:18px;margin-top:14px}
+@media(max-width:980px){.grid{grid-template-columns:1fr}}
+.matrix-wrap{overflow:auto;border-radius:8px;padding:12px;background:#f7feff;border:1px solid rgba(7,17,37,0.04)}
+table.matrix{border-collapse:separate;border-spacing:8px}
+table.matrix input{width:5.6em;text-align:right}
+.small{font-size:0.9rem;color:var(--muted)}
+.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.result{margin-top:12px}
+.status{padding:10px;border-radius:8px;background:#f1fdfc;border:1px solid rgba(7,17,37,0.04);color:var(--muted)}
+.steps{max-height:300px;overflow:auto;padding:8px;border-radius:8px;background:#fff;border:1px solid rgba(7,17,37,0.04)}
+.mode-row{display:flex;gap:8px;align-items:center;margin-top:8px}
+.small-muted{font-size:0.85rem;color:var(--muted)}
+.katex-area{padding:8px;background:#fff;border-radius:8px;border:1px solid rgba(7,17,37,0.04);margin-top:8px}
+.copy{cursor:pointer;color:var(--accent);text-decoration:underline}
+.footer{margin-top:18px;color:var(--muted);font-size:0.9rem;text-align:center}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="logo">Ax=b</div>
+    <div>
+      <h1>連立方程式ソルバー（分数・高精度対応）</h1>
+      <div class="sub">分数で正確に出す／高精度でたくさん桁を出す。表示は LaTeX（KaTeX）で。</div>
+    </div>
+  </header>
+
+  <div class="card topbar">
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <div><label>行 m</label><br><input id="rows" type="number" min="1" max="40" value="3" style="width:84px"></div>
+      <div><label>変数 n</label><br><input id="cols" type="number" min="1" max="40" value="3" style="width:84px"></div>
+      <div style="align-self:end"><button id="genGrid" class="btn btn-primary">グリッド生成</button></div>
+      <div style="align-self:end"><button id="pasteBtn" class="btn">貼り付けで入力</button></div>
+      <div style="align-self:end"><button id="loadExample" class="btn">例を読み込む</button></div>
+    </div>
+
+    <div style="margin-left:auto;text-align:right">
+      <div class="small-muted">Enterでセル移動。貼り付けでは空白/カンマ/タブ対応。</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <main class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <strong>A | b（係数行列と定数項）</strong>
+          <div class="small-muted">最後の列が定数項 b です</div>
+        </div>
+        <div class="mode-row">
+          <label class="small">計算モード</label>
+          <select id="modeSelect">
+            <option value="number">通常（Number）— 速い</option>
+            <option value="decimal">高精度（Decimal）— 任意桁</option>
+            <option value="fraction">分数（Fraction）— 正確（有理数）</option>
+          </select>
+          <div id="decSettings" style="display:none;margin-left:6px">
+            <label class="small">精度</label><br>
+            <input id="decPrec" type="number" value="40" min="16" max="200" style="width:84px">
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px" class="matrix-wrap" id="matrixWrap">
+        <div style="text-align:center;color:var(--muted)">「グリッド生成」を押して入力を始めてください</div>
+      </div>
+
+      <div class="actions">
+        <button id="solveBtn" class="btn btn-primary">解く</button>
+        <button id="clearBtn" class="btn">クリア</button>
+        <button id="exportCSV" class="btn">CSV出力</button>
+        <button id="copySol" class="btn">結果をコピー</button>
+        <button id="printBtn" class="btn">印刷</button>
+      </div>
+
+      <div id="resultArea" class="result"></div>
+    </main>
+
+    <aside class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <strong>手順 / 補足</strong>
+        <span id="statusLabel" class="small-muted">—</span>
+      </div>
+
+      <details style="margin-top:12px">
+        <summary>計算ステップ（Gauss-Jordan）</summary>
+        <div class="steps" id="stepsBox">ここに行列変形の記録が表示されます。</div>
+      </details>
+
+      <div style="margin-top:12px">
+        <strong>表示設定</strong>
+        <div class="small-muted" style="margin-top:6px">分数モードでは分数で厳密に出力。高精度では Decimal の精度を設定してください。</div>
+      </div>
+
+      <div style="margin-top:12px">
+        <strong>例題</strong>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
+          <button class="btn" data-ex="3 2 -1 | 1; 2 -2 4 | -2; -1 0.5 -1 | 0">3x+2y−z=1 ほか（3x3）</button>
+          <button class="btn" data-ex="1 2 | 9; 3 4 | 24">2×2 の例</button>
+          <button class="btn" data-ex="1 1 1 | 6; 2 2 2 | 12; 1 -1 0 | 1">自由解 / 矛盾の例</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+// --- ユーティリティ / UI ---
+const rowsEl = document.getElementById('rows');
+const colsEl = document.getElementById('cols');
+const genGridBtn = document.getElementById('genGrid');
+const matrixWrap = document.getElementById('matrixWrap');
+const solveBtn = document.getElementById('solveBtn');
+const clearBtn = document.getElementById('clearBtn');
+const resultArea = document.getElementById('resultArea');
+const stepsBox = document.getElementById('stepsBox');
+const statusLabel = document.getElementById('statusLabel');
+const exportCSV = document.getElementById('exportCSV');
+const copySol = document.getElementById('copySol');
+const loadExample = document.getElementById('loadExample');
+const pasteBtn = document.getElementById('pasteBtn');
+const printBtn = document.getElementById('printBtn');
+const modeSelect = document.getElementById('modeSelect');
+const decSettings = document.getElementById('decSettings');
+const decPrec = document.getElementById('decPrec');
+
+let currentTable = null;
+
+// grid 作成
+function makeMatrixGrid(m,n){
+  matrixWrap.innerHTML = '';
+  const tbl = document.createElement('table');
+  tbl.className = 'matrix';
+  for(let i=0;i<m;i++){
+    const tr = document.createElement('tr');
+    for(let j=0;j<n;j++){
+      const td = document.createElement('td');
+      const inp = document.createElement('input');
+      inp.type='text'; inp.inputMode='decimal';
+      inp.dataset.r=i; inp.dataset.c=j;
+      inp.placeholder='0';
+      inp.addEventListener('keydown', e=>{
+        if(e.key==='Enter'){ e.preventDefault(); moveToNextCell(inp); }
+      });
+      td.appendChild(inp);
+      tr.appendChild(td);
+      const plus = document.createElement('td');
+      plus.style.paddingRight='8px'; plus.style.color='var(--muted)';
+      plus.innerHTML = `<span>x<sub>${j}</sub> ${j<n-1?'+':'='}</span>`;
+      tr.appendChild(plus);
+    }
+    const tdB = document.createElement('td');
+    const inpB = document.createElement('input'); inpB.type='text'; inpB.inputMode='decimal'; inpB.placeholder='0';
+    inpB.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); moveToNextCell(inpB); }});
+    tdB.appendChild(inpB);
+    tr.appendChild(tdB);
+    tbl.appendChild(tr);
+  }
+  matrixWrap.appendChild(tbl);
+  currentTable = tbl;
+  setTimeout(()=>{ const first = matrixWrap.querySelector('input'); if(first) first.focus(); }, 50);
+}
+function moveToNextCell(el){
+  const inputs = Array.from(matrixWrap.querySelectorAll('input'));
+  const idx = inputs.indexOf(el);
+  if(idx >=0 && idx < inputs.length-1) inputs[idx+1].focus();
+}
+
+// parse cell to number (fallback 0)
+function parseCellValueRaw(v){
+  if(v === null || v === undefined) return null;
+  const s = String(v).trim();
+  if(s === '') return 0;
+  // allow comma decimal
+  const normalized = s.replace(/,/g, '.');
+  const num = Number(normalized);
+  if(Number.isFinite(num)) return num;
+  return NaN;
+}
+
+// read augmented matrix: returns {mat:[[...]]} or {error:...}
+function readAugmentedMatrix(){
+  if(!currentTable) return {error:'グリッドが未生成です'};
+  const rows = Array.from(currentTable.querySelectorAll('tr'));
+  const A = [];
+  for(const tr of rows){
+    const inputs = Array.from(tr.querySelectorAll('input'));
+    const vals = inputs.map(inp => {
+      const parsed = parseCellValueRaw(inp.value);
+      return parsed;
+    });
+    if(vals.some(v => Number.isNaN(v))) return {error:'数値として解釈できないセルがあります。半角数字を入れてください。'};
+    A.push(vals);
+  }
+  return {mat:A};
+}
+
+// --- RREF 各モード実装 ---
+// We'll implement three variants: number (float), decimal (Decimal), fraction (Fraction)
+
+// Helper: clone matrix
+function cloneMat(mat){ return mat.map(r => r.slice()); }
+
+// ---------- Number (native) ----------
+function rrefNumber(aug, eps=1e-12){
+  const m = aug.length, nPlus1 = aug[0].length, n = nPlus1 - 1;
+  const M = cloneMat(aug);
+  const steps = [];
+  let row = 0; const pivots=[];
+  for(let col=0; col<n && row<m; col++){
+    let sel = row;
+    let maxv = Math.abs(M[sel][col]);
+    for(let i=row+1;i<m;i++) if(Math.abs(M[i][col])>maxv){ maxv=Math.abs(M[i][col]); sel=i; }
+    if(Math.abs(M[sel][col])<eps) continue;
+    if(sel!==row){ [M[sel],M[row]]=[M[row],M[sel]]; steps.push(`R${sel+1} ↔ R${row+1}`); }
+    const pivot = M[row][col];
+    for(let j=col;j<nPlus1;j++) M[row][j] /= pivot;
+    steps.push(`R${row+1} := R${row+1} / ${pivot.toPrecision(6)}`);
+    for(let i=0;i<m;i++){
+      if(i===row) continue;
+      const factor = M[i][col];
+      if(Math.abs(factor)>eps){
+        for(let j=col;j<nPlus1;j++) M[i][j] -= factor * M[row][j];
+        steps.push(`R${i+1} := R${i+1} - (${factor.toPrecision(6)})·R${row+1}`);
+      }
+    }
+    pivots.push(col); row++;
+  }
+  // check inconsistency
+  for(let i=0;i<m;i++){
+    let allZero=true;
+    for(let j=0;j<n;j++) if(Math.abs(M[i][j])>eps){ allZero=false; break; }
+    if(allZero && Math.abs(M[i][n])>eps) return {rref:M, pivots:pivots, steps:steps, status:'inconsistent'};
+  }
+  if(pivots.length === n){
+    const sol = Array(n).fill(0);
+    for(let i=0;i<m;i++){
+      for(let c=0;c<n;c++) if(Math.abs(M[i][c]-1)<1e-9){ sol[c]=M[i][n]; break; }
+    }
+    return {rref:M, pivots:pivots, steps:steps, status:'unique', solution:sol};
+  } else {
+    const pivotSet = new Set(pivots);
+    const freeCols = [];
+    for(let j=0;j<n;j++) if(!pivotSet.has(j)) freeCols.push(j);
+    const particular = Array(n).fill(0);
+    const paramExpr = {};
+    for(let r=0;r<m;r++){
+      let pivotC=-1;
+      for(let c=0;c<n;c++) if(Math.abs(M[r][c]-1)<1e-9){ pivotC=c; break; }
+      if(pivotC>=0){
+        particular[pivotC] = M[r][n];
+        const coeffs={};
+        for(const f of freeCols){ const coef = -M[r][f]; if(Math.abs(coef)>1e-12) coeffs[f]=coef; }
+        paramExpr[pivotC] = {const:M[r][n], coeffs:coeffs};
+      }
+    }
+    return {rref:M,pivots:pivots,steps:steps,status:'infinite',freeCols:freeCols,particular:particular,paramExpr:paramExpr};
+  }
+}
+
+// ---------- Decimal (high-precision) ----------
+function rrefDecimal(aug, prec=40, epsStr='1e-20'){
+  Decimal.set({precision: prec, rounding: 4});
+  const eps = new Decimal(10).pow(-Math.min(prec, 30));
+  const m = aug.length, nPlus1 = aug[0].length, n = nPlus1 - 1;
+  const M = aug.map(r => r.map(x => new Decimal(x)));
+  const steps = [];
+  let row = 0; const pivots=[];
+  for(let col=0; col<n && row<m; col++){
+    let sel = row;
+    let maxv = M[sel][col].abs();
+    for(let i=row+1;i<m;i++) if(M[i][col].abs().greaterThan(maxv)){ maxv=M[i][col].abs(); sel=i; }
+    if(maxv.lessThan(eps)) continue;
+    if(sel!==row){ const tmp=M[sel]; M[sel]=M[row]; M[row]=tmp; steps.push(`R${sel+1} ↔ R${row+1}`); }
+    const pivot = M[row][col];
+    for(let j=col;j<nPlus1;j++) M[row][j] = M[row][j].div(pivot);
+    steps.push(`R${row+1} := R${row+1} / ${pivot.toSignificantDigits(6).toString()}`);
+    for(let i=0;i<m;i++){
+      if(i===row) continue;
+      const factor = M[i][col];
+      if(factor.abs().greaterThan(eps)){
+        for(let j=col;j<nPlus1;j++) M[i][j] = M[i][j].minus(factor.times(M[row][j]));
+        steps.push(`R${i+1} := R${i+1} - (${factor.toSignificantDigits(6)})·R${row+1}`);
+      }
+    }
+    pivots.push(col); row++;
+  }
+  // inconsistency
+  for(let i=0;i<m;i++){
+    let allZero=true;
+    for(let j=0;j<n;j++) if(M[i][j].abs().greaterThan(eps)){ allZero=false; break; }
+    if(allZero && M[i][n].abs().greaterThan(eps)) return {rref:M,pivots:pivots,steps:steps,status:'inconsistent'};
+  }
+  if(pivots.length === n){
+    const sol = Array(n).fill(new Decimal(0));
+    for(let i=0;i<m;i++){
+      for(let c=0;c<n;c++) if(M[i][c].minus(1).abs().lessThan(eps)){ sol[c]=M[i][n]; break; }
+    }
+    return {rref:M,pivots:pivots,steps:steps,status:'unique',solution:sol};
+  } else {
+    const pivotSet = new Set(pivots); const freeCols=[];
+    for(let j=0;j<n;j++) if(!pivotSet.has(j)) freeCols.push(j);
+    const particular = Array(n).fill(new Decimal(0));
+    const paramExpr={};
+    for(let r=0;r<m;r++){
+      let pivotC=-1;
+      for(let c=0;c<n;c++) if(M[r][c].minus(1).abs().lessThan(eps)){ pivotC=c; break; }
+      if(pivotC>=0){
+        particular[pivotC] = M[r][n];
+        const coeffs={};
+        for(const f of freeCols){
+          const coef = M[r][f].neg();
+          if(coef.abs().greaterThan(eps)) coeffs[f] = coef;
+        }
+        paramExpr[pivotC] = {const: M[r][n], coeffs: coeffs};
+      }
+    }
+    return {rref:M,pivots:pivots,steps:steps,status:'infinite',freeCols:freeCols,particular:particular,paramExpr:paramExpr};
+  }
+}
+
+// ---------- Fraction (exact rational) ----------
+function rrefFraction(aug){
+  // aug entries -> Fraction instances
+  const m = aug.length, nPlus1 = aug[0].length, n = nPlus1 - 1;
+  const M = aug.map(r => r.map(x => new Fraction(x)));
+  const steps = [];
+  let row=0; const pivots=[];
+  for(let col=0; col<n && row<m; col++){
+    // find pivot with non-zero abs
+    let sel = -1;
+    for(let i=row;i<m;i++) if(!M[i][col].equals(0)){ sel = i; break; }
+    if(sel === -1) continue;
+    if(sel !== row){ const tmp = M[sel]; M[sel] = M[row]; M[row] = tmp; steps.push(`R${sel+1} ↔ R${row+1}`); }
+    const pivot = M[row][col];
+    // normalize row: divide entire row by pivot
+    for(let j=col;j<nPlus1;j++) M[row][j] = M[row][j].div(pivot);
+    steps.push(`R${row+1} := R${row+1} / (${pivot.toFraction(true)})`);
+    // eliminate other rows
+    for(let i=0;i<m;i++){
+      if(i===row) continue;
+      const factor = M[i][col];
+      if(!factor.equals(0)){
+        for(let j=col;j<nPlus1;j++){
+          M[i][j] = M[i][j].sub(factor.mul(M[row][j]));
+        }
+        steps.push(`R${i+1} := R${i+1} - (${factor.toFraction(true)})·R${row+1}`);
+      }
+    }
+    pivots.push(col); row++;
+  }
+  // inconsistency check
+  for(let i=0;i<m;i++){
+    let allZero = true;
+    for(let j=0;j<n;j++) if(!M[i][j].equals(0)){ allZero=false; break; }
+    if(allZero && !M[i][n].equals(0)) return {rref:M,pivots:pivots,steps:steps,status:'inconsistent'};
+  }
+  if(pivots.length === n){
+    const sol = Array(n).fill(new Fraction(0));
+    for(let i=0;i<m;i++){
+      for(let c=0;c<n;c++) if(M[i][c].equals(1)){ sol[c]=M[i][n]; break; }
+    }
+    return {rref:M,pivots:pivots,steps:steps,status:'unique',solution:sol};
+  } else {
+    const pivotSet = new Set(pivots); const freeCols=[];
+    for(let j=0;j<n;j++) if(!pivotSet.has(j)) freeCols.push(j);
+    const particular = Array(n).fill(new Fraction(0));
+    const paramExpr = {};
+    for(let r=0;r<m;r++){
+      let pivotC=-1;
+      for(let c=0;c<n;c++) if(M[r][c].equals(1)){ pivotC=c; break; }
+      if(pivotC>=0){
+        particular[pivotC] = M[r][n];
+        const coeffs = {};
+        for(const f of freeCols){
+          const coef = M[r][f].neg();
+          if(!coef.equals(0)) coeffs[f] = coef;
+        }
+        paramExpr[pivotC] = {const: M[r][n], coeffs: coeffs};
+      }
+    }
+    return {rref:M,pivots:pivots,steps:steps,status:'infinite',freeCols:freeCols,particular:particular,paramExpr:paramExpr};
+  }
+}
+
+// --- Rendering helpers ---
+function renderFractionLaTeX(fr){
+  // fr is Fraction instance
+  const s = fr.toFraction(true); // e.g. "3/2" or "4"
+  if(s.includes('/')){
+    const [a,b] = s.split('/');
+    return `\\dfrac{${a}}{${b}}`;
+  } else {
+    return `${s}`;
+  }
+}
+function renderDecimalLatex(dec){
+  // dec is Decimal
+  return dec.toSignificantDigits(12).toString();
+}
+function renderNumberLatex(num){
+  return Number(num).toPrecision(12).toString();
+}
+
+// --- UI wiring ---
+document.getElementById('genGrid').addEventListener('click', ()=>{
+  const m = Math.max(1, Math.min(40, parseInt(rowsEl.value) || 1));
+  const n = Math.max(1, Math.min(40, parseInt(colsEl.value) || 1));
+  makeMatrixGridUI(m,n);
+  resultArea.innerHTML=''; stepsBox.innerHTML='';
+  statusLabel.textContent='グリッド生成済';
+});
+
+// generate grid UI (wraps makeMatrixGrid)
+function makeMatrixGridUI(m,n){
+  // reuse function above
+  makeMatrixGrid(m,n);
+}
+
+// clear
+clearBtn.addEventListener('click', ()=>{
+  matrixWrap.innerHTML = '<div style="text-align:center;color:var(--muted)">「グリッド生成」を押して入力を開始してください</div>';
+  currentTable = null; resultArea.innerHTML=''; stepsBox.innerHTML=''; statusLabel.textContent='クリア';
+});
+
+// example loader
+loadExample.addEventListener('click', ()=>{
+  rowsEl.value = 3; colsEl.value = 3;
+  makeMatrixGridUI(3,3);
+  const vals = [
+    [3,2,-1,1],
+    [2,-2,4,-2],
+    [-1,0.5,-1,0]
+  ];
+  const inputs = matrixWrap.querySelectorAll('input');
+  for(let i=0;i<inputs.length;i++){
+    const r = Math.floor(i / (3+1));
+    const c = i % (3+1);
+    inputs[i].value = vals[r][c];
+  }
+});
+
+// side example buttons
+document.querySelectorAll('button[data-ex]').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    const raw = b.dataset.ex;
+    const rows = raw.split(';').map(s=>s.trim());
+    const m = rows.length;
+    const parts = rows[0].split('|')[0].trim().split(/\s+/);
+    const n = parts.length;
+    rowsEl.value = m; colsEl.value = n;
+    makeMatrixGridUI(m,n);
+    const inputs = Array.from(matrixWrap.querySelectorAll('input'));
+    for(let i=0;i<m;i++){
+      const left = rows[i].split('|')[0].trim().split(/\s+/).map(x=>x.trim());
+      const right = (rows[i].split('|')[1] || '0').trim();
+      for(let j=0;j<n;j++){
+        const idx = i*(n+1) + j;
+        inputs[idx].value = left[j] ?? '0';
+      }
+      inputs[i*(n+1) + n].value = right;
+    }
+  });
+});
+
+// paste pasteBtn: read clipboard if available
+pasteBtn.addEventListener('click', async ()=>{
+  let text='';
+  try{ text = await navigator.clipboard.readText(); } catch(e){ text = prompt('貼り付けたい行列データをここに貼ってください（改行で行、空白/カンマ/タブで区切り）:'); if(!text) return; }
+  const lines = text.trim().split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length>0);
+  if(lines.length===0){ alert('貼り付けられた内容が空です'); return; }
+  const parsed = lines.map(l=>{
+    if(l.includes('|')){
+      const [left,right]=l.split('|');
+      const leftT = left.trim().split(/[\s,]+/).map(s=>s.replace(',','.'));
+      return leftT.concat([ (right||'0').trim().replace(',','.') ]);
+    } else {
+      const toks = l.split(/[\s,]+/).map(s=>s.replace(',','.'));
+      return toks;
+    }
+  });
+  const m = parsed.length;
+  // guess n (coeff count) as parsed[0].length -1 if >1
+  const nplus1 = parsed[0].length;
+  if(nplus1 < 2){ alert('列が足りません'); return; }
+  const n = nplus1 - 1;
+  rowsEl.value = m; colsEl.value = n;
+  makeMatrixGridUI(m,n);
+  const inputs = Array.from(matrixWrap.querySelectorAll('input'));
+  for(let i=0;i<m;i++){
+    const row = parsed[i];
+    for(let j=0;j<n+1;j++){
+      const idx = i*(n+1) + j;
+      inputs[idx].value = row[j] ?? '0';
+    }
+  }
+});
+
+// mode select
+modeSelect.addEventListener('change', ()=>{
+  if(modeSelect.value === 'decimal'){ decSettings.style.display='inline-block'; } else decSettings.style.display='none';
+});
+
+// solve button
+solveBtn.addEventListener('click', ()=>{
+  const read = readAugmentedMatrix();
+  if(read.error){ resultArea.innerHTML = `<div style="color:#b91c1c">${read.error}</div>`; return; }
+  const aug = read.mat;
+  const m = aug.length; const nplus1 = aug[0].length;
+  for(const r of aug) if(r.length !== nplus1){ resultArea.innerHTML = `<div style="color:#b91c1c">列数が揃っていません</div>`; return; }
+  const mode = modeSelect.value;
+  if(mode === 'number'){
+    const out = rrefNumber(aug);
+    renderResultNumber(out);
+  } else if(mode === 'decimal'){
+    const prec = Math.max(16, Math.min(200, parseInt(decPrec.value) || 40));
+    const out = rrefDecimal(aug, prec);
+    renderResultDecimal(out, prec);
+  } else {
+    // fraction
+    const out = rrefFraction(aug);
+    renderResultFraction(out);
+  }
+});
+
+// render helpers for each mode
+function renderResultNumber(out){
+  if(out.status === 'inconsistent'){ resultArea.innerHTML = `<div style="color:#b91c1c"><strong>矛盾 — 解なし</strong></div>`; stepsBox.innerHTML = out.steps.join('<br>'); statusLabel.textContent='矛盾'; return; }
+  if(out.status === 'unique'){
+    let html = `<div><strong>一意解（小数）</strong></div><div class="katex-area" id="latexOut"></div>`;
+    resultArea.innerHTML = html;
+    const latex = out.solution.map((v,i)=>`x_{${i}} = ${renderNumberLatex(v)}`).join(',\\; ');
+    renderLaTeXIn('latexOut', `\\displaystyle ${latex}`);
+    stepsBox.innerHTML = out.steps.join('<br>'); statusLabel.textContent='一意解';
+    return;
+  }
+  if(out.status === 'infinite'){
+    let html = `<div><strong>無限解（小数表現）</strong></div><div class="katex-area" id="latexOut"></div>`;
+    resultArea.innerHTML = html;
+    // render param expressions
+    let parts = [];
+    for(let v=0; v<out.particular.length; v++){
+      if(out.paramExpr[v]){
+        const p = out.paramExpr[v];
+        let rhs = Number(p.const).toPrecision(8);
+        for(const f in p.coeffs){
+          const coef = p.coeffs[f];
+          rhs += (coef>=0? ' + ' : ' - ') + Math.abs(coef).toPrecision(8) + `\\,t_{${f}}`;
+        }
+        parts.push(`x_{${v}} = ${rhs}`);
+      } else {
+        if(out.freeCols.includes(v)) parts.push(`x_{${v}} = t_{${v}}`);
+        else parts.push(`x_{${v}} = ${Number(out.particular[v]).toPrecision(8)}`);
+      }
+    }
+    renderLaTeXIn('latexOut', `\\displaystyle ${parts.join(',\\; ')}`);
+    stepsBox.innerHTML = out.steps.join('<br>'); statusLabel.textContent=`自由度 ${out.freeCols.length}`;
+    return;
+  }
+}
+
+function renderResultDecimal(out, prec){
+  if(out.status === 'inconsistent'){ resultArea.innerHTML = `<div style="color:#b91c1c"><strong>矛盾 — 解なし</strong></div>`; stepsBox.innerHTML = out.steps.join('<br>'); statusLabel.textContent='矛盾'; return; }
+  if(out.status === 'unique'){
+    let html = `<div><strong>一意解（高精度: ${prec}桁）</strong></div><div class="katex-area" id="latexOut"></div>`;
+    resultArea.innerHTML = html;
+    const latex = out.solution.map((v,i)=>`x_{${i}} = ${v.toSignificantDigits(Math.min(prec, 20)).toString()}`).join(',\\; ');
+    renderLaTeXIn('latexOut', `\\displaystyle ${latex}`);
+    stepsBox.innerHTML = out.steps.join('<br>'); statusLabel.textContent='一意解';
+    return;
+  }
+  if(out.status === 'infinite'){
+    let html = `<div><strong>無限解（高精度）</strong></div><div class="katex-area" id="latexOut"></div>`;
+    resultArea.innerHTML = html;
+    let parts = [];
+    for(let v=0; v<out.particular.length; v++){
+      if(out.paramExpr[v]){
+        const p = out.paramExpr[v];
+        let rhs = p.const.toSignificantDigits(Math.min(prec,20)).toString();
+        for(const f in p.coeffs){
+          const coef = p.coeffs[f];
+          rhs += (coef.gte(0)? ' + ' : ' - ') + coef.abs().toSignificantDigits(Math.min(prec,20)).toString() + `\\,t_{${f}}`;
+        }
+        parts.push(`x_{${v}} = ${rhs}`);
+      } else {
+        if(out.freeCols.includes(v)) parts.push(`x_{${v}} = t_{${v}}`);
+        else parts.push(`x_{${v}} = ${out.particular[v].toSignificantDigits(Math.min(prec,20)).toString()}`);
+      }
+    }
+    renderLaTeXIn('latexOut', `\\displaystyle ${parts.join(',\\; ')}`);
+    stepsBox.innerHTML = out.steps.join('<br>'); statusLabel.textContent=`自由度 ${out.freeCols.length}`;
+    return;
+  }
+}
+
+function renderResultFraction(out){
+  if(out.status === 'inconsistent'){ resultArea.innerHTML = `<div style="color:#b91c1c"><strong>矛盾 — 解なし</strong></div>`; stepsBox.innerHTML = out.steps.join('<br>'); statusLabel.textContent='矛盾'; return; }
+  if(out.status === 'unique'){
+    let html = `<div><strong>一意解（分数）</strong></div><div class="katex-area" id="latexOut"></div>`;
+    resultArea.innerHTML = html;
+    const latex = out.solution.map((v,i)=> {
+      return `x_{${i}} = ${renderFractionLaTeX(v)}`;
+    }).join(',\\; ');
+    renderLaTeXIn('latexOut', `\\displaystyle ${latex}`);
+    stepsBox.innerHTML = out.steps.join('<br>'); statusLabel.textContent='一意解（分数）';
+    return;
+  }
+  if(out.status === 'infinite'){
+    let html = `<div><strong>無限解（分数表示）</strong></div><div class="katex-area" id="latexOut"></div>`;
+    resultArea.innerHTML = html;
+    let parts=[];
+    for(let v=0; v<out.particular.length; v++){
+      if(out.paramExpr[v]){
+        const p = out.paramExpr[v];
+        let rhs = renderFractionLaTeX(p.const);
+        for(const f in p.coeffs){
+          const coef = p.coeffs[f];
+          rhs += (coef.s >= 0 ? ' + ' : ' - ') + renderFractionLaTeX(coef.abs()) + `\\,t_{${f}}`;
+        }
+        parts.push(`x_{${v}} = ${rhs}`);
+      } else {
+        if(out.freeCols.includes(v)) parts.push(`x_{${v}} = t_{${v}}`);
+        else parts.push(`x_{${v}} = ${renderFractionLaTeX(out.particular[v])}`);
+      }
+    }
+    renderLaTeXIn('latexOut', `\\displaystyle ${parts.join(',\\; ')}`);
+    stepsBox.innerHTML = out.steps.join('<br>'); statusLabel.textContent=`自由度 ${out.freeCols.length}`;
+    return;
+  }
+}
+
+// render LaTeX using KaTeX
+function renderLaTeXIn(id, latex){
+  const el = document.getElementById(id);
+  try{
+    katex.render(latex, el, {throwOnError:false, displayMode:false});
+  }catch(e){
+    el.textContent = latex;
+  }
+}
+
+// CSV export
+exportCSV.addEventListener('click', ()=>{
+  const read = readAugmentedMatrix();
+  if(read.error){ alert('有効な行列を用意してください'); return; }
+  const rows = read.mat;
+  let csv=''; for(const r of rows) csv += r.join(',') + '\n';
+  const blob = new Blob([csv], {type:'text/csv'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'augmented_matrix.csv'; a.click();
+});
+
+// copy result
+copySol.addEventListener('click', ()=>{
+  const txt = resultArea.innerText || '';
+  if(!txt) { alert('まず解を表示してください'); return; }
+  navigator.clipboard?.writeText(txt).then(()=> alert('結果をコピーしました')).catch(()=> alert('クリップボードにアクセスできません'));
+});
+
+// print
+printBtn.addEventListener('click', ()=> window.print());
+
+// initialize default grid
+makeMatrixGridUI(parseInt(rowsEl.value), parseInt(colsEl.value));
+</script>
+</body>
+</html>

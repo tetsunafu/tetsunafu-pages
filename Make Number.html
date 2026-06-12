@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html>
+<head lang="ja">
+    <meta charset="UTF-8" />
+    <title>すうじをつくろう！</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=BIZ+UDGothic&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=BIZ+UDMincho&display=swap');
+
+        #dialog {
+            border-radius: 10px;
+            border: double 3px darkred;
+            padding: 20px;
+            width: 50vw;
+            height: fit-content;
+            color: black;
+        }
+        #dialog h2 {
+            font-size: larger;
+            font-family: "BIZ UDGothic", sans-serif;
+        }
+        #dialog div {
+            font-size: small;
+            font-family: "BIZ UDMincho", serif;
+        }
+        #dialog button {
+            font-family: sans-serif;
+            font-size: 15px;
+            border-radius: 20px;
+            padding: 5px;
+            border: solid 3px darkblue;
+            color: darkblue;
+            background-color: rgba(255, 250, 250, 0.9);
+        }
+        #dialog button:active {
+            background-color: rgba(225, 220, 220, 0.9);
+        }
+        #dialog li {
+            margin-bottom: 0.5em;
+            letter-spacing: 0.5px;
+            text-align: justify;
+            line-height: 1.2;
+            border: none;
+        }
+        #dialog ul {
+            padding-left: 10px;
+            list-style: square;
+        }
+
+        .info {
+            bottom: 5px;
+            position: fixed;
+            margin-left: 0;
+            width: fit-content;
+            right: 10px;
+        }
+        .info button {
+            font-family: monospace;
+            font-size: 20px;
+            border-radius: 50%;
+            padding: 5px;
+            border: solid 3px darkblue;
+            color: darkblue;
+            background-color: rgba(255, 250, 250, 0.9);
+            width: 40px;
+            height: 40px;
+            margin: 0;
+            box-shadow: 4px 2px 3px 0px #00000085;
+        }
+        .info:hover {
+            bottom: 3px;
+        }
+        .info button:active {
+            background-color: rgba(225, 220, 220, 0.9);
+        }
+    </style>
+    <style>
+        :not(.LaTeX *) {
+            font-family: 'Times New Roman', Times, serif;
+        }
+        #now {
+            padding: 1em;
+        }
+        body > header {
+            background-color: khaki;
+            font-size: xx-large;
+        }
+
+        #answer {
+            border-style: ridge;
+            text-align: justify;
+        }
+        #answer > div {
+            border-bottom: dashed 1px lightgray;
+        }
+        #answer > div > h3 {
+            text-decoration: underline;
+            border-left: solid 7px skyblue;
+            padding-left: 5px;
+            font-weight: normal;
+            color: #9f9f9f;
+        }
+        #answer > div > div {
+            width: min-content;
+            text-align: center;
+        }
+        .results {
+            margin: 0.5em;
+        }
+    </style>
+    <style>
+        #AlertElement, #ConfirmElement, #PromptElement {
+            width: 50vw;
+            min-width: 250px;
+            max-width: 500px;
+            min-height: 100px;
+            border: none;
+            border-radius: 10px;
+            filter: drop-shadow(2px 2px 2px rgb(96, 96, 96));
+            background-color: white;
+        }
+        #AlertText, #ConfirmText, #PromptText {
+            font-size: 12px;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            text-align: justify;
+        }
+        :is(#AlertElement, #ConfirmElement, #PromptElement) > form[method="dialog"] {
+            text-align: right;
+        }
+        :is(#AlertElement, #ConfirmElement, #PromptElement) > h1 {
+            font-size: 17px;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            font-weight: bold;
+        }
+        #PromptElement > form[method="dialog"]  input {
+            width: -webkit-fill-available;
+        }
+        .ACPDialogOK {
+            width: 90px;
+            height: 30px;
+            border: solid 1px darkgray;
+            border-radius: 3px;
+            font-size: 12px;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            padding: 0;
+            margin: 3px 5px;
+            background-color: rgb(67 133 245);
+            color: white;
+        }
+        .ACPDialogCancel {
+            width: 90px;
+            height: 30px;
+            border: solid 1px darkgray;
+            border-radius: 3px;
+            font-size: 12px;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            padding: 0;
+            margin: 3px 5px;
+            background-color: white;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+    <dialog id="AlertElement">
+        <h1>このページの内容</h1>
+        <p id="AlertText"></p>
+        <form method="dialog">
+            <button class="ACPDialogOK">閉じる</button>
+        </form>
+    </dialog>
+    <header>
+        <div id="now" class="LaTeX">\(1+2+3+4=10\)</div>
+    </header>
+    <div style="margin-right: 50px;">
+        <ol>
+            <h1><li>いくつ数字があるかを入力</li></h1>
+            <h2 style="color: red;font-size: medium;">但し、5以上を入力すると時間がかかる場合があります</h2>
+            <input type="number" id="species" min="1" max="10">
+            <button id="species_button" onclick="SPECIES()">決定</button>
+            <div id="number"></div>
+            <div id="result"></div>
+            <div id="answer"></div>
+        </ol>
+    </div>
+    <div class="info"><button id="info_opn">?</button></div>
+    <dialog id="dialog">
+        <header style="text-align: center;border-bottom: solid 1px khaki;"><h2>使い方</h2></header>
+        <div style="overflow-y: scroll;max-height: 60vh;padding: 5px;">
+            <ul>
+                <li>いくつかの数字から特定の数を四則演算のみを用いて作成します．</li>
+                <li>まず最初に，数字の数を入力します．</li>
+                <li>次に，いくつかの数字を入力します．</li>
+                <li>その後，四則演算のみを用いて計算したい数を入力します．</li>
+                <li>並べ替えの可否を選択して「計算開始」をクリックします．</li>
+                <li>計算結果には全てのパターンを表示します．「以上」しか表示されない場合は四則演算のみを用いて指定した数を作ることができないということです．</li>
+                <li>全てのパターンを計算するため，時間がかかる場合があります．</li>
+            </ul>
+        </div>
+        <footer style="text-align: center;border-top: solid 1px khaki;"><p><button id="info_cls" autofocus>閉じる</button></p></footer>
+    </dialog>
+    <footer style="height: 40px;"></footer>
+</body>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script>
+    const dialog = document.getElementById("dialog");
+    const showButton = document.getElementById("info_opn");
+    const closeButton = document.getElementById("info_cls");
+
+    // ［ダイアログを表示］ボタンでダイアログがモーダルに開く
+    showButton.addEventListener("click", () => {
+    dialog.showModal();
+    });
+
+    // ［閉じる］ボタンでダイアログを閉じる
+    closeButton.addEventListener("click", () => {
+    dialog.close();
+    });
+
+    function DialogAlert(HTMLtext) {
+        document.getElementById('AlertText').innerHTML = String(HTMLtext)
+        document.getElementById('AlertElement').showModal()
+    }
+
+    const latex_operator = ['+', '-', '\\times', '\\div'];
+    function BinaryOperation(num1, num2, ASMDor0123) {
+        switch (ASMDor0123) {
+            case 'A':
+            case 0:
+            case '+':
+                return num1 + num2;
+                break;
+        
+            case 'B':
+            case 1:
+            case '-':
+            case '－':
+                return num1 - num2;
+                break;
+
+            case 'C':
+            case 2:
+            case '*':
+            case '×':
+                return num1 * num2;
+                break;
+
+            case 'D':
+            case 3:
+            case '/':
+            case '÷':
+                return num1 / num2;
+                break;
+
+            default:
+                break;
+        }
+    }
+    function rationalizationQ(num, arrOfDenominator) {
+        if (!Number.isInteger(Math.ceil(num*1e13)/1e13)) {
+            for (const denominator of arrOfDenominator) {
+                if(Number.isInteger(Math.ceil(num*denominator*1e13)/1e13)) {
+                    return Math.ceil(num*denominator*1e13)/1e13>0 ? `\\frac{${Math.ceil(num*denominator*1e13)/1e13}}{${denominator}}` : `-\\frac{${Math.abs(Math.ceil(num*denominator*1e13)/1e13)}}{${denominator}}`;
+                    break;
+                }
+            }
+        }
+        return Math.ceil(num*1e13)/1e13;
+    }
+    function gcd(a, b) {
+        a = Math.abs(a);
+        b = Math.abs(b);
+        
+        // 両方 0 の場合は 0 を返す（GCD の定義上）
+        if (a === 0 && b === 0) return 0;
+        
+        // 一方が 0 の場合、もう一方が GCD
+        if (b === 0) return a;
+        
+        while (b !== 0) {
+            let temp = b;
+            b = a % b;
+            a = temp;
+        }
+        return a;
+    }
+    function gcdArray(arr) {
+        if (arr.length === 0) return null;  // 空の配列なら null
+        if (arr.length === 1) return Math.abs(arr[0]);  // 要素が1つならそのまま
+
+        return arr.reduce(function(acc, num) {
+            return gcd(acc, num);
+        });
+    }
+    function coefficient(numerator_index, sqrt) {
+        if (numerator_index == -1) {
+            return Math.abs(numerator[0])==1 ? numerator[0]==1 ? '' : '-' : numerator[0]
+        }
+        if (numerator_index == 0) {
+            return numerator[0]==0 ? '' : numerator[0]
+        }else{
+            return numerator[numerator_index]==0 ? '' : numerator[numerator_index]<0 ? numerator[numerator_index]==-1 ? `-\\sqrt{${sqrt}}` : `${numerator[numerator_index]}\\sqrt{${sqrt}}` : numerator[numerator_index]==1 ? `+\\sqrt{${sqrt}}` : `+${numerator[numerator_index]}\\sqrt{${sqrt}}`
+        }
+    }
+
+    const now_random = Math.floor(Math.random()*2),
+        time1 = Number(String(new Date().getHours()).padStart(2,0).charAt(0)),
+        time2 = Number(String(new Date().getHours()).padStart(2,0).charAt(1)),
+        time3 = Number(String(new Date().getMinutes()).padStart(2,0).charAt(0)),
+        time4 = Number(String(new Date().getMinutes()).padStart(2,0).charAt(1));
+    let now_calculated;
+    switch (now_random) {
+        case 0:
+            let now_operator = [Math.floor(Math.random()*4), Math.floor(Math.random()*4), Math.floor(Math.random()*4)];
+            now_calculated = BinaryOperation(BinaryOperation(time1, time2, now_operator[0]), BinaryOperation(time3, time4, now_operator[2]), now_operator[1]);
+            while (isNaN(now_calculated)||!isFinite(now_calculated)) {
+                now_operator = [Math.floor(Math.random()*4), Math.floor(Math.random()*4), Math.floor(Math.random()*4), Math.floor(Math.random()*4)],
+                now_calculated = BinaryOperation(BinaryOperation(time1, time2, now_operator[0]), BinaryOperation(time3, time4, now_operator[2]), now_operator[1]);
+            }
+            now_calculated = rationalizationQ(now_calculated, Array.from({ length:126 },(_,i) => i+1));
+            
+            document.getElementById('now').innerHTML = `\\[${(now_operator[1]>=2)&&(now_operator[0]<=1) ? '\\left(':''}${time1}${latex_operator[now_operator[0]]}${time2}${(now_operator[1]>=2)&&(now_operator[0]<=1) ? '\\right)':''}${latex_operator[now_operator[1]]}
+                ${((now_operator[1]==2)&&(now_operator[2]<=1))||(now_operator[1]==3)||((now_operator[1]==1)&&(now_operator[2]<=1)) ? '\\left(':''}${time3}${latex_operator[now_operator[2]]}${time4}${((now_operator[1]==2)&&(now_operator[2]<=1))||(now_operator[1]==3)||((now_operator[1]==1)&&(now_operator[2]<=1)) ? '\\right)':''}=${now_calculated}\\]`;
+            break;
+
+        case 1:
+            var sinArray = [[0,0,0,0],[0,-1,0,1],[2,0,0,0],[0,2,0,0],[0,0,2,0],[0,1,0,1],[4,0,0,0],[0,1,0,1],[0,0,2,0],[0,2,0,0],[2,0,0,0],[0,-1,0,1],[0,0,0,0],[0,1,0,-1],[-2,0,0,0],[0,-2,0,0],[0,0,-2,0],[0,-1,0,-1],[-4,0,0,0],[0,-1,0,-1],[0,0,-2,0],[0,-2,0,0],[-2,0,0,0],[0,1,0,-1]],
+                cosArray = [[4,0,0,0],[0,1,0,1],[0,0,2,0],[0,2,0,0],[2,0,0,0],[0,-1,0,1],[0,0,0,0],[0,1,0,-1],[-2,0,0,0],[0,-2,0,0],[0,0,-2,0],[0,-1,0,-1],[-4,0,0,0],[0,-1,0,-1],[0,0,-2,0],[0,-2,0,0],[-2,0,0,0],[0,-1,0,1],[0,0,0,0],[0,1,0,-1],[2,0,0,0],[0,2,0,0],[0,0,2,0],[0,1,0,1]];
+            if (10*time1+time2==0) {
+                now_calculated = 0;
+            }else if (time3**2+time4**2==0) {
+                now_calculated = `${rationalizationQ((10*time1+time2)/12, [1,2,3,4,5,6,7,8,9,10,11,12,12,14,16,18,20,21,22,24,24,27,28,30,32,33,35,36,36,40,40,42,44,45,48,48,49,50,54,55,56,56,60,60,63,63,64,66,70,70,72,72,72,77,77,80,80,81,84,84,88,88,90,90,96,96,99,99,100,108,108,110,110,120,120,121,132,132,144])}\\pi`;
+            }else if (time3==0) {
+                let dividing = gcdArray([time4].concat(sinArray[(time4*(10*time1+time2))%24])),
+                    numerator = sinArray[(time4*(10*time1+time2))%24].map(num => num / dividing);
+                now_calculated = numerator[1]**2+numerator[2]**2+numerator[3]**2==0 ? rationalizationQ(numerator[0]/(time4/dividing), [1,2,3,4,5,6,7,8,9,10,11,12,12,14,16,18,20,21,22,24,24,27,28,30,32,33,35,36,36,40,40,42,44,45,48,48,49,50,54,55,56,56,60,60,63,63,64,66,70,70,72,72,72,77,77,80,80,81,84,84,88,88,90,90,96,96,99,99,100,108,108,110,110,120,120,121,132,132,144]) : `\\frac{${coefficient(0,1)}${coefficient(1,2)}${coefficient(2,3)}${coefficient(3,6)}}{${4*time4/dividing}}`;
+            }else if (time4==0) {
+                now_calculated = `${time3==1 ? '' : '\\frac{'}e^{${rationalizationQ(time3*(10*time1+time2)/12, [1,2,3,4,5,6,7,8,9,10,11,12,12,14,16,18,20,21,22,24,24,27,28,30,32,33,35,36,36,40,40,42,44,45,48,48,49,50,54,55,56,56,60,60,63,63,64,66,70,70,72,72,72,77,77,80,80,81,84,84,88,88,90,90,96,96,99,99,100,108,108,110,110,120,120,121,132,132,144])}\\pi}-1${time3==1 ? '' : `}{${time3}}`}`;
+            }else{
+                var preArrayNumerator = cosArray[(time4*(10*time1+time2))%24].map(function(item, index) {return time3*item+time4*sinArray[(time4*(10*time1+time2))%24][index]}),
+                    dividing = gcdArray([4*(time3**2+time4**2),4*time3].concat(preArrayNumerator)),
+                    numerator = preArrayNumerator.map(num => num / dividing);
+                if (numerator.filter(num => num === 0).length >= 3) {
+                    now_calculated = `\\frac{${coefficient(-1,1)}${coefficient(1,2)}${coefficient(2,3)}${coefficient(3,6)}e^{${rationalizationQ(time3*(10*time1+time2)/12, [1,2,3,4,5,6,7,8,9,10,11,12,12,14,16,18,20,21,22,24,24,27,28,30,32,33,35,36,36,40,40,42,44,45,48,48,49,50,54,55,56,56,60,60,63,63,64,66,70,70,72,72,72,77,77,80,80,81,84,84,88,88,90,90,96,96,99,99,100,108,108,110,110,120,120,121,132,132,144])}\\pi}-${4*time3/dividing}}{${4*(time3**2+time4**2)/dividing}}`;
+                }else{
+                    now_calculated = `\\frac{e^{${rationalizationQ(time3*(10*time1+time2)/12, [1,2,3,4,5,6,7,8,9,10,11,12,12,14,16,18,20,21,22,24,24,27,28,30,32,33,35,36,36,40,40,42,44,45,48,48,49,50,54,55,56,56,60,60,63,63,64,66,70,70,72,72,72,77,77,80,80,81,84,84,88,88,90,90,96,96,99,99,100,108,108,110,110,120,120,121,132,132,144])}\\pi}\\left(${coefficient(0,1)}${coefficient(1,2)}${coefficient(2,3)}${coefficient(3,6)}\\right)-${4*time3/dividing}}{${4*(time3**2+time4**2)/dividing}}`;
+                }
+            }
+            document.getElementById('now').innerHTML = `\\[\\int_0^{\\frac{${10*time1+time2}}{12}\\pi}e^{${time3}x}\\cos(${time4}x)dx=${now_calculated}\\]`;
+            break;
+
+        default:
+            break;
+    }
+
+</script>
+<script defer>
+
+    function permutation(arr, number) {  // arrのからnumber個取る順列の二次元配列を返す
+        let ans = []
+        if (number === 1) {
+            for (let i = 0; i < arr.length; i++) {
+                ans[i] = [arr[i]];
+            }
+        } else {
+            for (let i = 0; i < arr.length; i++) {
+                let parts = arr.slice(0);
+                parts.splice(i, 1)[0]
+                let row = permutation(parts, number - 1);
+                for (let j = 0; j < row.length; j++) {
+                    ans.push([arr[i]].concat(row[j]));
+                }
+            }
+        }
+        return ans;
+    };
+    var operatorLaTeX = ['+','-','\\times','\\div'];
+
+    var resolution_copy,                                    // Array.from(resolution[f])
+        Q,                                                  // resolution_copy.indexOf(h)
+        reminders,                                          // 演算子[+,-,*,/]を数字['0','1','2','3']にした文字列 ex) +*- => '021'
+        solve_numbers,                                      // Array.from(arr)
+        operator,                                           // d番目の演算子配列 ex) '2013'(4) => [2,0,1,3] ; '013'(4) なら [+,-,/] を意味する
+        resolution,                                         // permutation(Array.from({ length: numbers_species }, (_, i) => i + 1), numbers_species-1)
+        change_numbers,                                     // permutation(Array.from({ length: numbers_species }, (_, i) => i + 1), numbers_species)
+        new_element,                                        // 新しいli要素
+        GoalNumber = 0                                      // 最終的に計算で求める数値
+        successfulOperator = [0],                           // 計算結果が一致した演算子の配列 ex) [0,2,3,2] (=> [+,*,/,*])
+        successfulOperatorSequence = [0],                   // 計算結果が一致した演算子の計算順序の配列 ex) [3,4,1,2]
+        answer = [],                                        // [successfulOperator, successfulOperatorSequence]
+        Elements_LaTeX_codes = [''];                        // li要素のtextContentたちの配列
+
+    function SPECIES() {    // 1つ目の「決定」を押したときのプログラム
+        if (document.getElementById('species').value == '') {
+            alert('数値が入力されていません');
+        } else {
+            if ((document.getElementById('species').value < 1)||(!(Number.isInteger(Number(document.getElementById('species').value))))) {
+                alert('正の整数を入力してください')
+            } else {
+                if (document.getElementById('species').value >= 6) {
+                    if (confirm(document.getElementById('species').value + 'は大きすぎるため、計算に多くの時間がかかります。\n本当に計算しますか。')) {
+                        document.getElementById('species_button').disabled = true;
+                        document.getElementById('number').insertAdjacentHTML('afterbegin','<h1><li>計算する数を入力</li></h1><ol type="I" id="Base"></ol>');
+
+                        for (let a = 0; a < document.getElementById('species').value; a++) {
+                            let number_element2 = document.getElementById('Base');
+                            number_element2.insertAdjacentHTML('beforeend',`<li><input type="number" min="1" id=base${a} ></li>`);
+                        }
+                        document.getElementById('number').insertAdjacentHTML('beforeend','<button onclick="BASE(),disabled=true">決定');
+                    }
+                } else {
+                    document.getElementById('species_button').disabled = true;
+                    document.getElementById('number').insertAdjacentHTML('afterbegin','<h1><li>計算する数を入力</li></h1><ol type="I" id="Base"></ol>');
+
+                    for (let a = 0; a < document.getElementById('species').value; a++) {
+                        let number_element2 = document.getElementById('Base');
+                        number_element2.insertAdjacentHTML('beforeend',`<li><input type="number" min="1" name="base"></li>`);
+                    }
+                    document.getElementById('number').insertAdjacentHTML('beforeend','<button onclick="BASE(),disabled=true">決定');
+                }
+            }
+        }
+    }
+    
+    function BASE() {   // 1つ目の「決定」を押して出てくるHTMLのプログラム
+        document.getElementById('result').insertAdjacentHTML('afterbegin','<h1><li>計算して求めたい数を入力</li></h1>');
+        document.getElementById('result').insertAdjacentHTML('beforeend','<input type="number" id="result_number">');
+        document.getElementById('result').insertAdjacentHTML('beforeend','<h2>数字の並べ替えを許す</h2>')
+        document.getElementById('result').insertAdjacentHTML('beforeend','<div><input type="radio" name="sequence" value="OK">はい<input type="radio" name="sequence" value="NG" id="radio_ng" checked>いいえ</div>');
+        document.getElementById('result').insertAdjacentHTML('beforeend','<button onclick="RESULT(),disabled=true">計算開始</button>');
+    }
+    
+    function RESULT() { // 計算結果を表示させるプログラム
+        document.getElementById('answer').insertAdjacentHTML("beforebegin",'<h1><li>計算結果</li></h1>');
+
+        const numbers_species = Number(document.getElementById('species').value);
+        let bases = Array.from(document.getElementsByName('base'), (x) => Number(x.value))  // userが入力した数字たちの配列
+
+        GoalNumber = Number(document.getElementById('result_number').value);
+        answer = [[], []];
+
+        if (document.getElementById('radio_ng').checked) {
+            let displayed = [];
+            answer = SOLVE(bases, GoalNumber);
+            for (let j = 0; j < answer[0].length; j++) {
+                displayed = CREATE_div(GoalNumber, bases, answer[0][j], ApplyParenthesisLaTeX(bases, answer[0][j], answer[1][j]), document.getElementById('answer'),displayed)
+                console.log(displayed)
+            }
+        } else {
+            change_numbers = permutation(Array.from({ length: numbers_species }, (_, i) => i), numbers_species);
+            
+            for (let j = 0; j < change_numbers.length; j++) {
+                let changedBases = Array.from({ length : numbers_species }, (_,i) => bases[change_numbers[j].indexOf(i)]),
+                    gridTitleElement = document.createElement('h3'),
+                    gridGridElement = document.createElement('div'),
+                    displayed = [];
+                gridTitleElement.textContent = `並べ替えその${j+1}:(${String(changedBases)})`;
+
+                answer = SOLVE(changedBases, GoalNumber);
+                for (let j = 0; j < answer[0].length; j++) {
+                    displayed = CREATE_div(GoalNumber, changedBases, answer[0][j], ApplyParenthesisLaTeX(changedBases, answer[0][j], answer[1][j]), gridGridElement,displayed)
+                }
+                document.getElementById('answer').appendChild(gridTitleElement)
+                document.getElementById('answer').appendChild(gridGridElement)
+            }
+        }
+
+        document.getElementById('answer').insertAdjacentHTML("beforeend",'<h3><i>以上</i></h3>');
+    }
+
+    function SOLVE(arr, num) {  // 与えられた配列arrからnumを算出するプログラム return:[[演算子の配列の配列], [演算順序の配列の配列]] <= 3次元配列
+
+        const numbers_species = arr.length; // arrの数字の数
+        resolution = permutation(Array.from({ length: numbers_species-1 }, (_, i) => i + 1), numbers_species-1); // [1,2,...,numbers_species-1]の順列の2次元配列
+        successfulOperator = [];
+        successfulOperatorSequence = [];
+
+        for (let d = 0; d < 4 ** (numbers_species - 1); d++) {
+            for (let f = 0; f < resolution.length; f++) {
+
+                operator = Array.from(d.toString(4).padStart(numbers_species-1)).map(Number);   // d番目の演算子配列 ex) '2013'(4) => [2,0,1,3] ; '013'(4) なら [+,-,/] を意味する
+
+                solve_numbers = Array.from(arr);
+                resolution_copy = Array.from(resolution[f]);
+
+                for (let h = 1; h < numbers_species; h++) {
+                    Q = resolution_copy.indexOf(h); // resolution[f]の中のhのインデックス
+                    switch (operator[Q]) {  // Q番目の演算を実行する
+                        case 0:
+                            solve_numbers.splice(Q,2,(Number(solve_numbers[Q]) + Number(solve_numbers[Q + 1])));
+                            operator.splice(Q,1);
+                            resolution_copy.splice(Q,1);
+                            break;
+
+                        case 1:
+                            solve_numbers.splice(Q,2,(Number(solve_numbers[Q]) - Number(solve_numbers[Q + 1])));
+                            operator.splice(Q,1);
+                            resolution_copy.splice(Q,1);
+                            break;
+
+                        case 2:
+                            solve_numbers.splice(Q,2,(Number(solve_numbers[Q]) * Number(solve_numbers[Q + 1])));
+                            operator.splice(Q,1);
+                            resolution_copy.splice(Q,1);
+                            break;
+
+                        default:
+                            solve_numbers.splice(Q,2,(Number(solve_numbers[Q]) / Number(solve_numbers[Q + 1])));
+                            operator.splice(Q,1);
+                            resolution_copy.splice(Q,1);
+                            break;
+                    }
+                }
+
+                if (Math.round(solve_numbers[0] * 1e10) / 1e10 == num) {
+                    successfulOperator.push(Array.from(d.toString(4).padStart(numbers_species-1)).map(Number))
+                    successfulOperatorSequence.push(resolution[f])
+                }
+            }
+        }
+
+        return [successfulOperator, successfulOperatorSequence];
+    }
+    
+    function OperatorHierarchy(arr, ParenthesisArray, constSequenceArray, constOperatorsArray, preOperator, LorR) {    // 演算の順番の配列NumbersArrayを逆順に階層状に換えるプログラム ex) [2,1,8,5,3,4,7,6] => [2,3,1,3,5,4,2,3]
+
+        let ParenthesisArray_copy = ParenthesisArray;
+        let maxIndex = arr.indexOf(Math.max(...arr)); // 最大値のインデックスを取得
+
+        if (typeof(preOperator) != "undefined") {
+            switch (LorR) {
+                case 'L':
+                    if (2*Math.floor(preOperator/2) > constOperatorsArray[constSequenceArray.indexOf(arr[maxIndex])]) {
+                        ParenthesisArray_copy[constSequenceArray.indexOf(arr.at(0))][0] += '\\left(';
+                        ParenthesisArray_copy[constSequenceArray.indexOf(arr.at(-1))+1][1] += '\\right)';
+                    }
+                    break;
+
+                case 'R':
+                    if (2*Math.floor(preOperator/2-0.5) >= constOperatorsArray[constSequenceArray.indexOf(arr[maxIndex])]-1) {
+                        ParenthesisArray_copy[constSequenceArray.indexOf(arr.at(0))][0] += '\\left(';
+                        ParenthesisArray_copy[constSequenceArray.indexOf(arr.at(-1))+1][1] += '\\right)';
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+        }
+        let before = arr.slice(0, maxIndex);  // 最大値の前
+        let after = arr.slice(maxIndex + 1);  // 最大値の後
+        let next_preOperator = constOperatorsArray[constSequenceArray.indexOf(Math.max(...arr))];
+
+        // 前後の要素を 1 階層深くする（順番を保持）
+        before = before.length ? [OperatorHierarchy(before, ParenthesisArray_copy, constSequenceArray, constOperatorsArray, next_preOperator, 'L')[0]] : [];
+        after = after.length ? [OperatorHierarchy(after, ParenthesisArray_copy, constSequenceArray, constOperatorsArray, next_preOperator, 'R')[0]] : [];
+
+        return [[...before, arr[maxIndex], ...after], ParenthesisArray_copy];
+    }
+
+    function ApplyParenthesisLaTeX(materials, OperatorsArray, SequenceArray) {  // successfulOperatorとsuccessfulOperatorSequenceのある要素（1次元配列）から括弧を付ける関数 return: LaTeXcode
+        let parenthesis = Array.from({ length:materials.length }, x => ['','']);    // 括弧の個数を保存する2次元配列 ex) [['((', ''], ['', ')'], ['', ')']]
+
+        parenthesis = OperatorHierarchy(SequenceArray, parenthesis, SequenceArray, OperatorsArray, undefined, undefined)[1];
+        return parenthesis
+    }
+
+    function CREATE_div(targetNumber, materials, OperatorsArray, ParenthesisArray, elm, strHistory) {  // materials,OperatorsArray,ParenthesisArrayの内容をtextContentにしたli[type="A"]要素を生成してelmにappendChildするプログラム
+        let str = `\\(${targetNumber}=`;
+        for (let i = 0; i < OperatorsArray.length; i++) {
+            str += ParenthesisArray[i][0] + materials[i] + ParenthesisArray[i][1] + operatorLaTeX[OperatorsArray[i]];
+        }
+        str += ParenthesisArray.at(-1)[0] + materials.at(-1) + ParenthesisArray.at(-1)[1] + '\\)';
+        if ((str != '\\(\\)')&&(!strHistory.includes(str))) {
+            new_element = document.createElement('div');
+            new_element.className = 'LaTeX results';
+            new_element.textContent = String(str);
+            MathJax.typesetPromise([new_element]);
+
+            elm.appendChild(new_element);
+
+            strHistory.push(str);
+        }
+        return strHistory
+    }
+</script>
+</html>

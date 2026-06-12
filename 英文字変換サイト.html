@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>英文字変換サイト</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=BIZ+UDGothic&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=BIZ+UDMincho&display=swap');
+
+        #dialog {
+            border-radius: 10px;
+            border: double 3px darkred;
+            padding: 20px;
+            width: 50vw;
+            height: fit-content;
+            color: black;
+        }
+        #dialog h2 {
+            font-size: larger;
+            font-family: "BIZ UDGothic", sans-serif;
+        }
+        #dialog div {
+            font-size: small;
+            font-family: "BIZ UDMincho", serif;
+        }
+        #dialog button {
+            font-family: sans-serif;
+            font-size: 15px;
+            border-radius: 20px;
+            padding: 5px;
+            border: solid 3px darkblue;
+            color: darkblue;
+            background-color: rgba(255, 250, 250, 0.9);
+        }
+        #dialog button:active {
+            background-color: rgba(225, 220, 220, 0.9);
+        }
+        #dialog li {
+            margin-bottom: 0.5em;
+            letter-spacing: 0.5px;
+            text-align: justify;
+            line-height: 1.2;
+            border: none;
+        }
+        #dialog ul {
+            padding-left: 10px;
+            list-style: square;
+        }
+
+        .info {
+            bottom: 5px;
+            position: fixed;
+            margin-left: 0;
+            width: fit-content;
+            right: 10px;
+        }
+        .info button {
+            font-family: monospace;
+            font-size: 20px;
+            border-radius: 50%;
+            padding: 5px;
+            border: solid 3px darkblue;
+            color: darkblue;
+            background-color: rgba(255, 250, 250, 0.9);
+            width: 40px;
+            height: 40px;
+            margin: 0;
+            box-shadow: 4px 2px 3px 0px #00000085;
+        }
+        .info:hover {
+            bottom: 3px;
+        }
+        .info button:active {
+            background-color: rgba(225, 220, 220, 0.9);
+        }
+    </style>
+    <style>
+        #AlertElement, #ConfirmElement, #PromptElement {
+            width: 50vw;
+            min-width: 250px;
+            max-width: 500px;
+            min-height: 100px;
+            border: none;
+            border-radius: 10px;
+            filter: drop-shadow(2px 2px 2px rgb(96, 96, 96));
+            background-color: white;
+        }
+        #AlertText, #ConfirmText, #PromptText {
+            font-size: 12px;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            text-align: justify;
+        }
+        :is(#AlertElement, #ConfirmElement, #PromptElement) > form[method="dialog"] {
+            text-align: right;
+        }
+        :is(#AlertElement, #ConfirmElement, #PromptElement) > h1 {
+            font-size: 17px;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            font-weight: bold;
+        }
+        #PromptElement > form[method="dialog"]  input {
+            width: -webkit-fill-available;
+        }
+        .ACPDialogOK {
+            width: 90px;
+            height: 30px;
+            border: solid 1px darkgray;
+            border-radius: 3px;
+            font-size: 12px;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            padding: 0;
+            margin: 3px 5px;
+            background-color: rgb(67 133 245);
+            color: white;
+        }
+        .ACPDialogCancel {
+            width: 90px;
+            height: 30px;
+            border: solid 1px darkgray;
+            border-radius: 3px;
+            font-size: 12px;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            padding: 0;
+            margin: 3px 5px;
+            background-color: white;
+            color: black;
+        }
+    </style>
+</head>
+<body style="font-family: Verdana, Geneva, Tahoma, sans-serif;">
+    <dialog id="AlertElement">
+        <h1>このページの内容</h1>
+        <p id="AlertText"></p>
+        <form method="dialog">
+            <button class="ACPDialogOK">閉じる</button>
+        </form>
+    </dialog>
+    <div style="margin-right: 40px;">
+        <header><p style="text-align: center;font-size: x-large;background-color: aqua;">Thank you&ensp;⇒&ensp;&#x1d683;&#x1d691;&#x1d68a;&#x1d697;&#x1d694;&ensp;&#x1d6a2;&#x1d698;&#x1d69e;</p></header>
+        <h1>英文字を変換しよう</h1>
+        <ol>
+            <h2><li>変換する文字列を入力</li></h2>
+            <textarea spellcheck="false" placeholder="Enter English text...&emsp;(ex)ABcd12" id="text"></textarea>
+            <h2><li>変換する文字の種類を選択</li></h2>
+            <ol type="i">
+                <h3><li>大文字の変換の種類を選択</li></h3>
+                <fieldset>
+                    <input id="item-1b" class="input-b" type="radio" name="big-t" value="b-1" checked="checked"/>
+                    <label class="label-b" for="item-1b">&#x1d400;&#x1d401;&#x1d402;</label>
+                    <input id="item-2b" class="input-b" type="radio" name="big-t" value="b-2"/>
+                    <label class="label-b" for="item-2b">&#x1d434;&#x1d435;&#x1d436;</label>
+                    <input id="item-3b" class="input-b" type="radio" name="big-t" value="b-3"/>
+                    <label class="label-b" for="item-3b">&#x1d468;&#x1d469;&#x1d46a;</label>
+                    <input id="item-4b" class="input-b" type="radio" name="big-t" value="b-4"/>
+                    <label class="label-b" for="item-4b">&#x1d49c;&#x212c;&#x1d49e;</label>
+                    <input id="item-5b" class="input-b" type="radio" name="big-t" value="b-5"/>
+                    <label class="label-b" for="item-5b">&#x1d4d0;&#x1d4d1;&#x1d4d2;</label>
+                    <input id="item-6b" class="input-b" type="radio" name="big-t" value="b-6"/>
+                    <label class="label-b" for="item-6b">&#x1d504;&#x1d505;&#x212d;</label>
+                    <input id="item-7b" class="input-b" type="radio" name="big-t" value="b-7"/>
+                    <label class="label-b" for="item-7b">&#x1d538;&#x1d539;&#x2102;</label>
+                    <input id="item-8b" class="input-b" type="radio" name="big-t" value="b-8"/>
+                    <label class="label-b" for="item-8b">&#x1d56c;&#x1d56d;&#x1d56e;</label>
+                    <input id="item-9b" class="input-b" type="radio" name="big-t" value="b-9"/>
+                    <label class="label-b" for="item-9b">&#x1d5a0;&#x1d5a1;&#x1d5a2;</label>
+                    <input id="item-10b" class="input-b" type="radio" name="big-t" value="b-10"/>
+                    <label class="label-b" for="item-10b">&#x1d5d4;&#x1d5d5;&#x1d5d6;</label>
+                    <input id="item-11b" class="input-b" type="radio" name="big-t" value="b-11"/>
+                    <label class="label-b" for="item-11b">&#x1d608;&#x1d609;&#x1d60a;</label>
+                    <input id="item-12b" class="input-b" type="radio" name="big-t" value="b-12"/>
+                    <label class="label-b" for="item-12b">&#x1d63c;&#x1d63d;&#x1d63e;</label>
+                    <input id="item-13b" class="input-b" type="radio" name="big-t" value="b-13"/>
+                    <label class="label-b" for="item-13b">&#x1d670;&#x1d671;&#x1d672;</label>
+                </fieldset>
+                <h3><li>小文字の変換の種類を選択</li></h3>
+                <fieldset>
+                    <input id="item-1s" class="input-s" type="radio" name="small-t" value="s-1" checked="checked"/>
+                    <label class="label-s" for="item-1s">&#x1d41a;&#x1d41b;&#x1d41c;</label>
+                    <input id="item-2s" class="input-s" type="radio" name="small-t" value="s-2"/>
+                    <label class="label-s" for="item-2s">&#x1d44e;&#x1d44f;&#x1d450;</label>
+                    <input id="item-3s" class="input-s" type="radio" name="small-t" value="s-3"/>
+                    <label class="label-s" for="item-3s">&#x1d482;&#x1d483;&#x1d484;</label>
+                    <input id="item-4s" class="input-s" type="radio" name="small-t" value="s-4"/>
+                    <label class="label-s" for="item-4s">&#x1d4b6;&#x1d4b7;&#x1d4b8;</label>
+                    <input id="item-5s" class="input-s" type="radio" name="small-t" value="s-5"/>
+                    <label class="label-s" for="item-5s">&#x1d4ea;&#x1d4eb;&#x1d4ec;</label>
+                    <input id="item-6s" class="input-s" type="radio" name="small-t" value="s-6"/>
+                    <label class="label-s" for="item-6s">&#x1d51e;&#x1d51f;&#x1d520;</label>
+                    <input id="item-7s" class="input-s" type="radio" name="small-t" value="s-7"/>
+                    <label class="label-s" for="item-7s">&#x1d552;&#x1d553;&#x1d554;</label>
+                    <input id="item-8s" class="input-s" type="radio" name="small-t" value="s-8"/>
+                    <label class="label-s" for="item-8s">&#x1d586;&#x1d587;&#x1d588;</label>
+                    <input id="item-9s" class="input-s" type="radio" name="small-t" value="s-9"/>
+                    <label class="label-s" for="item-9s">&#x1d5ba;&#x1d5bb;&#x1d5bc;</label>
+                    <input id="item-10s" class="input-s" type="radio" name="small-t" value="s-10"/>
+                    <label class="label-s" for="item-10s">&#x1d5ee;&#x1d5ef;&#x1d5f0;</label>
+                    <input id="item-11s" class="input-s" type="radio" name="small-t" value="s-11"/>
+                    <label class="label-s" for="item-11s">&#x1d622;&#x1d623;&#x1d624;</label>
+                    <input id="item-12s" class="input-s" type="radio" name="small-t" value="s-12"/>
+                    <label class="label-s" for="item-12s">&#x1d656;&#x1d657;&#x1d658;</label>
+                    <input id="item-13s" class="input-s" type="radio" name="small-t" value="s-13"/>
+                    <label class="label-s" for="item-13s">&#x1d68a;&#x1d68b;&#x1d68c;</label>
+                </fieldset>
+                <h3><li>数字の変換の種類を選択</li></h3>
+                <fieldset>
+                    <input id="item-1n" class="input-n" type="radio" name="number-t" value="n-1" checked="checked"/>
+                    <label class="label-n" for="item-1n">&#x1d7ce;&#x1d7cf;&#x1d7d0;</label>
+                    <input id="item-2n" class="input-n" type="radio" name="number-t" value="n-2"/>
+                    <label class="label-n" for="item-2n">&#x1d7d8;&#x1d7d9;&#x1d7da;</label>
+                    <input id="item-3n" class="input-n" type="radio" name="number-t" value="n-3"/>
+                    <label class="label-n" for="item-3n">&#x1d7e2;&#x1d7e3;&#x1d7e4;</label>
+                    <input id="item-4n" class="input-n" type="radio" name="number-t" value="n-4"/>
+                    <label class="label-n" for="item-4n">&#x1d7ec;&#x1d7ed;&#x1d7ee;</label>
+                    <input id="item-5n" class="input-n" type="radio" name="number-t" value="n-5"/>
+                    <label class="label-n" for="item-5n">&#x1d7f6;&#x1d7f7;&#x1d7f8;</label>
+                </fieldset>
+            </ol>
+            <h2><li>変換する</li></h2>
+            <button id="btn01" onclick="Enter_text()">決定</button>
+            <h2><li>結果</li></h2>
+            <button id="copy_btn" onclick="CopyText()">コピー</button>
+            <p id="message">クリップボードにコピーしました！</p>
+            <div id="changed"></div>
+        </ol>
+    </div>
+
+    <div class="info"><button id="info_opn">?</button></div>
+    <dialog id="dialog">
+        <header style="text-align: center;border-bottom: solid 1px khaki;"><h2>使い方</h2></header>
+        <div style="overflow-y: scroll;max-height: 60vh;padding: 5px;">
+            <ul>
+                <li>入力した英数字を，Unicode追加多言語面にある数学用英数字の文字に変換します．</li>
+                <li>大文字・小文字・数字のそれぞれに対して個別に種類を設定できます．</li>
+                <li>Unicode追加多言語面にある数学用英数字に収録されていない文字はUnicode基本多言語面にある文字用記号で補っています．</li>
+                <li>デバイスによっては，正常に表示されない場合がございます．</li>
+                <li>「コピー」をクリックすることでお使いの端末のクリップボードにコピーすることができます．</li>
+                <li>デバイスによっては，クリップボードにコピーされない場合がございます．</li>
+            </ul>
+        </div>
+        <footer style="text-align: center;border-top: solid 1px khaki;"><p><button id="info_cls" autofocus>閉じる</button></p></footer>
+    </dialog>
+    <footer style="height: 40px;"></footer>
+</body>
+<style>
+    #text {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        width: 70vw;
+        resize: none;
+        min-height: 10vw;
+        font-size: large;
+    }
+
+    li {
+        border-left: solid;
+        padding-left: 0.5rem;
+        border-left-width: 8px;
+        border-left-color: goldenrod;
+    }
+
+    fieldset {
+        border: none;
+        padding: 0;
+        margin: 0;
+        text-align: left;
+    }
+
+    .input-b {
+    clip: rect(1px, 1px, 1px, 1px);
+    position: absolute !important;
+    }
+
+    .label-b {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        margin-right: 18px;
+        margin-bottom: 10px;
+        border-radius: 3px;
+        transition: all .2s;
+        font-family: math;
+        border: solid;
+        border-width: 1px;
+        border-color: #bf8585;
+        width: 38px;
+        text-align: center;
+    }
+
+    .input-b:checked + .label-b {
+        background: #B54A4A;
+        color: #fff;
+        text-shadow: 0 0 1px rgba(0,0,0,.7);
+    }
+
+    .input-b:focus + .label-b {
+        outline-color: #4D90FE;
+        outline-offset: -2px;
+        outline-style: auto;
+        outline-width: 5px;
+        border: none;
+    }
+
+    .input-s {
+    clip: rect(1px, 1px, 1px, 1px);
+    position: absolute !important;
+    }
+
+    .label-s {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        margin-right: 18px;
+        margin-bottom: 10px;
+        border-radius: 3px;
+        transition: all .2s;
+        font-family: math;
+        border: solid;
+        border-width: 1px;
+        border-color: #bf8585;
+        width: 38px;
+        text-align: center;
+    }
+
+    .input-s:checked + .label-s {
+        background: #B54A4A;
+        color: #fff;
+        text-shadow: 0 0 1px rgba(0,0,0,.7);
+    }
+
+    .input-s:focus + .label-s {
+        outline-color: #4D90FE;
+        outline-offset: -2px;
+        outline-style: auto;
+        outline-width: 5px;
+        border: none;
+    }
+    .input-n {
+    clip: rect(1px, 1px, 1px, 1px);
+    position: absolute !important;
+    }
+
+    .label-n {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        margin-right: 18px;
+        margin-bottom: 10px;
+        border-radius: 3px;
+        transition: all .2s;
+        font-family: math;
+        border: solid;
+        border-width: 1px;
+        border-color: #bf8585;
+        width: 38px;
+        text-align: center;
+    }
+
+    .input-n:checked + .label-n {
+        background: #B54A4A;
+        color: #fff;
+        text-shadow: 0 0 1px rgba(0,0,0,.7);
+    }
+
+    .input-n:focus + .label-n {
+        outline-color: #4D90FE;
+        outline-offset: -2px;
+        outline-style: auto;
+        outline-width: 5px;
+        border: none;
+    }
+
+    button#btn01 {
+        border: 2px solid #4f4fff;
+        border-radius: 0;
+        background: #fff;
+        font-size: 1rem;
+        font-weight: 700;
+        line-height: 1.5;
+        position: relative;
+        display: inline-block;
+        padding: 0.7rem 2rem;
+        cursor: pointer;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        -webkit-transition: all 0.3s;
+        transition: all 0.3s;
+        text-align: center;
+        vertical-align: middle;
+        text-decoration: none;
+        letter-spacing: 0.1em;
+        color: #003467;
+        border-radius: 0.5rem;
+        margin-left: 3em;
+    }
+
+    button#btn01:hover {
+        color: #fff;
+        background: #5bbee4;
+    }
+
+    button#copy_btn {
+        border: 2px solid #1bae2c;
+        border-radius: 0;
+        background: #fff;
+        font-size: 1rem;
+        font-weight: 700;
+        line-height: 1.5;
+        position: relative;
+        display: inline-block;
+        padding: 0.7rem 2rem;
+        cursor: pointer;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        -webkit-transition: all 0.3s;
+        transition: all 0.3s;
+        text-align: center;
+        vertical-align: middle;
+        text-decoration: none;
+        letter-spacing: 0.1em;
+        color: #00671b;
+        border-radius: 0.5rem;
+        margin-left: 3em;
+    }
+
+    button#copy_btn:hover {
+        color: #fff;
+        background: #10a526;
+    }
+
+    #changed {
+        background-color: #eeeeee;
+        border: double;
+        border-color: #78788d;
+        width: 70vw;
+        min-height: 5vw;
+        padding: 0.5em;
+        word-wrap: break-word;
+    }
+
+    #message {
+      opacity: 0;
+    
+      &.is-active {
+        opacity: 1;  
+      }
+    }
+</style>
+<script>
+    const dialog = document.getElementById("dialog");
+    const showButton = document.getElementById("info_opn");
+    const closeButton = document.getElementById("info_cls");
+
+    // ［ダイアログを表示］ボタンでダイアログがモーダルに開く
+    showButton.addEventListener("click", () => {
+    dialog.showModal();
+    });
+
+    // ［閉じる］ボタンでダイアログを閉じる
+    closeButton.addEventListener("click", () => {
+    dialog.close();
+    });
+
+    function DialogAlert(HTMLtext) {
+        document.getElementById('AlertText').innerHTML = String(HTMLtext)
+        document.getElementById('AlertElement').showModal()
+    }
+
+    let b_item = 0,
+        s_item = 0,
+        n_item = 0,
+        unicode = '';
+    const Text_Element = document.getElementById('text'),
+        big_Elements = document.getElementsByName('big-t'),
+        small_Elements = document.getElementsByName('small-t'),
+        number_Elements = document.getElementsByName('number-t'),
+        AftCha = document.getElementById('changed'),
+        alphabet_and_number = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','0','1','2','3','4','5','6','7','8','9'],
+        not_grapheme = ['455','210e','49d','212c','4a0','2130','4a1','2131','4a3','210b','4a4','2110','4a7','2112','4a8','2133','4ad','211b','4ba','212f','4bc','210a','4c4','2134',
+                        '506','212d','50b','210c','50c','2111','515','211c','51d','2128','53a','2102','53f','210d','545','2115','547','2119','548','211a','549','211d','551','2124'];
+    
+    function Enter_text() {
+        if (Text_Element == '') {
+            alert('文字列が入力されていません');
+        } else {
+            AftCha.innerHTML = '';
+
+            for (let i = 0; i < 13; i++) {
+                if (big_Elements.item(i).checked) {
+                    b_item = i;
+                    break;
+                }
+            }
+            for (let i = 0; i < 13; i++) {
+                if (small_Elements.item(i).checked) {
+                    s_item = i;
+                    break;
+                }
+            }
+            for (let i = 0; i < 5; i++) {
+                if (number_Elements.item(i).checked) {
+                    n_item = i;
+                    break;
+                }
+            }
+
+            for (let i = 0; i < Text_Element.value.length; i++) {
+                if (alphabet_and_number.indexOf(Text_Element.value.charAt(i)) != -1) {
+                    if (alphabet_and_number.indexOf(Text_Element.value.charAt(i)) < 26) {
+                        unicode = ((alphabet_and_number.indexOf(Text_Element.value.charAt(i))) + 52*(b_item) + 1024).toString(16);
+                    } else {
+                        if (alphabet_and_number.indexOf(Text_Element.value.charAt(i)) < 52) {
+                            unicode = ((alphabet_and_number.indexOf(Text_Element.value.charAt(i))) + 52*(s_item - 1) + 1076).toString(16);
+                        } else {
+                            unicode = ((alphabet_and_number.indexOf(Text_Element.value.charAt(i))) + 10*(n_item - 1) + 1956).toString(16);
+                        }
+                    }
+                    if (not_grapheme.includes(unicode)) {
+                        AftCha.innerHTML += '&#x' + not_grapheme[not_grapheme.indexOf(unicode) + 1] + ';';
+                    } else {
+                        AftCha.innerHTML += '&#x1d' + unicode + ';';
+                    }
+                } else {
+                    if (Text_Element.value.charAt(i) == '\n') {
+                        AftCha.innerHTML += '<br>';
+                    } else {
+                        AftCha.innerHTML += Text_Element.value.charAt(i);
+                    }
+                }
+            }
+
+        }
+    }
+
+    function CopyText() {
+        const tagValue = AftCha.innerHTML // inputタグのvalue値を変数へ挿入する
+        copyToClipboard(tagValue) // 関数copyToClipboardを実行する
+        // クリップボードへコピー（コピーの処理）
+        function copyToClipboard (tagValue) {
+            if (navigator.clipboard) { // navigator.clipboardが使えるか判定する
+                return navigator.clipboard.writeText(tagValue).then(function () { // クリップボードへ書きむ
+                messageActive() //メッセージを表示する
+                })
+            } else {
+                AftCha.innerHTML.select() // inputタグを選択する
+                document.execCommand('copy') // クリップボードにコピーする
+                messageActive() //メッセージを表示する
+            }
+        }
+        // メッセージを表示
+        function messageActive () {
+            message.classList.add('is-active') // メッセージを表示する
+            setTimeout(() => { // メッセージを非表示にする
+                message.classList.remove('is-active')
+            }, 1600)
+        }
+    }
+</script>
+</html>

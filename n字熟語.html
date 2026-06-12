@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>n字熟語メーカー — ランダム漢字ワークショップ</title>
+
+<!-- 外部ライブラリ -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" defer></script>
+
+<style>
+  :root{
+    --bg: #f3fbff;
+    --card: #ffffff;
+    --muted: #28555a;
+    --accent: #7ed3ff;
+    --accent-2: #38a4d6;
+    --glass: rgba(255,255,255,0.9);
+    --mono: 'Noto Sans JP', 'Inter', system-ui, -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:var(--mono); background: linear-gradient(180deg,var(--bg), #eefcff); color:#07323a;
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  }
+  .wrap{max-width:1100px;margin:28px auto;padding:18px}
+  .head{display:flex;gap:12px;align-items:center}
+  .logo{
+    width:68px; height:68px; border-radius:14px;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    color:white; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:30px;
+    box-shadow: 0 10px 30px rgba(5,60,80,0.08);
+  }
+  .title{line-height:1}
+  .title h1{margin:0;font-size:1.25rem}
+  .lead{margin-top:6px;color:var(--muted);font-size:0.95rem}
+
+  /* layout */
+  .card{background:var(--card); border-radius:12px; padding:16px; margin-top:18px; box-shadow:0 14px 34px rgba(4,30,35,0.06);}
+  .grid{display:grid; grid-template-columns: 360px 1fr; gap:18px;}
+  @media(max-width:980px){ .grid{grid-template-columns:1fr} }
+
+  label{display:block; font-size:0.92rem; color:var(--muted); margin-bottom:6px}
+  .input, select, textarea { width:100%; padding:9px; border-radius:10px; border:1px solid #e6f7fb; background:var(--glass); font-size:0.96rem; }
+  .row{display:flex; gap:8px; align-items:center}
+  .col{flex:1}
+
+  .controls .group{margin-bottom:12px}
+  .btn{padding:10px 14px;border-radius:10px;border:0;font-weight:700;cursor:pointer}
+  .btn-main{background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#003239}
+  .btn-ghost{background:transparent;border:1px solid #e6f7fb;border-radius:10px;padding:8px;}
+
+  /* output */
+  .out-header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .big-output{display:flex;gap:8px;flex-wrap:wrap;padding:14px;border-radius:10px;background:linear-gradient(180deg,#fff,#fbfeff);border:1px solid rgba(0,0,0,0.04);min-height:120px}
+  .token{
+    font-family: "Noto Sans JP", "Inter", monospace;
+    font-size:1.6rem; padding:10px 14px; border-radius:10px; background:linear-gradient(180deg,#f6feff,#eaffff);
+    box-shadow: 0 6px 18px rgba(2,80,120,0.05); cursor: pointer; transition: transform .15s;
+    display:inline-flex; align-items:center; justify-content:center;
+  }
+  .token:hover{ transform: translateY(-6px); box-shadow: 0 18px 32px rgba(2,80,120,0.08); }
+
+  .controls-list{display:flex;flex-direction:column;gap:8px}
+
+  .small{font-size:0.85rem;color:var(--muted)}
+  .muted{color:#637b7f}
+
+  /* table-like alignment for inputs */
+  .form-row{display:flex;gap:8px;align-items:center}
+  .form-row > *{flex:1}
+  .label-inline{width:140px; min-width:110px; font-size:0.95rem; color:var(--muted)}
+  .actions{display:flex;gap:8px;flex-wrap:wrap}
+
+  /* favorites / list */
+  .fav-list{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+
+  footer{margin-top:12px;text-align:center;color:var(--muted);font-size:0.85rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="logo">熟語</div>
+    <div class="title">
+      <h1>n字熟語メーカー</h1>
+      <div class="lead">好きな文字数 n を指定して、学年別や常用漢字などからランダムに n 字の熟語（文字列）を生成します。カスタム漢字も使えるよ。</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- 左：設定 -->
+    <div class="card controls" aria-label="設定パネル">
+      <div class="group">
+        <label class="label-inline">1. 文字数 n</label>
+        <div class="form-row"><input id="nCount" type="number" min="1" max="10" value="4" class="input" /></div>
+        <div class="small muted">※1〜10 の範囲で指定。日本語の「熟語」っぽさを試すなら 2～4 がよく使われるよ。</div>
+      </div>
+
+      <div class="group">
+        <label class="label-inline">2. 漢字プールを選ぶ</label>
+        <div class="controls-list">
+          <select id="presetSelect" class="input">
+            <option value="grade-sample">級別</option>
+            <option value="jouyou-sample">常用漢字</option>
+            <option value="custom">カスタムを貼り付ける</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="group" id="gradeSelectors">
+        <label class="label-inline">級を選ぶ（複数可）</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <label><input type="checkbox" class="grade" value="1" checked>10級</label>
+          <label><input type="checkbox" class="grade" value="2" checked>9級</label>
+          <label><input type="checkbox" class="grade" value="3" checked>8級</label>
+          <label><input type="checkbox" class="grade" value="4">7級</label>
+          <label><input type="checkbox" class="grade" value="5">6級</label>
+          <label><input type="checkbox" class="grade" value="6">5級</label>
+          <label><input type="checkbox" class="grade" value="7">4級</label>
+            <label><input type="checkbox" class="grade" value="8">3級</label>
+            <label><input type="checkbox" class="grade" value="9">準2級</label>
+            <label><input type="checkbox" class="grade" value="10">2級</label>
+            <label><input type="checkbox" class="grade" value="11">準1級</label>
+        </div>
+        <div class="small muted">選択した学年の漢字がプールに加わります（サンプルリスト）。</div>
+      </div>
+
+      <div class="group" id="customArea" style="display:none">
+        <label class="label-inline">カスタム漢字（貼り付け）</label>
+        <textarea id="customInput" class="input" rows="4" placeholder="例: 漢字を大量に貼ってね（スペースや改行は無視）"></textarea>
+        <div class="small muted">ここに入れた漢字すべてが選択プールになります（複数文字での単語や読みは無視）。</div>
+      </div>
+
+      <div class="group">
+        <label class="label-inline">3. オプション</label>
+        <div style="display:flex;gap:8px;flex-direction:column">
+          <label><input type="checkbox" id="allowRepeat" checked> 文字の重複を許可する</label>
+          <label><input type="checkbox" id="forceUnique" > 文字を必ず重複なしに（許可が外れていても優先しない）</label>
+          <label><input type="checkbox" id="useKana" > ひらがな・カタカナを混ぜる（カスタム利用時）</label>
+        </div>
+      </div>
+
+      <div class="group">
+        <label class="label-inline">4. 生成数 / 振る舞い</label>
+        <div class="form-row">
+          <input id="howMany" type="number" min="1" max="200" value="12" class="input" />
+          <button id="btnGenerate" class="btn btn-main">生成</button>
+        </div>
+        <div class="small muted">複数生成してギャラリー表示。1度にたくさん作るときは上限に注意。</div>
+      </div>
+
+      <div class="group">
+        <label class="label-inline">5. 保存・操作</label>
+        <div class="row actions">
+          <button id="btnCopyAll" class="btn btn-ghost">一覧をコピー</button>
+          <button id="btnCSV" class="btn btn-ghost">CSV ダウンロード</button>
+          <button id="btnClearFav" class="btn btn-ghost">お気に入りをクリア</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <label class="label-inline">ヒント</label>
+        <div class="small muted">
+          ・公式の学年漢字や常用漢字を使いたい場合、そのデータ（テキスト）をカスタム入力に貼ると即利用できます。<br>
+          ・作った熟語をクリックすると「お気に入り」に追加できます。ドラッグで順番変更などは今後実装予定。
+        </div>
+      </div>
+    </div>
+
+    <!-- 右：出力 -->
+    <div class="card">
+      <div class="out-header">
+        <div><strong>出力</strong> <span class="small muted">（クリックでお気に入りへ）</span></div>
+        <div class="small muted">生成結果: <span id="resultCount">0</span> 件</div>
+      </div>
+
+      <div id="gallery" class="big-output" aria-live="polite">
+        <!-- tokens here -->
+      </div>
+
+      <div style="margin-top:12px;display:flex;gap:8px;align-items:center;justify-content:space-between">
+        <div class="small muted">お気に入り (<span id="favCount">0</span>)</div>
+        <div>
+          <button id="btnExportFav" class="btn btn-main">お気に入りをCSVで保存</button>
+        </div>
+      </div>
+
+      <div class="fav-list" id="favList" style="margin-top:10px"></div>
+    </div>
+  </div>
+
+  <footer>© n字熟語メーカー — カスタマイズや漢字セットの追加、デザイン改良も遠慮なく言ってね！</footer>
+</div>
+
+<script>
+/*
+  n字熟語メーカー (single-file)
+  - 編集しやすいようにコメントを多めにしています。
+  - 漢字セットは「サンプル」ですが、カスタム欄に公式データを張れば即利用可能です。
+*/
+
+/* ---------- サンプル漢字データ（学年別・常用サンプル） ----------
+   注意: ここでは代表的なサンプルを用意しています。
+   正確な公式リスト（文部科学省の学年別漢字表、常用漢字一覧）を
+   丸ごと使いたい場合は、そのテキストを customInput に貼るか、
+   配列を差し替えてください。
+*/
+const KANJI = {
+  grade1: '百町先人耳五学一文天早水七口気右木田草正車校九雨本土足生手左休円名二村青十三玉王目日大夕出山金音立入男石女子空下力年竹赤小四月火林白中千上糸犬花六八虫川森字見貝',
+  grade2: '毎肉通前場矢光近角引妹馬弟組色姉考兄楽羽万売店走食思行形活雲明買点多心紙高計間園鳴麦電太新寺黄元丸遠毛半刀体親自合言岩何門番冬台図時谷原顔科夜父当地数室国戸汽夏野風東池西社黒古記家友分答知声弱今午帰歌用聞頭茶星首才後弓画曜米同昼晴秋細語牛回来歩道長切週作工魚会里母読鳥雪春算公京海理方内朝船書止広強絵話北南直線少市交教外',
+  grade3: '由氷湯炭真拾仕銀開悪油表登短深終死区階安有秒等談進習使苦寒暗遊病動着世集始具感医予品童注整住指君漢委羊負農柱昔重歯係館意洋部波丁全宿詩軽岸育葉服配帳相所次血起員陽福倍調送暑事決期院様物箱追想助持研客飲落平畑定息昭式県究運流返発庭速消実庫急泳旅勉反笛族商写湖級駅両放坂鉄他章者向宮央緑味板転打勝主幸球横礼命皮都対乗守港去屋列面悲度待植取号橋温練問美投代申酒根業化路役鼻豆第身受祭曲荷和薬筆島題神州皿局界',
+  grade4: '民票典然唱産健泣械愛無標伝争焼散験給害案約不徒倉照残固挙街以勇夫努巣城氏功漁各衣要付灯束縄司好共覚位養府働側臣試香協潟茨浴阜特続信児候鏡完印利富徳卒井治康競官英陸副栃孫成滋佐極管栄良兵奈帯省辞差熊関媛料別梨隊清鹿菜訓観塩量辺熱達静失最軍願岡輪変念単席借埼郡岐億類便敗置積種材群希加令包梅仲折周崎径季果冷法博沖節祝昨景旗貨例望阪兆説順札芸器課連牧飯低浅初刷欠機芽老末飛底戦松察結議賀労満必的選笑参建求改録未',
+  grade5: '暴非停設招士航許解圧脈費提絶証支鉱境格囲務備程祖象史構均確移夢評適素賞志興禁額因迷貧統総条枝講句刊永綿布堂造状師告型幹営輸婦銅像常資混経慣衛余武導増情飼査潔眼易容復得則織示再件紀益略複毒測職似災険基液留仏独属制識妻検寄演領粉任率性質採限規応歴編燃損政舎際現喜往弁能貸勢謝在減技桜保破態精授財故義可墓犯団製修罪個逆仮報判断税述殺護久価豊版築責術雑効旧河防比貯績準酸厚救過貿肥張接序賛耕居快',
+  grade6: '幼並糖宅誠縦策憲危胃欲陛届担舌縮冊源机異翌閉難探宣熟蚕厳揮遺乱片乳誕専純至己貴域卵補認段泉処私呼疑宇覧暮納暖洗署姿誤吸映裏宝脳値染諸視后供延律訪派宙銭除詞孝胸沿臨亡拝忠善承誌皇郷恩朗忘背著奏将磁紅勤我論棒肺庁窓傷射降筋灰枚俳頂創障捨鋼系拡幕班腸装蒸尺刻敬革密晩潮層針若穀警閣盟否賃操仁樹骨劇割模批痛蔵垂収困激株訳秘敵臓推宗砂穴干郵俵展存寸就座券巻優腹討尊盛衆済絹看預奮党退聖従裁権簡',
+  grade7: '侵獣紫項兼況輝較援握振瞬雌稿剣狭儀獲煙扱浸旬執豪軒恐戯刈鉛依寝巡芝込圏響詰甘縁威慎盾斜婚堅驚却汗汚為震召煮鎖遣仰脚乾押偉薪床釈彩玄駆及勧奥違尽沼寂歳枯屈丘歓憶維陣称朱載誇掘朽監菓緯尋紹狩剤鼓繰巨環暇壱吹詳趣咲互恵拠鑑箇芋是丈需惨抗傾距含雅陰姓畳舟旨攻継御奇介隠征殖秀伺更迎凶祈戒影跡飾襲刺恒撃叫鬼皆鋭占触柔脂荒肩狂幾壊越麗腰漫柄微薄稲滴淡扇暦踊妙壁匹爆踏添嘆鮮劣謡眠捕描髪闘殿端訴烈翼矛舗浜抜胴吐弾僧恋雷霧抱敏罰峠途恥燥露頼娘峰怖般突渡致騒郎絡茂砲浮販鈍奴遅贈惑欄猛忙普搬曇怒蓄即腕離網坊腐範弐到跳俗粒黙肪敷繁悩逃徴耐慮紋冒膚盤濃倒澄替療躍傍賦彼杯唐沈沢隣雄帽舞疲輩桃珍拓涙与凡幅被拍透抵濁隷誉盆払避泊盗堤脱齢溶慢噴尾迫塔摘丹',
+  grade8: '婿譲殊削拘憩喫貫餓哀請嘱寿搾郊鶏虐喚怪慰斥辱潤錯控鯨虚換悔詠隻伸遵撮慌倹峡敢塊悦惜辛如擦硬賢脅緩慨閲籍審徐暫絞幻凝企該炎摂炊匠祉綱孤斤忌概宴潜粋昇施酵弧緊軌郭欧繕衰掌諮克雇愚既隔殴阻酔晶侍獄顧偶棋穫乙措遂焦慈恨娯遇棄岳卸粗穂衝軸紺悟刑騎掛穏礎随鐘疾魂孔契欺滑佳双髄冗湿墾巧啓犠肝架桑瀬嬢赦債甲掲菊冠華掃牲錠邪催坑携吉勘嫁励幽乏伏縛訂胆葬零誘妨覆伐締鍛遭霊憂房紛帆哲壇憎裂揚某墳伴斗稚促廉揺膨癖畔塗畜賊錬擁謀募藩凍窒怠炉抑墨慕蛮陶抽胎浪裸没簿卑痘鋳袋廊濫翻芳碑匿駐逮楼吏魔邦泌篤彫滞漏隆埋奉姫豚超滝湾了膜胞漂尿聴択猟又倣苗粘陳卓陵魅崩赴婆鎮託糧滅飽符排墜諾厘免縫封陪帝奪',
+  grade9: '詔殉儒栽肯薫擬且寡亜奨循囚斎侯茎糾缶稼尉彰庶臭索洪渓窮陥蚊逸償緒愁酢貢蛍拒患拐姻礁叙酬桟溝慶享堪懐韻浄升醜傘衡傑挟棺劾畝剰抄汁肢購嫌恭款涯浦壌肖充嗣拷献矯閑垣疫醸尚渋賜剛謙暁寛核謁津宵銃璽酷繭菌憾殻猿唇症叔漆昆顕琴還嚇凹娠祥淑遮懇懸謹艦括翁紳渉粛蛇唆弦襟頑喝虞診訟塾酌詐呉吟飢渇渦刃硝俊爵砕碁隅宜褐禍迅粧准珠宰江勲偽轄靴寮悠堀憤煩尼艇挑霜践甚倫猶奔丙頒妊泥眺藻遷帥累裕麻併妃忍迭釣妥薦睡塁融摩塀披寧徹懲堕繊枢戻庸磨幣扉把撤勅惰禅崇鈴窯抹弊罷覇悼朕駄漸据賄羅岬偏猫廃搭塚泰租杉枠酪銘遍賓培棟漬濯疎斉痢妄泡頻媒筒坪但塑逝履盲俸瓶賠謄呈棚壮誓柳耗褒扶伯騰廷痴荘析竜厄剖附舶洞邸逐捜拙硫愉紡譜漠督亭秩挿窃虜諭朴侮肌凸貞嫡曹仙涼癒僕沸鉢屯逓衷喪栓僚唯撲雰閥軟偵弔槽旋',
+  grade10: '羞拶傲拳僅鎌楷唄挨蹴斬駒鍵錦韓潰鬱曖憧恣頃舷惧玩諧怨宛拭摯痕股串伎崖艶嵐尻餌沙虎窟亀蓋旺畏芯叱挫錮詣毀骸臆萎腎嫉采勾憬畿柿俺椅須腫塞梗稽臼顎苛彙裾呪柵喉隙嗅葛牙咽凄袖刹乞桁巾釜瓦淫賂沃蜜璧箸貪爪戴遡醒弄拉冥蔑氾丼鶴誰曽脊籠辣麺哺汎那諦旦爽戚麓藍冶蜂斑謎溺綻痩煎脇璃弥貌眉鍋填緻踪羨慄闇頬膝匂妬酎捉腺侶喩睦肘虹賭貼遜詮瞭湧勃訃捻藤嘲汰箋瑠妖昧蔽罵瞳捗唾膳呂瘍枕餅剥頓椎堆狙',
+  grade11: '乃卜叉巳勺之也丑勿云仇尤巴什壬匁廿允帀疋弗禾叶匝乎凧弘戊汀仔只乍叩卯亘亙牟托伍此艮瓜亥凪弛辻而吃吊肋亦伊夙汐曳吋匡尖夷牝丞舛圭汝戎兇旭庄佃吞牡扮苅沌李酉辿庇宏杢辰杖芹杜伽杏吾坐妓冴兎呑芥宍灼芙吻汲劫牢灸伶玖芭邑杓甫禿孜亨呆佑迄宋迂吠孟枇其侠茅祁佼尭怯斧杷欣狛姑庖朋狗杵苒怜妾坦苓姐苧竺宕於咒陀或苑奄岨岱苔苫昌茄坤忽沓肱肴杭沫昂庚昏些函卦帖兔阿侃頁柏粂荊穿荏茸姶茜叛柁哉巷珊姪剃屍栂柘狐柊廼洲殆酋矧盃祢胡柚郁祇宥盈祐歪韭荆珂洛俠耶籾竿柑姦凾恰俣柾廻虻洩姥恢垢臥亮娃粁胤俄毘衿彦毗玲咳迦按砥凌桧狼耽套迺桓峨涛悌恕桐荻哩蚤隼浬栗栖啄窄朔涌紐釘莱狸柴挺晒晋砺凋峻紗莵砧疹豹脆狽唖屑秤栴笈娩倭圃翆倦倶匪挽訊桂珪矩盌捌畠莫桔俱倖晃粍涜浩莞峩皋砿秦哨閃紘峯烏琢紬啐婁惇偓雀捺蛋掻崕埴捷埜淳淋渚庵釧娼啞渕雫掩焔痔菖惟梯蛎萊凰寅逗舵梢壷祷淘捲梼桶牽椛粕惚彪梱訣兜釦袷萄袴菩掬梧絃烹萌萠逢埠皐菅彬砦笹梓笥畦捧笠悉袈猪這梶躯梁掠晦菱甜淀掴琉畢偲匙貰揃葡靭牌硲斐厨琵椙詑筏棲溌弼斌靱焚隈遥禄裡屡脹琳湛智筑葎註椀堵菟琶焰惣敦棉葢董喋湊葱巽悶椋稀瑛湘甥閏淵渠卿喬揖欽戟堰筈葵黍蛭疏惹斯雁蛛萱韮粥蛤鈎絢堺葺菰喰壺渥覗蛙粟犀凱寓竣腔喧萩硯蒙馳碍楢爺嵩楊碓傭猷蓉蒐椴愈塙馴楕嵯逼禽鉤摸幌鈷楠跨瑚稗楳煤塘蓑椿蒔獅碇禎鼎蒜畷鳩嵳楓蒲裟罫賎蒼搔靖嘩瑞葦溢鉦蛸溯蒋碗煉蓮鼠稜楯蛾溜舜蜎詫楚遁稔牒厩蔀嘘煽蔭榊碩厭鳳閤頚箆碧漉廐廏厰摺鳶瑳蔣膏翠塵蔚斡𨻶屢頗飴賑摑駁槙蔓裳嶋僑箔窪緋輔綴綜爾熔赫嘉樺榎槍魁綾漕綬蜘鉾竪潅聡蝋鞄暢腿嘗劃銚榛箕銑槌蔦漣肇廓蓬潑篇蝿漑噓劉蝱駕蕃蝦撹鞍幡慾㵎磐撫鴇鋒鴎慧毅緬蕪誼聨僻鋪麹槻嬉駈澗諌翫誹諒蕎廟鋲遼麪鴈魯噌樋噂噛蕉潴醇蕋蕊蝶箭樟撰糎廠賤撒撚鋤蝉樗撞蕨蝕鄭歎箪糊播廚蕩諏髭鴬鴦輯橢豎鴨樫鴛薙篦醍蹄穆穐錫諫窺舘鴫諜樽薮翰餐橘憐頸穎橡叡篭錐頴錘錆縞鞘噸醐儘諺醗錨彊樵謂黛鮎噺鮒薗蕗澱鋸燕繋駿嬰嶺薯擢輿霞燭鍔燐檜繍鮪鮭鍬醤曙甑糟篠螺聯鍾鍍竃鴻檎糠瞥徽濤鮫鞠藁膿磯癌瓢薩濠壕濡禦燦檀糞嬬趨橿簞鯉藪鵜鞭鵠謬檮叢襖嚢蟬蹟鎔儲擾鎧雛瀆嚙軀鎗鎚醬麿穣鹸簾簸瀕鯖曝蘇贋繫繡顚麴禱蠅蠏蘂醱瀞顛鵬騨鯛寵蘭蟹蟻瀦麒鯵櫛藷櫓禰轍簾鵡鏑礪馨耀蠣鐙鰐纂巌灌礦鰍轟蠟鰭竈鐸龝鶯鰯纏鑓韃灘驒鰻囊聾鱈纒饗讃轡鷗鰺鷲鱒鰹攪鷺鹼麟鱗鷹讚鸚',
+
+};
+
+/* ---------- アプリ内状態 ---------- */
+let pool = [];           // 現在の漢字プール（配列 of single-char）
+let results = [];        // 直近の生成結果
+let favorites = [];      // お気に入り（配列 of string）
+
+/* ---------- DOM ---------- */
+const nCountEl = document.getElementById('nCount');
+const presetSelect = document.getElementById('presetSelect');
+const gradeCheckboxes = Array.from(document.querySelectorAll('.grade'));
+const customArea = document.getElementById('customArea');
+const customInput = document.getElementById('customInput');
+const allowRepeatEl = document.getElementById('allowRepeat');
+const forceUniqueEl = document.getElementById('forceUnique');
+const useKanaEl = document.getElementById('useKana');
+const howManyEl = document.getElementById('howMany');
+const btnGenerate = document.getElementById('btnGenerate');
+const gallery = document.getElementById('gallery');
+const resultCount = document.getElementById('resultCount');
+const btnCopyAll = document.getElementById('btnCopyAll');
+const btnCSV = document.getElementById('btnCSV');
+const favListEl = document.getElementById('favList');
+const favCountEl = document.getElementById('favCount');
+const btnExportFav = document.getElementById('btnExportFav');
+const presetDetails = document.getElementById('presetDetails');
+const gradeSelectors = document.getElementById('gradeSelectors');
+
+/* ---------- ヘルパ関数 ---------- */
+function uniq(array){ return Array.from(new Set(array)); }
+function sample(arr){
+  if(!arr || arr.length===0) return null;
+  return arr[Math.floor(Math.random()*arr.length)];
+}
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+/* HTMLエスケープ（念のため） */
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* 漢字プールを構築する（現在の設定に従う） */
+function buildPool(){
+  const preset = presetSelect.value;
+  let chars = [];
+  if(preset === 'grade-sample'){
+    // 選択された学年の文字を集める
+    gradeCheckboxes.forEach(ch=>{
+      if(ch.checked){
+        const key = 'grade' + ch.value;
+        if(KANJI[key]) chars = chars.concat(KANJI[key].split(''));
+      }
+    });
+    if(chars.length===0){
+      // デフォルトで grade1 を入れる
+      chars = chars.concat(KANJI.grade1.split(''));
+    }
+  } else if(preset === 'jouyou-sample'){
+    chars = chars.concat(KANJI.grade1.split(''), KANJI.grade2.split(''), KANJI.grade3.split(''), KANJI.grade4.split(''), KANJI.grade5.split(''), KANJI.grade6.split(''), KANJI.grade7.split(''), KANJI.grade8.split(''), KANJI.grade9.split(''), KANJI.grade10.split(''));
+  } else if(preset === 'custom'){
+    const raw = customInput.value || '';
+    // normalize: remove spaces & newlines; keep unique characters
+    const normalized = raw.replace(/\s+/g,'');
+    if(normalized.length === 0){
+      // fallback to some default to avoid empty pool
+      chars = ['漢','字','試','験','天','地','人','心'];
+    } else {
+      chars = normalized.split('');
+    }
+  }
+
+  // optionally add kana if requested (from small sets)
+  if(useKanaEl.checked){
+    const hira = 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん';
+    const kata = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+    chars = chars.concat(hira.split(''), kata.split(''));
+  }
+
+  // convert to unique array and filter out whitespace
+  chars = chars.filter(c=>c.trim()!=='');
+  chars = uniq(chars);
+  pool = chars;
+  // If pool small, show note
+  if(pool.length === 0){
+    pool = ['漢','字','例'];
+  }
+  return pool;
+}
+
+/* 指定条件で 1 つの n 字文字列を生成 */
+function generateOne(n){
+  // build pool if empty
+  if(pool.length === 0) buildPool();
+  const allowRepeat = allowRepeatEl.checked;
+  const forceUnique = forceUniqueEl.checked;
+  const out = [];
+  // if forceUnique true and pool smaller than n, ignore or fallback
+  if(forceUnique && pool.length < n){
+    // fallback: allow repetition but attempt to use unique as much as possible
+    // we don't throw error to keep UX smooth
+  }
+
+  if(allowRepeat && !forceUnique){
+    for(let i=0;i<n;i++){
+      out.push(sample(pool));
+    }
+  } else {
+    // try to produce unique characters if possible
+    const shuffled = shuffle(pool);
+    for(let i=0;i<n;i++){
+      if(i < shuffled.length) out.push(shuffled[i]);
+      else {
+        // pool exhausted: reuse random
+        out.push(sample(pool));
+      }
+    }
+  }
+  return out.join('');
+}
+
+/* まとめて複数生成 */
+function generateMany(count, n){
+  results = [];
+  for(let i=0;i<count;i++){
+    results.push(generateOne(n));
+  }
+  return results;
+}
+
+/* ギャラリーに描画（アニメつき） */
+function renderGallery(list){
+  gallery.innerHTML = '';
+  resultCount.textContent = list.length;
+  list.forEach((s, idx) => {
+    const token = document.createElement('div');
+    token.className = 'token';
+    token.setAttribute('data-idx', idx);
+    token.innerHTML = `<span class="chars">${escapeHtml(s)}</span>`;
+    // click -> favorite
+    token.addEventListener('click', ()=>{
+      if(!favorites.includes(s)){
+        favorites.push(s);
+        renderFavorites();
+        // small anime
+        anime({
+          targets: token,
+          scale: [1,1.06,1],
+          duration: 420,
+          easing:'easeOutQuad'
+        });
+      }
+    });
+    gallery.appendChild(token);
+  });
+
+  // nice entrance animation using anime.js if available
+  if(window.anime){
+    anime({
+      targets: '.token',
+      translateY: [18,0],
+      opacity: [0,1],
+      delay: anime.stagger(40),
+      duration: 550,
+      easing: 'easeOutQuad'
+    });
+  }
+}
+
+/* favorites 描画 */
+function renderFavorites(){
+  favListEl.innerHTML = '';
+  favCountEl.textContent = String(favorites.length);
+  favorites.forEach((s,i)=>{
+    const el = document.createElement('div');
+    el.className = 'token';
+    el.style.background = 'linear-gradient(180deg,#fffef6,#f0fcff)';
+    el.innerHTML = `${escapeHtml(s)} <button data-i="${i}" style="margin-left:10px;border-radius:6px;padding:4px 6px;border:0;background:#e6f7fb;cursor:pointer">削除</button>`;
+    // remove handler
+    el.querySelector('button').addEventListener('click',(e)=>{
+      const idx = Number(e.currentTarget.dataset.i);
+      favorites.splice(idx,1);
+      renderFavorites();
+    });
+    favListEl.appendChild(el);
+  });
+}
+
+/* コピー: 生成一覧をテキストコピー */
+btnCopyAll.addEventListener('click', async ()=>{
+  if(results.length === 0){ alert('まず生成してください。'); return; }
+  try{
+    await navigator.clipboard.writeText(results.join('\n'));
+    alert('コピーしました 🎉');
+  }catch(e){
+    alert('コピーに失敗しました: ' + e);
+  }
+});
+
+/* CSV ダウンロード（生成結果） */
+btnCSV.addEventListener('click', ()=>{
+  if(results.length === 0){ alert('まず生成してください。'); return; }
+  const csv = 'id,phrase\n' + results.map((r,i)=>`${i+1},"${r}"`).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'nji_phrases.csv'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+/* エクスポート: お気に入り */
+btnExportFav.addEventListener('click', ()=>{
+  if(favorites.length === 0){ alert('お気に入りが空です。'); return; }
+  const csv = 'id,phrase\n' + favorites.map((r,i)=>`${i+1},"${r}"`).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'favorites.csv'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+/* クリアお気に入り */
+document.getElementById('btnClearFav').addEventListener('click', ()=>{
+  if(!confirm('お気に入りを本当にクリアしますか？')) return;
+  favorites = []; renderFavorites();
+});
+
+/* 生成ボタン */
+btnGenerate.addEventListener('click', ()=>{
+  try{
+    // build pool according to current settings
+    buildPool();
+    // ensure pool alignment: we keep inputs aligned in rows so it's visually tidy (UI-level)
+    const n = Math.max(1, Math.min(30, Number(nCountEl.value) || 1));
+    const count = Math.max(1, Math.min(500, Number(howManyEl.value) || 12));
+    const got = generateMany(count, n);
+    results = got;
+    renderGallery(got);
+    // set focus to gallery for keyboard users
+    gallery.focus();
+  }catch(e){
+    alert('生成エラー: ' + e);
+  }
+});
+
+/* プリセット選択で表示切替（学年チェック or カスタム入力） */
+presetSelect.addEventListener('change', ()=>{
+  const v = presetSelect.value;
+  if(v === 'custom'){
+    customArea.style.display = 'block';
+    gradeSelectors.style.display = 'none';
+    presetDetails.textContent = 'カスタム漢字を貼り付けてください。スペース・改行は無視されます。';
+  } else if(v === 'grade-sample'){
+    customArea.style.display = 'none';
+    gradeSelectors.style.display = 'block';
+    presetDetails.textContent = '学年別のサンプル漢字を使用します。公式完全版を使いたい場合はカスタムに貼ってください。';
+  } else {
+    customArea.style.display = 'none';
+    gradeSelectors.style.display = 'none';
+    presetDetails.textContent = '常用漢字（サンプル）を使用します。';
+  }
+});
+
+/* Enter キーで生成（入力回数を減らす） */
+[nCountEl, howManyEl, customInput].forEach(el=>{
+  el.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter' && (e.ctrlKey || e.metaKey || e.shiftKey) === false){
+      e.preventDefault();
+      btnGenerate.click();
+    }
+  });
+});
+
+/* 初期化 */
+(function init(){
+  // initial pool build
+  buildPool();
+  renderFavorites();
+})();
+</script>
+</body>
+</html>

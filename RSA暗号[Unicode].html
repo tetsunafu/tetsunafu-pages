@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>RSA暗号[Unicode]</title>
+<style>
+    body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+
+    textarea {
+        width: 70vw;
+        resize: none;
+        min-height: 10vw;
+        font-family: 'Courier New', Courier, monospace;
+    }
+    
+    button#btn01 {
+        border: 2px solid #4f4fff;
+        border-radius: 0;
+        background: #fff;
+        font-size: 1rem;
+        font-weight: 700;
+        line-height: 1.5;
+        position: relative;
+        display: inline-block;
+        padding: 0.7rem 2rem;
+        cursor: pointer;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        -webkit-transition: all 0.3s;
+        transition: all 0.3s;
+        text-align: center;
+        vertical-align: middle;
+        text-decoration: none;
+        letter-spacing: 0.1em;
+        color: #003467;
+        border-radius: 0.5rem;
+        margin-left: 3em;
+    }
+
+    button#btn01:hover {
+        color: #fff;
+        background: #5bbee4;
+    }
+    
+    button#copy_btn {
+        border: 2px solid #1bae2c;
+        border-radius: 0;
+        background: #fff;
+        font-size: 1rem;
+        font-weight: 700;
+        line-height: 1.5;
+        position: relative;
+        display: inline-block;
+        padding: 0.7rem 2rem;
+        cursor: pointer;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        -webkit-transition: all 0.3s;
+        transition: all 0.3s;
+        text-align: center;
+        vertical-align: middle;
+        text-decoration: none;
+        letter-spacing: 0.1em;
+        color: #00671b;
+        border-radius: 0.5rem;
+        margin-left: 3em;
+    }
+
+    button#copy_btn:hover {
+        color: #fff;
+        background: #10a526;
+    }
+
+    
+    #changed1, #changed2 {
+        background-color: #eeeeee;
+        border: double;
+        border-color: #78788d;
+        width: 70vw;
+        min-height: 5vw;
+        padding: 0.5em;
+        word-wrap: break-word;
+        font-family: 'Courier New', Courier, monospace;
+    }
+
+    #message1, #message2 {
+      opacity: 0;
+    
+      &.is-active {
+        opacity: 1;  
+      }
+    }
+</style>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=BIZ+UDGothic&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=BIZ+UDMincho&display=swap');
+
+    #dialog {
+        border-radius: 10px;
+        border: double 3px darkred;
+        padding: 20px;
+        width: 50vw;
+        height: fit-content;
+        color: black;
+    }
+    #dialog h2 {
+        font-size: larger;
+        font-family: "BIZ UDGothic", sans-serif;
+    }
+    #dialog div {
+        font-size: small;
+        font-family: "BIZ UDMincho", serif;
+    }
+    #dialog button {
+        font-family: sans-serif;
+        font-size: 15px;
+        border-radius: 20px;
+        padding: 5px;
+        border: solid 3px darkblue;
+        color: darkblue;
+        background-color: rgba(255, 250, 250, 0.9);
+    }
+    #dialog button:active {
+        background-color: rgba(225, 220, 220, 0.9);
+    }
+    #dialog li {
+        margin-bottom: 0.5em;
+        letter-spacing: 0.5px;
+        text-align: justify;
+        line-height: 1.2;
+        border: none;
+    }
+    #dialog ul {
+        padding-left: 10px;
+        list-style: square;
+    }
+
+    .info {
+        bottom: 5px;
+        position: fixed;
+        margin-left: 0;
+        width: fit-content;
+        right: 10px;
+    }
+    .info button {
+        font-family: monospace;
+        font-size: 20px;
+        border-radius: 50%;
+        padding: 5px;
+        border: solid 3px darkblue;
+        color: darkblue;
+        background-color: rgba(255, 250, 250, 0.9);
+        width: 40px;
+        height: 40px;
+        margin: 0;
+        box-shadow: 4px 2px 3px 0px #00000085;
+    }
+    .info:hover {
+        bottom: 3px;
+    }
+    .info button:active {
+        background-color: rgba(225, 220, 220, 0.9);
+    }
+</style>
+</head>
+<body>
+    <h1>RSA暗号をマスターしよう！Unicode ver.</h1>
+    <div style="margin-right: 50px;">
+        <ol>
+            <h2><li>公開鍵を入力</li></h2>
+            <div style="border: double; width: fit-content;padding: 0 1em;border-radius: 0.5em;background-color: rgb(208, 255, 255);">
+                <p><label>素数１：<input type="number" min="2" step="1" id="pri1"></label></p>
+                <p><label>素数２：<input type="number" min="2" step="1" id="pri2"></label></p>
+                <p><label>自然数：<input type="number" min="1" step="1" id="natu"></label></p>
+                <p style="padding: 0.5em;border: solid 1px darkred;">注意 : 上の2素数の積は十分大きい数にする必要があります．<br>例えば，基本多言語面の全ての文字をカバーするには積を65535以上にします．<br>第三漢字面までカバーする場合は205743以上になるように2素数を入力します．</p>
+            </div>
+            <h2><li>任意の文章を入力</li></h2>
+            <div>
+                <textarea spellcheck="false" placeholder="Unicode文字セットにある文字で記述" id="text"></textarea>
+            </div>
+            <h2><li>変換する</li></h2>
+            <button id="btn01" onclick="transition()">決定</button>
+            <h2><li>結果</li></h2>
+            <button id="copy_btn" onclick="CopyText1()">コピー</button>
+            <p id="message1">クリップボードにコピーしました！</p>
+            <div id="changed1"></div>
+        </ol>
+        <ol>
+            <h2><li>公開鍵を入力</li></h2>
+            <div style="border: double; width: fit-content;padding: 0 1em;border-radius: 0.5em;background-color: rgb(208, 255, 255);">
+                <p><label>素数積：<input type="number" min="4" step="1" id="pri_pri"></label></p>
+                <p><label>自然数：<input type="number" min="1" step="1" id="key_n"></label></p>
+            </div>
+            <h2><li>暗号文を入力</li></h2>
+            <div>
+                <textarea spellcheck="false" placeholder="数字の列を入力" id="angou"></textarea>
+            </div>
+            <h2><li>変換する</li></h2>
+            <button id="btn01" onclick="hukugou()">決定</button>
+            <h2><li>結果</li></h2>
+            <button id="copy_btn" onclick="CopyText2()">コピー</button>
+            <p id="message2">クリップボードにコピーしました！</p>
+            <div id="changed2"></div>
+        </ol>
+    </div>
+    <div class="info"><button id="info_opn">?</button></div>
+    <dialog id="dialog">
+        <header style="text-align: center;border-bottom: solid 1px khaki;"><h2>使い方</h2></header>
+        <div style="overflow-y: scroll;max-height: 60vh;padding: 5px;">
+            <ul>
+                <li>Unicodeを基にして文字列を数字の列に変換し，逆も可能です．</li>
+                <li>入力した各文字をUnicodePointに変換することで文字と数字を対応付けています．</li>
+                <li>扱える数の上限は 10^16 までです．</li>
+                <li>大きな数を扱うには時間がかかる場合があります．</li>
+                <li>コピーをクリックするとクリップボードにコピーすることができます．</li>
+                <li>デバイスによっては，クリップボードにコピーされない場合がございます．</li>
+            </ul>
+        </div>
+        <footer style="text-align: center;border-top: solid 1px khaki;"><p><button id="info_cls" autofocus>閉じる</button></p></footer>
+    </dialog>
+    <footer style="height: 40px;"></footer>
+</body>
+<script>
+    const dialog = document.getElementById("dialog");
+    const showButton = document.getElementById("info_opn");
+    const closeButton = document.getElementById("info_cls");
+
+    // ［ダイアログを表示］ボタンでダイアログがモーダルに開く
+    showButton.addEventListener("click", () => {
+    dialog.showModal();
+    });
+
+    // ［閉じる］ボタンでダイアログを閉じる
+    closeButton.addEventListener("click", () => {
+    dialog.close();
+    });
+
+
+    let p = 2,
+        q = 2,
+        e = 1,
+        N = 4,
+        phi_N = 1,
+        d = 1,
+        m = 11,
+        c = '',
+        sentence = [];
+
+    const Text_Element = document.getElementById('text'),
+        AftCha = document.getElementById('changed1'),
+        pri1 = document.getElementById('pri1'),
+        pri2 = document.getElementById('pri2'),
+        natu = document.getElementById('natu'),
+        Angou_Element = document.getElementById('angou'),
+        AftCha_sec = document.getElementById('changed2'),
+        pri_pri = document.getElementById('pri_pri'),
+        key_n = document.getElementById('key_n');
+        
+    function gcd (x, y){
+        if(x % y){
+            return gcd(y, x % y)
+        }else{
+            return y
+        }
+    }
+
+    function convertCodePoints(str) {
+        return Array.from(str).map(char => {
+            return char.codePointAt(0);
+        });
+    }
+
+    function transition() {
+        p = Number(pri1.value)
+        q = Number(pri2.value)
+        e = Number(natu.value)
+        N = p*q
+        phi_N = (p-1)*(q-1)
+
+        if (N < 65535) {
+            let asked = confirm('選んだ2素数が小さい可能性があります\n続行しますか?');
+            if (asked) {
+                if (gcd(phi_N,e) != 1) {
+                    alert('“自然数”を違う自然数に変えてください')
+                }else{
+                    c = ''
+                    sentence = convertCodePoints(Text_Element.value)
+                    for (let j = 0; j < sentence.length; j++) {
+                        m = sentence[j]
+
+                        let l = m
+                        for (let k = 1; k < e; k++) {
+                            l = (l*m)%N
+                        }
+                        c += String(l).padStart(6,'0')
+                    }
+                    AftCha.textContent = c
+                }
+            }
+        }else{
+            if (gcd(phi_N,e) != 1) {
+                alert('“自然数”を違う自然数に変えてください')
+            }else{
+                c = ''
+                sentence = convertCodePoints(Text_Element.value)
+                for (let j = 0; j < sentence.length; j++) {
+                    m = sentence[j]
+
+                    let l = m
+                    for (let k = 1; k < e; k++) {
+                        l = (l*m)%N
+                    }
+                    c += String(l).padStart(6,'0')
+                }
+                AftCha.textContent = c
+            }
+        }
+    }
+
+    function hukugou() {
+        N = Number(pri_pri.value)
+        if (N%2 == 0) {
+            p = 2
+            q = N/p
+        }else{
+            p = 3
+            while (N%p != 0) {
+                p += 2
+            }
+            q = N/p
+        }
+
+        phi_N = (p-1)*(q-1)
+        e = Number(key_n.value)
+        let i = 1
+        while ((i*e)%phi_N != 1) {
+            i++
+        }
+        d = i
+
+        c = String(Angou_Element.value)
+        sentence = ''
+        for (let j = 0; j < c.length/6; j++) {
+            let l = Number(c.substr(j*6,6))
+                m = l
+            for (let k = 1; k < d; k++) {
+                m = (l*m)%N
+            }
+            sentence += String.fromCodePoint(m)
+        }
+        AftCha_sec.textContent = sentence
+    }
+    
+    function CopyText1() {
+        const tagValue = AftCha.innerHTML // inputタグのvalue値を変数へ挿入する
+        copyToClipboard(tagValue) // 関数copyToClipboardを実行する
+        // クリップボードへコピー（コピーの処理）
+        function copyToClipboard (tagValue) {
+            if (navigator.clipboard) { // navigator.clipboardが使えるか判定する
+                return navigator.clipboard.writeText(tagValue).then(function () { // クリップボードへ書きむ
+                messageActive() //メッセージを表示する
+                })
+            } else {
+                AftCha.innerHTML.select() // inputタグを選択する
+                document.execCommand('copy') // クリップボードにコピーする
+                messageActive() //メッセージを表示する
+            }
+        }
+        // メッセージを表示
+        function messageActive () {
+            message1.classList.add('is-active') // メッセージを表示する
+            setTimeout(() => { // メッセージを非表示にする
+                message1.classList.remove('is-active')
+            }, 1600)
+        }
+    }
+    function CopyText2() {
+        const tagValue = AftCha_sec.innerHTML // inputタグのvalue値を変数へ挿入する
+        copyToClipboard(tagValue) // 関数copyToClipboardを実行する
+        // クリップボードへコピー（コピーの処理）
+        function copyToClipboard (tagValue) {
+            if (navigator.clipboard) { // navigator.clipboardが使えるか判定する
+                return navigator.clipboard.writeText(tagValue).then(function () { // クリップボードへ書きむ
+                messageActive() //メッセージを表示する
+                })
+            } else {
+                AftCha.innerHTML.select() // inputタグを選択する
+                document.execCommand('copy') // クリップボードにコピーする
+                messageActive() //メッセージを表示する
+            }
+        }
+        // メッセージを表示
+        function messageActive () {
+            message2.classList.add('is-active') // メッセージを表示する
+            setTimeout(() => { // メッセージを非表示にする
+                message2.classList.remove('is-active')
+            }, 1600)
+        }
+    }
+</script>
+</html>

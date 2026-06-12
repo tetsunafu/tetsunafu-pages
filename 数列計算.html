@@ -1,0 +1,804 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Sequence Studio — 漸化式階数指定対応版</title>
+
+<!-- ライブラリ（明示バージョン） -->
+<script src="https://cdn.jsdelivr.net/npm/mathjs@12.2.1/lib/browser/math.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist@2.24.1/plotly.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+
+<!-- MathJax v3（積極的に LaTeX 表示に使う） -->
+<script id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#f3fbff; --card:#ffffff; --muted:#49656f;
+  --primary:#7dd3fc; --primary-deep:#06b6d4; --glass: rgba(255,255,255,0.95);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto;background:linear-gradient(180deg,var(--bg),#f7fdff);color:#022834}
+.container{max-width:1200px;margin:28px auto;padding:18px}
+.header{display:flex;gap:12px;align-items:center}
+.logo{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--primary-deep));display:flex;align-items:center;justify-content:center;color:#01303b;font-weight:800;font-size:30px}
+.title{line-height:1}
+.h1{margin:0;font-size:1.4rem}
+.lead{margin:6px 0 0;color:var(--muted);font-size:0.95rem}
+
+/* card */
+.card{background:var(--card);border-radius:14px;padding:16px;margin-top:14px;box-shadow:0 16px 40px rgba(2,40,52,0.06)}
+.grid{display:grid;grid-template-columns:420px 1fr;gap:18px}
+@media(max-width:1000px){ .grid{grid-template-columns:1fr} }
+
+/* numbered rows form layout */
+.row-input{display:grid;grid-template-columns:36px 1fr;gap:10px;padding:10px;border-radius:10px;border:1px solid rgba(3,105,161,0.06);align-items:center;background:linear-gradient(180deg,#fbfeff,#f7feff);margin-bottom:10px}
+.row-num{width:36px;height:36px;border-radius:8px;background:linear-gradient(180deg,var(--primary),var(--primary-deep));display:flex;align-items:center;justify-content:center;color:snow;font-weight:800;font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;}
+.row-body{display:grid;grid-template-columns:1fr;gap:8px}
+
+/* aligned input grid inside row-body */
+.form-grid{display:grid;grid-template-columns:160px 1fr;gap:8px;align-items:center}
+.form-grid label{color:var(--muted);font-size:0.9rem}
+.form-grid input[type=text], .form-grid input[type=number], .form-grid select, textarea{
+  width:100%;padding:8px;border-radius:8px;border:1px solid #e6f3fb;background:var(--glass);
+  font-family:Inter, 'JetBrains Mono', monospace;
+}
+
+/* small */
+.hint{font-size:0.86rem;color:var(--muted)}
+.btn{padding:10px 14px;border-radius:10px;border:0;font-weight:700;cursor:pointer;transition:transform .12s}
+.btn-primary{background:linear-gradient(90deg,var(--primary),#60a5fa);color:snow;box-shadow:0 8px 20px rgba(56,189,248,0.12)}
+.btn-ghost{background:transparent;border:1px solid #e6f3fb;border-radius:10px;padding:8px 12px}
+
+/* preview & output */
+.preview{padding:10px;border-radius:8px;background:#fff;border:1px solid rgba(0,0,0,0.04);min-height:44px}
+.table-wrap{overflow:auto;border-radius:8px;border:1px solid rgba(0,0,0,0.04);background:linear-gradient(180deg,#fff,#fbfdff);padding:8px;margin-top:8px}
+#seqTable{font-family:'JetBrains Mono',monospace;border-collapse:collapse;width:100%}
+#seqTable td{padding:6px 8px;border-bottom:1px dashed rgba(0,0,0,0.03);text-align:right}
+#seqTable .val{font-family:'JetBrains Mono',monospace;color:#0b2b34}
+.graph-wrap{grid-column:1 / -1;margin-top:14px;border-radius:10px;padding:10px;background:#fff;border:1px solid rgba(0,0,0,0.04)}
+#plot{width:100%;height:520px}
+
+/* utilities */
+.controls-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.small-mono{font-family:'JetBrains Mono',monospace}
+.bad{color:#ef4444}
+.good{color:#16a34a}
+
+/* highlight style */
+.row-highlight{background:linear-gradient(90deg, rgba(34,211,238,0.12), transparent);}
+
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="logo">\(\sum\)</div>
+    <div class="title">
+      <div class="h1">Sequence Studio</div>
+      <div class="lead">数列を一般項と漸化式から計算する。表とグラフで出力。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="grid">
+      <!-- left: inputs (numbered rows) -->
+      <div>
+        <!-- Row 1: モード選択 -->
+        <div class="row-input">
+          <div class="row-num">①</div>
+          <div class="row-body">
+            <div style="font-weight:700">入力モード</div>
+            <div class="form-grid">
+              <label>モード</label>
+              <div style="display:flex;gap:8px">
+                <button id="mode-explicit" class="btn btn-primary" aria-pressed="true">一般項</button>
+                <button id="mode-recur" class="btn btn-ghost">漸化式</button>
+              </div>
+            </div>
+            <div class="hint">一般項モード: \(a_n = f(n)\)<br>漸化式モード: \(a_n = F(a_{n-1}, a_{n-2}, \dots)\)（階数は自動検出 or 手動指定）。</div>
+          </div>
+        </div>
+
+        <!-- Row 2: 数式入力 -->
+        <div class="row-input">
+          <div class="row-num">②</div>
+          <div class="row-body">
+            <div style="font-weight:700">数式入力</div>
+            <div class="form-grid">
+              <label id="labelExpr">一般項（\(n\) を変数）</label>
+              <input id="exprExplicit" type="text" placeholder="例: 2*n+1" value="2*n+1"/>
+            </div>
+            <div class="form-grid" id="recurGrid" style="display:none">
+              <label>漸化式（入力: \(a_{n-1}\mapsto{}\)<code>prev1</code>, \(a_{n-2}\mapsto{}\)<code>prev2</code>, ...）</label>
+              <input id="exprRecur" type="text" placeholder="例: prev1 + prev2" value="prev1 + prev2"/>
+            </div>
+            <div class="preview" id="latexPreviewRow">— 式のプレビュー（MathJax） —</div>
+            <div class="hint">入力は Math.js 構文。表示は MathJax による LaTeX 風プレビュー。</div>
+          </div>
+        </div>
+
+        <!-- Row 3: 階数指定（漸化式） -->
+        <div class="row-input" id="row-order" style="display:none">
+          <div class="row-num">③</div>
+          <div class="row-body">
+            <div style="font-weight:700">漸化式の階数（order）</div>
+            <div class="form-grid">
+              <label>自動検出</label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input id="orderAuto" type="checkbox" checked /> <span class="hint" style="margin-left:6px">ON: 式から階数を自動検出（推奨）</span>
+              </div>
+              <label>手動指定（階数）</label>
+              <input id="recurrenceOrder" type="number" min="1" value="2" />
+            </div>
+            <div class="hint">「自動検出」を OFF にすると手動階数が使用されます。手動指定時は必ず一致する初期値欄が生成されます。</div>
+          </div>
+        </div>
+
+        <!-- Row 4: 初期値（漸化式時） -->
+        <div class="row-input" id="row-initials" style="display:none">
+          <div class="row-num">④</div>
+          <div class="row-body">
+            <div style="font-weight:700">初期値（漸化式用）</div>
+            <div id="initialsArea" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+            <div class="hint">例: 分数は "3/2" と入力。</div>
+          </div>
+        </div>
+
+        <!-- Row 5: 範囲・出力数 -->
+        <div class="row-input">
+          <div class="row-num">⑤</div>
+          <div class="row-body">
+            <div style="font-weight:700">出力範囲</div>
+            <div class="form-grid">
+              <label>開始インデックス \(n_0\)</label>
+              <input id="nStart" type="number" value="1" class="small-mono"/>
+              <label>出力 個数</label>
+              <input id="count" type="number" value="20" min="1" class="small-mono"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 6: 表示設定 -->
+        <div class="row-input">
+          <div class="row-num">⑥</div>
+          <div class="row-body">
+            <div style="font-weight:700">表示／丸め／精度</div>
+            <div class="form-grid">
+              <label>厳密表示モード</label>
+              <select id="exactMode">
+                <option value="auto">自動: 有理式なら厳密表示</option>
+                <option value="force">強制: 厳密できなければエラー</option>
+                <option value="off">無効: 常に数値</option>
+              </select>
+              <label>BigNumber（多倍長）</label>
+              <select id="precisionMode">
+                <option value="auto">自動（通常）</option>
+                <option value="bignumber">BigNumber（64精度）</option>
+              </select>
+            </div>
+            <div class="form-grid">
+              <label>丸め（小数桁数、空欄で丸めなし）</label>
+              <input id="precision" type="number" min="0" placeholder="例: 6" class="small-mono"/>
+              <label>表示モード</label>
+              <select id="displayMode">
+                <option value="fraction_first">分数優先（分数（小数））</option>
+                <option value="decimal_first">小数優先（小数（分数））</option>
+                <option value="only_fraction">分数のみ</option>
+                <option value="only_decimal" selected>小数のみ</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 7: 強調・サンプル・操作 -->
+        <div class="row-input">
+          <div class="row-num">⑦</div>
+          <div class="row-body">
+            <div style="font-weight:700">強調条件・サンプル・操作</div>
+            <div class="form-grid">
+              <label>強調条件（例: a>10, n%2==0）</label>
+              <input id="highlight" type="text" placeholder="例: a>10, n%2==0"/>
+              <label>サンプル読み込み</label>
+              <select id="examples">
+                <option value="">— サンプル —</option>
+                <optgroup label="一般項">
+                  <option value="explicit:2*n+1">等差列 a_n = 2n+1</option>
+                  <option value="explicit:n^2">二乗列 a_n = n^2</option>
+                  <option value="explicit:1/(n+1)">分数列 a_n = 1/(n+1)</option>
+                </optgroup>
+                <optgroup label="漸化式">
+                  <option value="recur:a_{n-1}+a_{n-2}:1,1">フィボナッチ（1,1）</option>
+                  <option value="recur:2*prev1:1">等比漸化 a_n = 2 a_{n-1}</option>
+                  <option value="recur:(prev1+prev2)/2:1,3">平均で収束（1,3）</option>
+                </optgroup>
+              </select>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-top:6px">
+              <button id="btnLoad" class="btn btn-ghost">読み込む</button>
+              <button id="btnCalc" class="btn btn-primary">計算して表示</button>
+              <button id="btnCSV" class="btn btn-ghost">CSV 出力</button>
+              <button id="btnCopy" class="btn btn-ghost">コピー</button>
+              <button id="btnReset" class="btn btn-ghost">リセット</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 8: プレビュー・メッセージ -->
+        <div class="row-input">
+          <div class="row-num">⑧</div>
+          <div class="row-body">
+            <div style="font-weight:700">MathJax プレビュー・メッセージ</div>
+            <div class="preview" id="latexPreviewRow">— 式のプレビュー（MathJax） —</div>
+            <div id="message" class="hint">手順: ①モード → ②式入力 → ③（漸化式なら階数）→ ④初期値 → ⑤範囲・設定 → ⑥計算</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- right: result -->
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-weight:700">結果［表］</div>
+          <div class="hint">計算結果が表とグラフで表示されます。</div>
+        </div>
+
+        <div class="table-wrap" id="tableArea" style="min-height:320px">
+          <div style="color:var(--muted)">ここに計算結果の表が表示されます。</div>
+        </div>
+
+        <div class="graph-wrap" aria-live="polite">
+          <div style="font-weight:700;margin-bottom:8px">結果［グラフ］</div>
+          <div id="plot"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* -------------------- 初期設定と UI 参照 -------------------- */
+const math = window.math;
+
+const modeExplicitBtn = document.getElementById('mode-explicit');
+const modeRecurBtn = document.getElementById('mode-recur');
+const exprExplicit = document.getElementById('exprExplicit');
+const exprRecur = document.getElementById('exprRecur');
+const rowInitials = document.getElementById('row-initials');
+const initialsArea = document.getElementById('initialsArea');
+const nStart = document.getElementById('nStart');
+const countEl = document.getElementById('count');
+const precisionEl = document.getElementById('precision');
+const precisionMode = document.getElementById('precisionMode');
+const exactMode = document.getElementById('exactMode');
+const displayMode = document.getElementById('displayMode');
+const btnCalc = document.getElementById('btnCalc');
+const tableArea = document.getElementById('tableArea');
+const plotDiv = document.getElementById('plot');
+const latexPreview = document.getElementById('latexPreviewRow');
+const message = document.getElementById('message');
+const examples = document.getElementById('examples');
+const btnLoad = document.getElementById('btnLoad');
+const btnCSV = document.getElementById('btnCSV');
+const btnCopy = document.getElementById('btnCopy');
+const btnReset = document.getElementById('btnReset');
+const highlight = document.getElementById('highlight');
+const recurGrid = document.getElementById('recurGrid');
+const labelExpr = document.getElementById('labelExpr');
+
+const orderAuto = document.getElementById('orderAuto');
+const recurrenceOrder = document.getElementById('recurrenceOrder');
+const rowOrder = document.getElementById('row-order');
+
+let mode = 'explicit';
+let detectedOrder = 2;
+
+/* 保存配列（raw と display の分離） */
+let lastSequenceRaw = [];
+let lastSequenceDisplay = [];
+
+/* -------------------- モード切替 -------------------- */
+function setMode(m){
+  mode = m;
+  if(m === 'explicit'){
+    modeExplicitBtn.classList.add('btn-primary'); modeExplicitBtn.classList.remove('btn-ghost');
+    modeRecurBtn.classList.add('btn-ghost'); modeRecurBtn.classList.remove('btn-primary');
+    exprExplicit.style.display='block'; recurGrid.style.display='none';
+    rowOrder.style.display='none'; rowInitials.style.display='none';
+    labelExpr.textContent = '一般項（n を変数）';
+    renderPreviewTex(exprExplicit.value || '', 'explicit');
+  } else {
+    modeExplicitBtn.classList.add('btn-ghost'); modeExplicitBtn.classList.remove('btn-primary');
+    modeRecurBtn.classList.add('btn-primary'); modeRecurBtn.classList.remove('btn-ghost');
+    exprExplicit.style.display='none'; recurGrid.style.display='block';
+    rowOrder.style.display=''; rowInitials.style.display='';
+    labelExpr.textContent = '（漸化式モード）';
+    renderPreviewTex(exprRecur.value || '', 'recur');
+    detectOrderFromStrAndMakeInputs();
+  }
+  anime({targets:'.card',translateY:[6,0],opacity:[0.96,1],duration:260,easing:'easeOutQuad'});
+}
+modeExplicitBtn.addEventListener('click', ()=> setMode('explicit'));
+modeRecurBtn.addEventListener('click', ()=> setMode('recur'));
+
+/* -------------------- MathJax プレビュー（式→TeX 変換して MathJax で描画） -------------------- */
+function exprToTeX(expr, modeType){
+  if(!expr) return '';
+  // 基本的な変換（Math.js 風入力を見やすい TeX にする）
+  let s = String(expr);
+  // replace prevk -> a_{n-k}
+  s = s.replace(/prev(\d+)/g, (m,g1)=> `a_{n-${g1}}`);
+  // replace a_{n-1} etc remain as is
+  // ^n -> ^{n}
+  s = s.replace(/\^([A-Za-z0-9\{\(]+)/g, (m,g1)=> `^{${g1}}`);
+  // * -> \cdot (but hide * for multiplication by number: "2*n" -> "2n")
+  s = s.replace(/(\d)\s*\*\s*n/g,'$1n'); // 2*n -> 2n
+  s = s.replace(/\*\s*/g,'\\cdot ');
+  // fractions like 3/2 keep slash, MathJax will render it if wrapped with \frac when appropriate:
+  s = s.replace(/(\d+)\/(\d+)/g,'\\frac{$1}{$2}');
+  // nicer spacing for + - / etc
+  return s;
+}
+
+async function renderPreviewTex(expr, modeType='explicit'){
+  try{
+    const tex = exprToTeX(expr, modeType);
+    if(!tex || tex.trim()===''){ latexPreview.innerHTML = '— 式のプレビュー（MathJax） —'; return; }
+    latexPreview.innerHTML = `\\( ${tex} \\)`;
+    if(window.MathJax && MathJax.typesetPromise){
+      await MathJax.typesetPromise([latexPreview]);
+    }
+  }catch(e){
+    latexPreview.textContent = 'プレビューエラー';
+  }
+}
+exprExplicit.addEventListener('input', ()=> renderPreviewTex(exprExplicit.value, 'explicit'));
+exprRecur.addEventListener('input', ()=> { renderPreviewTex(exprRecur.value,'recur'); if(orderAuto.checked) detectOrderFromStrAndMakeInputs(); });
+
+/* -------------------- 階数検出と初期値フィールド（自動/手動） -------------------- */
+function detectOrderFromStr(s){
+  const regex1 = /a\s*[_\[]?\s*\(?\s*n\s*-\s*(\d+)\s*\)?/ig;
+  const regex2 = /prev\s*(\d+)/ig;
+  let m; let max = 0;
+  while((m = regex1.exec(s)) !== null) max = Math.max(max, Number(m[1]||0));
+  while((m = regex2.exec(s)) !== null) max = Math.max(max, Number(m[1]||0));
+  return Math.max(1, max);
+}
+function createInitialInputs(k){
+  initialsArea.innerHTML = '';
+  initialsArea.style.alignItems = 'center';
+  for(let i=0;i<k;i++){
+    const wrap = document.createElement('div'); wrap.style.display='flex'; wrap.style.gap='6px'; wrap.style.alignItems='center';
+    const lab = document.createElement('label'); lab.innerHTML = `<math><mrow><msub><mi>a</mi><mn>${i}</mn></msub><mo>=</mo></mrow></math>`; lab.style.fontSize='0.9rem'; lab.style.color='var(--muted)';
+    const inp = document.createElement('input'); inp.type='text'; inp.value = (i<2? '1' : '0'); inp.className='small-mono';
+    inp.style.width='120px';
+    wrap.appendChild(lab); wrap.appendChild(inp); initialsArea.appendChild(wrap);
+  }
+}
+function populateInitialsFromCSV(csv){
+  const arr = csv.split(',').map(s=>s.trim()).filter(s=>s!=='');
+  const k = Math.max(1, arr.length || detectOrderFromStr(exprRecur.value));
+  createInitialInputs(k);
+  if(arr.length){
+    for(let i=0;i<Math.min(arr.length,k);i++){
+      initialsArea.children[i].querySelector('input').value = arr[i];
+    }
+  }
+}
+function detectOrderFromStrAndMakeInputs(){
+  if(!orderAuto.checked){
+    // manual; set recurrenceOrder to current manual value and regen
+    const manual = Math.max(1, Number(recurrenceOrder.value) || 1);
+    createInitialInputs(manual);
+    detectedOrder = manual;
+    return;
+  }
+  const k = detectOrderFromStr(exprRecur.value || '');
+  detectedOrder = k;
+  recurrenceOrder.value = k;
+  createInitialInputs(k);
+  showMessage(`自動検出された階数 = ${k}`, 'ok');
+}
+
+/* when user toggles orderAuto or changes recurrenceOrder */
+orderAuto.addEventListener('change', ()=> detectOrderFromStrAndMakeInputs());
+recurrenceOrder.addEventListener('input', ()=> { if(!orderAuto.checked){ detectOrderFromStrAndMakeInputs(); } });
+
+/* 初期化時 */
+populateInitialsFromCSV('1,1');
+
+/* -------------------- 厳密評価ユーティリティ（前回コードと互換） -------------------- */
+/* ...（以前の厳密評価ユーティリティをそのまま使用） */
+function expressionIsExactCapable(exprStr){
+  try{
+    const node = math.parse(exprStr);
+    let ok = true;
+    node.traverse(n=>{
+      const t = n.type;
+      if(t === 'FunctionNode' || t==='AssignmentNode' || t==='AccessorNode' || t==='BlockNode' || t==='IndexNode'){
+        ok = false;
+      }
+      if(t === 'OperatorNode'){
+        const op = n.op;
+        if(!['+','-','*','/','^'].includes(op)) ok = false;
+      }
+      if(t === 'SymbolNode'){
+        if(!/^n$/.test(n.name) && !/^prev\d+$/.test(n.name)){
+          ok = false;
+        }
+      }
+    });
+    return ok;
+  }catch(e){
+    return false;
+  }
+}
+
+function evalNodeExact(node, scope){
+  switch(node.type){
+    case 'ConstantNode': {
+      const raw = node.value;
+      try{ return math.fraction(String(raw)); } catch(e){ throw new Error('定数を分数に変換できません: ' + raw); }
+    }
+    case 'SymbolNode': {
+      const name = node.name;
+      if(Object.prototype.hasOwnProperty.call(scope,name)){
+        const v = scope[name];
+        if(math.typeOf(v) === 'Fraction') return v;
+        try{ return math.fraction(String(v)); } catch(e){ throw new Error('シンボルを分数化できません: ' + name); }
+      } else {
+        throw new Error('不明なシンボル: ' + name);
+      }
+    }
+    case 'ParenthesisNode':
+      return evalNodeExact(node.content, scope);
+    case 'UnaryNode': {
+      const val = evalNodeExact(node.value, scope);
+      if(node.op === '+') return val;
+      if(node.op === '-') return math.unaryMinus(val);
+      throw new Error('未対応の単項演算子: ' + node.op);
+    }
+    case 'OperatorNode': {
+      const op = node.op;
+      if(node.args.length === 1){
+        const a = evalNodeExact(node.args[0], scope);
+        if(op === '+') return a;
+        if(op === '-') return math.unaryMinus(a);
+        throw new Error('未対応の単項演算子: ' + op);
+      } else if(node.args.length === 2){
+        const A = evalNodeExact(node.args[0], scope);
+        if(op === '^'){
+          const bNode = node.args[1];
+          if(bNode.type === 'ConstantNode'){
+            const bVal = Number(bNode.value);
+            if(!Number.isInteger(bVal)) throw new Error('冪の指数は整数でなければなりません');
+            return math.pow(A, bVal);
+          } else {
+            const B = evalNodeExact(bNode, scope);
+            if(math.typeOf(B) === 'Fraction' && B.d === 1){
+              return math.pow(A, B.n);
+            }
+            throw new Error('冪の指数は定数整数である必要があります');
+          }
+        }
+        const B = evalNodeExact(node.args[1], scope);
+        if(op === '+') return math.add(A,B);
+        if(op === '-') return math.subtract(A,B);
+        if(op === '*') return math.multiply(A,B);
+        if(op === '/') return math.divide(A,B);
+        throw new Error('未対応の演算子（厳密経路非対応）: ' + op);
+      }
+      throw new Error('演算子の引数数が不正です');
+    }
+    default:
+      throw new Error('このノード型は厳密経路に対応していません: ' + node.type);
+  }
+}
+
+function formatFractionOrDecimal(fracObj, precision, displayModeVal){
+  if(math.typeOf(fracObj) !== 'Fraction'){
+    try{ fracObj = math.fraction(fracObj); } catch(e){ return String(fracObj); }
+  }
+  const fracStr = fracObj.toString();
+  const dec = Number(fracObj.valueOf());
+  const decStr = (precision !== null && precision !== '') ? (Math.round(dec * Math.pow(10, Number(precision))) / Math.pow(10, Number(precision))).toFixed(Number(precision)).replace(/\.?0+$/,'') : String(dec);
+  if(displayModeVal === 'only_fraction') return fracStr;
+  if(displayModeVal === 'only_decimal') return decStr;
+  if(displayModeVal === 'fraction_first') return `${fracStr}  (${decStr})`;
+  if(displayModeVal === 'decimal_first') return `${decStr}  (${fracStr})`;
+  return fracStr;
+}
+
+function formatNumberGeneric(v, precision, displayModeVal){
+  if(typeof v === 'object' && v && v.isComplex){
+    const re = (precision!==null && precision!=='') ? Number(Number(v.re).toFixed(Number(precision))) : Number(v.re);
+    const im = (precision!==null && precision!=='') ? Number(Number(v.im).toFixed(Number(precision))) : Number(v.im);
+    return `${re} + ${im}i`;
+  }
+  let num = Number(v);
+  if(!isFinite(num)) return String(v);
+  if(precision !== null && precision !== '') return roundTo(num, Number(precision));
+  const abs = Math.abs(num);
+  if((abs !== 0 && (abs < 1e-6 || abs >= 1e7))){
+    const exp = Math.floor(Math.log10(abs));
+    const mant = num / Math.pow(10, exp);
+    const mantS = roundTo(mant, 6);
+    return `${mantS}×10^${exp}`;
+  }
+  return String(roundTo(num, 12));
+}
+function roundTo(x,p){
+  const f = Math.pow(10,p);
+  return (Math.round(x*f)/f).toFixed(p).replace(/\.?0+$/,'');
+}
+
+function parseNumberForMathFromRaw(raw){
+  if(raw === null || raw === undefined) return NaN;
+  if(math.typeOf(raw) === 'Fraction') return Number(raw.valueOf());
+  if(math.typeOf(raw) === 'BigNumber') return Number(raw.toNumber());
+  if(typeof raw === 'number') return raw;
+  if(typeof raw === 'string') {
+    const m = raw.match(/^([\-0-9]+\/[0-9]+)|^([\-0-9]+(\.[0-9]*)?(?:e[-+]?\d+)?)/i);
+    if(m){
+      try{
+        if(m[1]) return Number(math.fraction(m[1]).valueOf());
+        return Number(m[2]);
+      }catch(e){}
+    }
+  }
+  return NaN;
+}
+
+/* -------------------- 評価: 明示式 / 漸化式（raw & display を分離） -------------------- */
+function safeCompile(expr){
+  try{ const node = math.parse(expr); return node.compile(); }catch(e){ throw new Error('式の解析に失敗しました: ' + e.message); }
+}
+
+function configureMath(opts){
+  if(opts.precisionMode === 'bignumber'){ math.config({number:'BigNumber', precision: 64}); }
+  else math.config({number:'number'}); 
+}
+
+/* 明示式 */
+function evalExplicitProduce(expr, nStartVal, count, opts){
+  configureMath(opts);
+  lastSequenceRaw = []; lastSequenceDisplay = [];
+  const node = math.parse(expr);
+  const wantExact = opts.exactSetting !== 'off';
+  const canExact = expressionIsExactCapable(expr);
+  if(wantExact && opts.exactSetting === 'force' && !canExact) throw new Error('厳密表示を強制していますが、式は有理数経路に適合しません。');
+  const doExact = wantExact && canExact;
+  if(doExact){
+    for(let i=0;i<count;i++){
+      const nval = Number(nStartVal) + i;
+      const scope = {n: nval};
+      try{
+        const f = evalNodeExact(node, scope);
+        lastSequenceRaw.push(f);
+        lastSequenceDisplay.push(formatFractionOrDecimal(f, opts.precision, opts.displayMode));
+      }catch(e){
+        const code = node.compile();
+        const numv = code.evaluate({n:nval});
+        lastSequenceRaw.push(numv);
+        lastSequenceDisplay.push(formatNumberGeneric(numv, opts.precision, opts.displayMode));
+      }
+    }
+  } else {
+    const code = safeCompile(expr);
+    for(let i=0;i<count;i++){
+      const n = Number(nStartVal) + i;
+      try{
+        const v = code.evaluate({n});
+        lastSequenceRaw.push(v);
+        lastSequenceDisplay.push(formatNumberGeneric(v, opts.precision, opts.displayMode));
+      }catch(e){
+        lastSequenceRaw.push(NaN);
+        lastSequenceDisplay.push('ERR');
+      }
+    }
+  }
+}
+
+/* 漸化式 */
+function preprocessRecurrence(str){
+  let s = str;
+  s = s.replace(/a\s*[_\[]?\s*\(?\s*n\s*-\s*(\d+)\s*\)?/gi, (m,g1)=> 'prev'+g1);
+  s = s.replace(/a\s*\[\s*n\s*-\s*(\d+)\s*\]/gi, (m,g1)=> 'prev'+g1);
+  s = s.replace(/a\s*\(\s*n\s*-\s*(\d+)\s*\)/gi, (m,g1)=> 'prev'+g1);
+  s = s.replace(/a\s*_\s*\{\s*n\s*-\s*(\d+)\s*\}/gi,(m,g1)=>'prev'+g1);
+  return s;
+}
+
+function evalRecurrenceProduce(exprRaw, nStartVal, count, initialValuesInput, opts){
+  configureMath(opts);
+  lastSequenceRaw = []; lastSequenceDisplay = [];
+  const expr = preprocessRecurrence(exprRaw);
+  const used = (expr.match(/prev(\d+)/g) || []).map(s=>Number(s.replace('prev','')));
+  let k = Math.max(used.length?Math.max(...used):0, 1);
+  if(!orderAuto.checked){
+    // manual override
+    k = Math.max(1, Number(recurrenceOrder.value) || 1);
+  } else {
+    if(k === 0) k = initialValuesInput.length || 1;
+  }
+  const initials = initialValuesInput.slice(0,k).map(s=>{
+    if(opts.exactSetting !== 'off' && expressionIsExactCapable(s)){
+      try{ return math.fraction(s); } catch(e){ /* fallthrough */ }
+    }
+    const num = Number(s);
+    return isNaN(num) ? 0 : num;
+  });
+  const node = math.parse(expr);
+  const canExact = expressionIsExactCapable(expr);
+  if(opts.exactSetting === 'force' && !canExact) throw new Error('漸化式を厳密表示で強制していますが、有理数経路に適合しません。');
+  const doExact = (opts.exactSetting!=='off') && canExact;
+
+  for(let i=0;i<initials.length && lastSequenceRaw.length < count;i++){
+    const v = initials[i];
+    lastSequenceRaw.push(v);
+    if(doExact && math.typeOf(v) === 'Fraction') lastSequenceDisplay.push(formatFractionOrDecimal(v, opts.precision, opts.displayMode));
+    else if(doExact) lastSequenceDisplay.push(formatFractionOrDecimal(math.fraction(String(v)), opts.precision, opts.displayMode));
+    else lastSequenceDisplay.push(formatNumberGeneric(v, opts.precision, opts.displayMode));
+  }
+
+  let safety = 0;
+  while(lastSequenceRaw.length < count && safety++ < 200000){
+    const scope = {};
+    for(let j=1;j<=k;j++){
+      const idx = lastSequenceRaw.length - j;
+      const rawVal = lastSequenceRaw[idx];
+      scope['prev'+j] = rawVal;
+    }
+    const curN = Number(nStartVal) + lastSequenceRaw.length;
+    scope.n = curN;
+
+    if(doExact){
+      try{
+        const f = evalNodeExact(node, scope);
+        lastSequenceRaw.push(f);
+        lastSequenceDisplay.push(formatFractionOrDecimal(f, opts.precision, opts.displayMode));
+      }catch(e){
+        const code = node.compile();
+        const numv = code.evaluate(scope);
+        lastSequenceRaw.push(numv);
+        lastSequenceDisplay.push(formatNumberGeneric(numv, opts.precision, opts.displayMode));
+      }
+    } else {
+      const code = node.compile();
+      const numv = code.evaluate(scope);
+      lastSequenceRaw.push(numv);
+      lastSequenceDisplay.push(formatNumberGeneric(numv, opts.precision, opts.displayMode));
+    }
+  }
+}
+
+/* -------------------- 描画 / 表 / CSV / コピー -------------------- */
+function renderTable(n0){
+  if(!lastSequenceDisplay || lastSequenceDisplay.length===0){
+    tableArea.innerHTML = '<div style="color:var(--muted)">結果がありません</div>'; return;
+  }
+  const tbl = document.createElement('table'); tbl.id='seqTable';
+  const tbody = document.createElement('tbody'); tbl.appendChild(tbody);
+  const widthN = String(n0 + lastSequenceDisplay.length - 1).length;
+  for(let i=0;i<lastSequenceDisplay.length;i++){
+    const tr = document.createElement('tr');
+    const td1 = document.createElement('td'); td1.textContent = String(n0 + i).padStart(widthN,' '); td1.style.fontWeight='700';
+    const td2 = document.createElement('td'); td2.textContent = '  →  ';
+    const td3 = document.createElement('td'); td3.className='val'; td3.textContent = lastSequenceDisplay[i];
+    tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+    tbody.appendChild(tr);
+  }
+  tableArea.innerHTML = ''; tableArea.appendChild(tbl);
+  applyHighlightFilter();
+}
+
+function applyHighlightFilter(){
+  const expr = highlight.value.trim();
+  const rows = tableArea.querySelectorAll('tr');
+  rows.forEach((r,i)=>{
+    const raw = lastSequenceRaw[i];
+    const nVal = Number(nStart.value) + i;
+    let cond = false;
+    if(!expr) { r.classList.remove('row-highlight'); return; }
+    try{
+      const scope = {n: nVal, a: parseNumberForMathFromRaw(raw)};
+      cond = Boolean(math.evaluate(expr, scope));
+    }catch(e){ cond=false; }
+    if(cond) r.classList.add('row-highlight'); else r.classList.remove('row-highlight');
+  });
+}
+
+function renderPlot(n0){
+  const xs = [], ys = [];
+  for(let i=0;i<lastSequenceRaw.length;i++){
+    xs.push(n0 + i);
+    const v = lastSequenceRaw[i];
+    const num = parseNumberForMathFromRaw(v);
+    ys.push(isFinite(num) ? num : NaN);
+  }
+  const trace = {x: xs, y: ys, mode: 'lines+markers', marker:{size:6,color:'#0284c7'}, line:{color:'#06b6d4',shape:'spline'}};
+  const layout = {margin:{t:30,l:60,r:20,b:60}, xaxis:{title:'n'}, yaxis:{title:'aₙ'}, height:520, paper_bgcolor:'#fff', plot_bgcolor:'#fff'};
+  Plotly.newPlot(plotDiv, [trace], layout, {responsive:true});
+}
+
+btnCSV.addEventListener('click', ()=>{
+  if(!lastSequenceDisplay || lastSequenceDisplay.length===0){ alert('まず計算してください'); return; }
+  const n0 = Number(nStart.value);
+  let csv = 'n,a_n\n';
+  for(let i=0;i<lastSequenceDisplay.length;i++){ csv += `${n0+i},${JSON.stringify(String(lastSequenceDisplay[i]))}\n`; }
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'sequence.csv'; a.click();
+});
+btnCopy.addEventListener('click', async ()=>{
+  if(!lastSequenceDisplay || lastSequenceDisplay.length===0){ alert('まず計算してください'); return; }
+  try{ await navigator.clipboard.writeText(lastSequenceDisplay.join(', ')); alert('クリップボードにコピーしました'); } catch(e){ alert('コピー失敗: '+e.message); }
+});
+
+/* -------------------- 実行トリガ -------------------- */
+btnCalc.addEventListener('click', async ()=>{
+  showMessage('');
+  const n0 = Number(nStart.value);
+  const count = Math.max(1, Number(countEl.value));
+  const opts = {
+    exactSetting: exactMode.value,
+    precision: precisionEl.value,
+    precisionMode: precisionMode.value,
+    displayMode: displayMode.value
+  };
+  try{
+    tableArea.innerHTML = '<div class="hint">計算中…</div>';
+    anime({targets:'#tableArea',opacity:[0.8,1],translateY:[8,0],duration:320});
+    if(mode === 'explicit'){
+      evalExplicitProduce(exprExplicit.value, n0, count, opts);
+    } else {
+      const inits = Array.from(initialsArea.querySelectorAll('input')).map(i=>i.value || '0');
+      evalRecurrenceProduce(exprRecur.value, n0, count, inits, opts);
+    }
+    renderTable(n0);
+    renderPlot(n0);
+    showMessage('計算完了', 'ok');
+  }catch(e){
+    showMessage(e.message,'error');
+    tableArea.innerHTML = `<div class="bad">計算エラー: ${e.message}</div>`;
+    Plotly.purge(plotDiv);
+  }
+});
+
+/* Enter で計算をトリガ */
+exprExplicit.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); btnCalc.click(); }});
+exprRecur.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); btnCalc.click(); }});
+
+/* サンプル読み込み / リセット / 初期化 */
+btnLoad.addEventListener('click', ()=> {
+  const v = examples.value; if(!v) return;
+  const parts = v.split(':');
+  if(parts[0] === 'explicit'){ setMode('explicit'); exprExplicit.value = parts[1]; renderPreviewTex(parts[1],'explicit'); }
+  else if(parts[0] === 'recur'){ setMode('recur'); exprRecur.value = parts[1]; populateInitialsFromCSV(parts[2]||''); renderPreviewTex(parts[1],'recur'); }
+});
+btnReset.addEventListener('click', ()=>{
+  exprExplicit.value='2*n+1'; exprRecur.value='a_{n-1}+a_{n-2}';
+  populateInitialsFromCSV('1,1'); nStart.value=1; countEl.value=20; precisionEl.value=''; precisionMode.value='auto';
+  exactMode.value='auto'; displayMode.value='only_decimal'; highlight.value='';
+  tableArea.innerHTML = '<div style="color:var(--muted)">ここに計算結果の表が表示されます。</div>'; Plotly.purge(plotDiv);
+  lastSequenceRaw = []; lastSequenceDisplay = []; showMessage('初期化しました','ok');
+  renderPreviewTex(exprExplicit.value);
+});
+
+/* message */
+function showMessage(txt, kind='info'){ message.textContent = txt || ''; message.className = kind==='error' ? 'bad' : (kind==='ok' ? 'good' : 'hint'); }
+
+/* 初期化 */
+(function init(){
+  populateInitialsFromCSV('1,1');
+  renderPreviewTex(exprExplicit.value,'explicit');
+  anime({targets:'.logo',scale:[0.88,1],duration:680,delay:180,easing:'easeOutElastic(1, .8)'});
+  showMessage('手順: ①モード → ②式入力 → ③（漸化式なら自動/手動で階数指定）→ ④初期値 → ⑤範囲・設定 → ⑥計算','info');
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Integrator — improved</title>
+
+<!-- Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/mathjs@11.8.0/lib/browser/math.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist@3.3.1/plotly.min.js"></script>
+
+<!-- Styles (compact & clean) -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f8fb; --card:#fff; --muted:#6b7280; --accent:#1f6feb; --mono: "Fira Code", "Consolas", monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,"Noto Sans JP",sans-serif;background:var(--bg);color:#0b1220}
+.header{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid #e6eef8;background:#fff}
+.brand{font-weight:700;color:var(--accent)}
+.container{display:flex;gap:18px;padding:18px;max-width:1200px;margin:18px auto}
+.left{width:380px;min-width:300px;background:var(--card);border-radius:12px;padding:14px;border:1px solid #e6eef8}
+.right{flex:1;background:var(--card);border-radius:12px;padding:14px;border:1px solid #e6eef8}
+.label{font-size:13px;color:var(--muted);margin-bottom:6px}
+.select, textarea, input[type="number"], input[type="text"]{
+  width:100%;padding:8px;border-radius:8px;border:1px solid #e6eef8;background:linear-gradient(180deg,#fff,#fbfdff);font-size:13px;
+  font-family:var(--mono);
+}
+.row{display:flex;gap:8px;align-items:center}
+.btn{background:linear-gradient(90deg,var(--accent),#4f78ff);color:white;border:none;padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:600}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid #dbe9ff}
+.small{font-size:13px;color:var(--muted)}
+.examples{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.chip{padding:6px 10px;border-radius:999px;background:rgba(37,99,235,0.06);border:1px solid rgba(37,99,235,0.06);cursor:pointer;font-size:13px;color:var(--accent)}
+.resultBox{margin-top:12px;padding:10px;border-radius:8px;background:#fbfdff;border:1px solid #e6eef8}
+.plot{height:360px}
+.smallMuted{color:var(--muted);font-size:13px}
+.footer{max-width:1200px;margin:10px auto;text-align:center;color:var(--muted);font-size:13px}
+.error{color:#b02a37;background:#fff1f2;padding:8px;border-radius:6px;border:1px solid #fecaca;margin-top:8px}
+.kv{font-family:var(--mono);background:#f8fafc;padding:6px;border-radius:6px;border:1px solid #eef2ff;display:block;margin-top:6px}
+
+/* =========================
+   Responsive Layout
+   ========================= */
+
+/* デフォルト（PC想定）：左右配置 */
+.container {
+    display: flex;
+    flex-direction: row;
+    gap: 18px;
+}
+
+/* ===== タブレット（縦持ち） ===== */
+@media (max-width: 1024px) {
+    .container {
+        flex-direction: column;
+    }
+
+    .left,
+    .right {
+        width: 100%;
+    }
+
+    .plot {
+        height: 320px;
+    }
+}
+
+/* ===== スマホ ===== */
+@media (max-width: 600px) {
+    body {
+        font-size: 14px;
+    }
+
+    .container {
+        padding: 10px;
+        gap: 12px;
+    }
+
+    .left,
+    .right {
+        padding: 12px;
+        border-radius: 10px;
+    }
+
+    textarea,
+    input,
+    select {
+        font-size: 14px;
+    }
+
+    .plot {
+        height: 260px;
+    }
+
+    #plot2 {
+        height: 180px;
+    }
+
+    .examples {
+        gap: 6px;
+    }
+
+    .chip {
+        font-size: 12px;
+        padding: 5px 8px;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 10px;
+    }
+
+    .controls {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+}
+
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="brand">Integrator</div>
+  <div class="small">MathJS ベースの数値積分ツール（定積分 / 数値原始関数）</div>
+</header>
+
+<div class="container">
+  <div class="left">
+    <div class="label">入力モード</div>
+    <select id="mode" class="select">
+      <option value="mathjs">MathJS（推奨） — 例: sin(x), exp(-x), x^2</option>
+      <option value="friendly">Friendly — sin x, e^{-x}, 1/(1+x^2) などを自動変換</option>
+    </select>
+
+    <div style="margin-top:12px" class="label">関数（被積分関数）</div>
+    <textarea id="expr" rows="5">sin(x)/(1+x^2)</textarea>
+    <div class="smallMuted" style="margin-top:8px">表示（変換後の式）</div>
+    <div id="mathExpr" class="kv">—</div>
+
+    <div style="margin-top:12px" class="label">区間（定積分）</div>
+    <div class="row"><input id="a" type="number" step="any" value="0"/><input id="b" type="number" step="any" value="5"/></div>
+
+    <div style="margin-top:12px" class="label">タスク</div>
+    <select id="task" class="select">
+      <option value="definite">定積分（数値）</option>
+      <option value="indefinite">不定積分（数値的原始関数）</option>
+      <option value="plotOnly">関数プロットのみ</option>
+    </select>
+
+    <div style="margin-top:12px" class="label">設定</div>
+    <div class="row"><input id="tol" type="number" step="any" value="1e-8"/><input id="npts" type="number" step="1" value="800"/></div>
+    <div class="smallMuted" style="margin-top:6px">tol = 適応シンプソン誤差、npts = 原始関数サンプル数（多いほど滑らか）</div>
+
+    <div style="margin-top:12px" class="controls">
+      <button id="run" class="btn">計算する</button>
+      <button id="reset" class="btn ghost">リセット</button>
+    </div>
+
+    <div style="margin-top:12px" class="label">プリセット</div>
+    <div class="examples">
+      <div class="chip" data-expr="sin(x)">sin x</div>
+      <div class="chip" data-expr="1/(1+x^2)">1/(1+x^2)</div>
+      <div class="chip" data-expr="exp(-x)">e^{-x}</div>
+      <div class="chip" data-expr="abs(x)">|x|</div>
+      <div class="chip" data-expr="x^3*exp(-x)">x^3 e^{-x}</div>
+    </div>
+
+    <div class="resultBox">
+      <div><strong>結果</strong></div>
+      <div id="result" style="font-size:18px;margin-top:6px">—</div>
+      <div id="details" class="smallMuted" style="margin-top:8px"></div>
+      <div id="err" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div><strong>グラフ</strong></div>
+      <div class="smallMuted">samples: <input id="plotSamples" type="number" value="400" style="width:80px;margin-left:8px"/></div>
+    </div>
+    <div id="plot" class="plot"></div>
+    <div id="plot2" style="height:220px;margin-top:12px"></div>
+    <div id="info" class="smallMuted" style="margin-top:8px"></div>
+  </div>
+</div>
+
+<script>
+/* ---------- helpers: conversion & parsing ---------- */
+
+/* friendly → mathjs converter (conservative, robust):
+   - insert parentheses for common functions when written like "sin x" -> "sin(x)"
+   - handle \frac{a}{b} like "frac{a}{b}" or "a/b"
+   - replace common LaTeX tokens if present: \pi, \exp, etc.
+   This is intentionally conservative: if conversion fails, error shows original input.
+*/
+function friendlyToMathjs(s){
+  if (!s) return s;
+  let t = s.trim();
+
+  // replace TeX-style \frac{a}{b} (simple, no recursion)
+  while (true){
+    const m = t.match(/\\frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/);
+    if (!m) break;
+    t = t.replace(m[0], '(' + m[1] + ')/(' + m[2] + ')');
+  }
+
+  // replace some LaTeX tokens
+  t = t.replace(/\\pi/g, 'pi');
+  t = t.replace(/\\times/g, '*');
+  t = t.replace(/\\cdot/g, '*');
+  t = t.replace(/\\,|\\;/g, '');
+
+  // function names list
+  const funs = ['sin','cos','tan','asin','acos','atan','sinh','cosh','tanh','exp','log','sqrt','abs','floor','ceil'];
+  // ensure parentheses after function names if missing: sin x -> sin(x), but don't change sin(x)
+  for (const f of funs){
+    // sin x -> sin(x)
+    const re = new RegExp('\\b' + f + '\\s+([0-9a-zA-Z\\(\\-\\.])', 'g');
+    t = t.replace(re, (m, p1) => `${f}(${p1}`);
+    // also close parentheses when we opened by the above: add ) where appropriate by balancing approximation
+  }
+
+  // add missing closing parens for simple patterns introduced (approx):
+  // e.g. sin( x -> sin(x)
+  // If parentheses counts don't match, try to balance by adding ) at end
+  const opens = (t.match(/\(/g)||[]).length;
+  const closes = (t.match(/\)/g)||[]).length;
+  if (opens > closes) t += ')'.repeat(opens - closes);
+
+  // implicit multiplication: number followed by variable or paren -> add *
+  t = t.replace(/([0-9\.])\s*([a-zA-Z\(])/g,'$1*$2');
+  t = t.replace(/([a-zA-Z\)])\s*\(/g,'$1*(');
+
+  // caret power normalization: keep ^ acceptable for mathjs
+  // return
+  return t;
+}
+
+/* Universal function maker: tries mode-specific conversion, then math.parse+compile.
+   Returns {fn, mathExpr} or {error}. */
+function makeFnFromInput(raw, mode){
+  try {
+    let mathExpr = raw;
+    if (mode === 'friendly') mathExpr = friendlyToMathjs(raw);
+    else mathExpr = raw; // mathjs mode: assume user knows mathjs syntax
+
+    // final cleanup: remove long spaces
+    mathExpr = String(mathExpr).trim();
+
+    // attempt parse + compile with mathjs
+    // math.parse accepts e.g. "sin(x)" etc.
+    const node = math.parse(mathExpr);
+    const code = node.compile();
+
+    const fn = (x) => {
+      const scope = {x: x, pi: Math.PI, e: Math.E};
+      const v = code.evaluate(scope);
+      if (typeof v === 'object' && v && v.re !== undefined) return v.re; // complex -> real part
+      return Number(v);
+    };
+    // quick sanity check
+    const test = fn( (0+1)/2 );
+    if (!isFinite(test)) { /* still allow maybe singulars */ }
+    return {fn, mathExpr};
+  } catch (err){
+    return {error: String(err)};
+  }
+}
+
+/* ---------- numerical integrators ---------- */
+/* adaptive Simpson (from earlier) */
+function adaptiveSimpson(f,a,b,eps=1e-8, maxRec=20){
+  function recurse(f,a,b,eps,S,fa,fb,fc,depth){
+    const c=(a+b)/2;
+    const d=(a+c)/2;
+    const e=(c+b)/2;
+    const fd=f(d), fe=f(e);
+    const Sleft = (fa+4*fd+fc)*(c-a)/6;
+    const Sright= (fc+4*fe+fb)*(b-c)/6;
+    const S2 = Sleft + Sright;
+    if (depth<=0 || Math.abs(S2-S) <= 15*eps) return S2 + (S2-S)/15;
+    return recurse(f,a,c,eps/2,Sleft,fa,fc,fd,depth-1) + recurse(f,c,b,eps/2,Sright,fc,fb,fe,depth-1);
+  }
+  const c=(a+b)/2;
+  const fa=f(a), fb=f(b), fc=f(c);
+  const S = (fa+4*fc+fb)*(b-a)/6;
+  return recurse(f,a,b,eps,S,fa,fb,fc,maxRec);
+}
+
+/* composite Simpson to compute cumulative F(x) on uniform samples (fast & stable) */
+function cumulativeSimpson(f,a,b,n){
+  // ensure n is even
+  if (n % 2 === 1) n++;
+  const h = (b-a)/n;
+  const xs = new Array(n+1);
+  const ys = new Array(n+1);
+  // precompute f values
+  const fv = new Array(n+1);
+  for (let i=0;i<=n;i++){
+    const x = a + i*h;
+    try { fv[i] = f(x); if (!isFinite(fv[i])) fv[i] = NaN; } catch(e){ fv[i] = NaN; }
+    xs[i] = x;
+  }
+  // cumulative Simpson: for k from 0..n, compute integral from a to x_k
+  // we can compute cumulative by incremental Simpson blocks:
+  ys[0]=0;
+  for (let k=1;k<=n;k++){
+    // integrate over [x_{k-1}, x_k] using Simpson with mid at m = (x_{k-1}+x_k)/2
+    const xa = xs[k-1], xb = xs[k];
+    const m = (xa+xb)/2;
+    // approximate f(m) via interpolation or compute directly:
+    let fm;
+    try { fm = f(m); if (!isFinite(fm)) fm = NaN; } catch(e){ fm = NaN; }
+    // simple Simpson over this small interval (may be coarse but with large n ok)
+    const term = ( (fv[k-1] || 0) + 4*(fm||0) + (fv[k] || 0) )*(xb-xa)/6;
+    ys[k] = ys[k-1] + term;
+  }
+  return {xs, ys};
+}
+
+/* safe eval wrapper */
+function safeEval(f,x){ try{ const y=f(x); if (!isFinite(y)) throw new Error('非有限値'); return y;} catch(e){ throw e; } }
+
+/* ---------- UI wiring ---------- */
+const exprEl = document.getElementById('expr');
+const modeEl = document.getElementById('mode');
+const aEl = document.getElementById('a'), bEl = document.getElementById('b');
+const taskEl = document.getElementById('task'), tolEl = document.getElementById('tol'), nptsEl = document.getElementById('npts');
+const runBtn = document.getElementById('run'), resetBtn = document.getElementById('reset');
+const resultDiv = document.getElementById('result'), detailsDiv = document.getElementById('details'), errDiv = document.getElementById('err');
+const mathExprDiv = document.getElementById('mathExpr');
+const plotDiv = document.getElementById('plot'), plot2Div = document.getElementById('plot2');
+const plotSamples = document.getElementById('plotSamples');
+const chips = document.querySelectorAll('.chip');
+
+function showError(msg){ errDiv.innerHTML = `<div class="error">${msg}</div>`; }
+function clearError(){ errDiv.innerHTML = ''; }
+
+function renderMathExprPreview(raw, mode){
+  const attempt = makeFnFromInput(raw, mode);
+  if (attempt.error){
+    mathExprDiv.textContent = 'パース失敗: ' + attempt.error;
+    return;
+  }
+  mathExprDiv.textContent = attempt.mathExpr;
+}
+
+/* initial preview */
+renderMathExprPreview(exprEl.value, modeEl.value);
+
+exprEl.addEventListener('input', ()=> renderMathExprPreview(exprEl.value, modeEl.value));
+modeEl.addEventListener('change', ()=> renderMathExprPreview(exprEl.value, modeEl.value));
+chips.forEach(c => c.addEventListener('click', ()=>{ exprEl.value = c.dataset.expr; renderMathExprPreview(exprEl.value, modeEl.value); }));
+
+resetBtn.addEventListener('click', ()=>{
+  exprEl.value = 'sin(x)/(1+x^2)';
+  aEl.value = 0; bEl.value = 5; tolEl.value = 1e-8; nptsEl.value = 800; plotSamples.value = 400;
+  renderMathExprPreview(exprEl.value, modeEl.value);
+  resultDiv.textContent = '—'; detailsDiv.textContent = ''; clearError();
+  plotDiv.innerHTML=''; plot2Div.innerHTML='';
+});
+
+runBtn.addEventListener('click', async ()=>{
+  resultDiv.textContent = '計算中…'; detailsDiv.textContent = ''; clearError();
+  plotDiv.innerHTML=''; plot2Div.innerHTML='';
+  const raw = exprEl.value.trim();
+  const mode = modeEl.value;
+  const task = taskEl.value;
+  const a = Number(aEl.value), b = Number(bEl.value);
+  const tol = Number(tolEl.value) || 1e-8;
+  const npts = Math.max(4, Math.floor(Number(nptsEl.value) || 800));
+  const plotN = Math.max(20, Number(plotSamples.value) || 400);
+
+  // build function
+  const res = makeFnFromInput(raw, mode);
+  if (res.error){ resultDiv.textContent = '式のパースに失敗'; showError(res.error); mathExprDiv.textContent = res.error; return; }
+  const fn = res.fn;
+  mathExprDiv.textContent = res.mathExpr;
+
+  // quick check: evaluate a safe sample
+  try { safeEval(fn, (a+b)/2); } catch(e){ resultDiv.textContent = '評価でエラー'; showError(String(e)); return; }
+
+  try {
+    if (task === 'definite'){
+      const val = adaptiveSimpson((x)=>safeEval(fn,x), a, b, tol, 22);
+      resultDiv.textContent = String(val);
+      detailsDiv.textContent = `内部 mathjs: ${res.mathExpr} ・ tol=${tol}`;
+      // plot f(x)
+      const xs = []; const ys = [];
+      for (let i=0;i<=plotN;i++){
+        const x = a + (b-a)*i/plotN;
+        let y = NaN;
+        try{ y = safeEval(fn,x); } catch(e){ y = NaN; }
+        xs.push(x); ys.push(y);
+      }
+      Plotly.newPlot(plotDiv, [{x:xs,y:ys,mode:'lines',name:'f(x)'}], {margin:{t:30}});
+    } else if (task === 'indefinite'){
+      // compute cumulative integral from a to b with composite Simpson (npts samples)
+      const cum = cumulativeSimpson((x)=>{ try{return fn(x);}catch(e){return NaN;} }, a, b, npts);
+      resultDiv.textContent = `数値的原始関数 (${cum.xs.length}点)。F(b) ≒ ${cum.ys[cum.ys.length-1]}`;
+      detailsDiv.textContent = `内部 mathjs: ${res.mathExpr} ・ samples=${npts}`;
+      // plot F(x) and f(x)
+      const traceF = {x:cum.xs, y:cum.ys, mode:'lines', name:'F(x)=∫_a^x f'};
+      const ys_f = cum.xs.map(x=>{ try{ return fn(x);}catch(e){ return NaN; }});
+      const tracef = {x:cum.xs, y:ys_f, mode:'lines', name:'f(x)', yaxis:'y2', line:{dash:'dot'}};
+      const layout = {title:'原始関数と元関数', xaxis:{title:'x'}, yaxis:{title:'F(x)'}, yaxis2:{overlaying:'y',side:'right',title:'f(x)'}};
+      Plotly.newPlot(plotDiv, [traceF, tracef], layout, {responsive:true});
+    } else {
+      // plot only
+      const xs=[]; const ys=[];
+      for (let i=0;i<=plotN;i++){ const x=a+(b-a)*i/plotN; let y=NaN; try{ y=fn(x);}catch(e){ y=NaN } xs.push(x); ys.push(y);}
+      Plotly.newPlot(plotDiv, [{x:xs,y:ys,mode:'lines',name:'f(x)'}], {margin:{t:30}});
+      resultDiv.textContent = 'プロット完了';
+      detailsDiv.textContent = `内部 mathjs: ${res.mathExpr}`;
+    }
+  } catch(e){
+    resultDiv.textContent = '計算中にエラー';
+    showError(String(e));
+  }
+});
+</script>
+</body>
+</html>

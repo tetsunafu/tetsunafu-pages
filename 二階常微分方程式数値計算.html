@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ODE2 Studio — 二階常微分方程式数値計算</title>
+
+<!-- math.js の新しいバンドルパス（重要） -->
+<script src="https://cdn.jsdelivr.net/npm/mathjs@11/lib/browser/math.js"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Source+Code+Pro&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#f5f8ff; --card:#ffffff; --muted:#6b7280; --accent:#6b46ff; --accent2:#16a34a;
+  --radius:14px; --pad:16px;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Noto Sans JP",sans-serif;background:linear-gradient(180deg,#fbfbff,#eef6ff);color:#0b1220}
+.container{max-width:1100px;margin:28px auto;padding:0 18px}
+.header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+.brand{font-weight:700;color:var(--accent);font-size:20px}
+.subtitle{color:var(--muted);font-size:13px}
+
+/* レイアウト */
+.grid{display:grid;grid-template-columns:380px 1fr;gap:18px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--card);border-radius:var(--radius);padding:var(--pad);box-shadow:0 8px 30px rgba(20,30,80,0.05);border:1px solid rgba(11,18,32,0.04)}
+.sectionTitle{font-size:15px;font-weight:600;margin-bottom:8px}
+
+/* 入力 */
+.field{margin-bottom:12px}
+.label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+.input, textarea, select{width:100%;padding:10px;border-radius:10px;border:1px solid #e7eefc;font-family:Source Code Pro,monospace}
+.row{display:flex;gap:8px}
+.small{font-size:13px;color:var(--muted)}
+.btn{padding:10px 14px;border-radius:10px;border:none;background:linear-gradient(90deg,var(--accent),#4b2bff);color:#fff;cursor:pointer;font-weight:600}
+.btn.ghost{background:transparent;border:1px solid #eef2ff;color:var(--accent);font-weight:600}
+.btn.secondary{background:linear-gradient(90deg,var(--accent2),#16a34a);color:#fff}
+
+/* chart area */
+.chartWrap{height:440px;border-radius:10px;padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.9),rgba(255,255,255,0.95));border:1px solid #eef4ff}
+
+/* controls */
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.badge{background:#f0f7ff;padding:6px 10px;border-radius:999px;color:var(--muted);font-size:13px}
+
+/* presets */
+.presetList{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.preset{background:#fff8ff;border:1px solid #fde8ff;padding:6px 10px;border-radius:999px;color:var(--accent);cursor:pointer}
+
+/* extras */
+.debug{font-family:Source Code Pro,monospace;background:#fbfcff;padding:8px;border-radius:8px;border:1px solid #eef4ff;margin-top:8px;white-space:pre-wrap;color:#a33}
+@media(max-width:540px){.chartWrap{height:320px}}
+</style>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div>
+      <div class="brand">二階常微分方程式数値計算サイト</div>
+      <div class="subtitle">二階常微分方程式: \(x'' = f(t,v,x)\) — math.js ベースで可視化</div>
+    </div>
+    <div class="small">式は math.js 構文 • Ctrl/Cmd+Enter で実行</div>
+  </div>
+
+  <div class="grid">
+    <!-- LEFT -->
+    <div class="panel">
+      <div class="sectionTitle">式・パラメータ</div>
+
+      <div class="field">
+        <label class="label">プリセット（クリックで式をロード）</label>
+        <div class="presetList">
+          <div class="preset" data-expr="-(k/m)*x">単振動: -(k/m)*x</div>
+          <div class="preset" data-expr="-(c/m)*v - (k/m)*x">減衰振動: -(c/m)*v - (k/m)*x</div>
+          <div class="preset" data-expr="-(c/m)*v - (k/m)*x + F/m * sin(omega*t)">駆動減衰振動</div>
+          <div class="preset" data-expr="-g">等加速度（落下）: -g</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label">関数 \(f(t,v,x)\)（math.js 構文）</label>
+        <textarea id="exprInput" rows="3" class="input" placeholder="例: -(c/m)*v - (k/m)*x + F/m * sin(omega*t)"></textarea>
+        <div class="small" style="margin-top:6px">利用可能: sin, cos, exp, sqrt, ^ など。変数は <code>t</code>, <code>v</code>, <code>x</code> とパラメータ。</div>
+      </div>
+
+      <div class="field">
+        <label class="label">パラメータ \(\left[m, k, c, F, \omega, g\right]\)</label>
+        <div class="row">
+          <input id="m" class="input" placeholder="m (質量)" title="m (質量) の数値を入力してください" value="1">
+          <input id="k" class="input" placeholder="k" title="k の数値を入力してください" value="4">
+        </div>
+        <div class="row" style="margin-top:8px">
+            <input id="c" class="input" placeholder="c (減衰)" title="c (減衰) の数値を入力してください" value="0.5">
+          <input id="F" class="input" placeholder="F (駆動)" title="F (駆動) の数値を入力してください" value="0">
+        </div>
+        <div class="row" style="margin-top:8px">
+          <input id="omega" class="input" placeholder="omega" title="omega の数値を入力してください" value="1">
+          <input id="g" class="input" placeholder="g (重力)" title="g (重力) の数値を入力してください" value="9.8">
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label">初期値 \(\left[t_0, v(t_0), x(t_0)\right]\)</label>
+        <div class="row">
+          <input id="t0" class="input" placeholder="t₀" title="t₀ の数値を入力してください" value="0">
+          <input id="v0" class="input" placeholder="v(t₀)" title="v(t₀) の数値を入力してください" value="0">
+          <input id="x0" class="input" placeholder="x(t₀)" title="x(t₀) の数値を入力してください" value="1">
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label">範囲 / ステップ</label>
+        <div class="row">
+          <input id="tmax" class="input" placeholder="t_max" title="t_max の数値を入力してください" value="20">
+          <input id="steps" class="input" placeholder="steps" title="steps の数値を入力してください" value="5000">
+        </div>
+        <div class="small" style="margin-top:6px">steps は大きいほど精度が向上。UI は固まりません（チャンク処理）。</div>
+      </div>
+
+      <div class="field">
+        <div class="controls">
+          <button id="runBtn" class="btn">計算スタート</button>
+          <button id="cancelBtn" class="btn ghost" disabled>キャンセル</button>
+          <button id="resetBtn" class="btn ghost">リセット</button>
+          <div class="badge" id="progressBadge">準備OK</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="sectionTitle" style="font-size:13px">ヘルプ</div>
+        <ul style="margin:0 0 8px 18px;color:var(--muted)">
+          <li>変数: <code>t</code>, <code>v</code>, <code>x</code> のみ使用。</li>
+          <li>パラメータはテキスト欄で数値を指定（例: m=1, k=4, c=0.5）。</li>
+          <li>math.js の関数を使えます（例: <code>sin(omega*t)</code>）。</li>
+        </ul>
+        <div id="lastError" class="debug" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div class="sectionTitle">出力</div>
+          <div class="small">青: x(t) • 緑: v(t)</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button id="exportPng" class="btn ghost">PNG 保存</button>
+          <button id="exportCsv" class="btn ghost">CSV ダウンロード</button>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+        <label class="small">表示モード：</label>
+        <select id="viewMode" class="input" style="width:auto">
+          <option value="time">時刻幅 (t -> x, v)</option>
+          <option value="phase">位相図 (x vs v)</option>
+          <option value="energy">エネルギー (if m,k set)</option>
+        </select>
+        <div style="flex:1"></div>
+        <div class="small" id="stats">点数: 0 • 時間: 0 ms</div>
+      </div>
+
+      <div class="chartWrap" style="margin-top:12px">
+        <canvas id="odeChart"></canvas>
+      </div>
+
+      <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+        <div class="small" id="infoHint" style="color:var(--muted)"></div>
+        <div style="flex:1"></div>
+        <div class="small" id="energyHint" style="color:var(--muted)"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===============================
+   安全な評価 (math.js) + RK4（チャンク化）
+   主要点：
+   - math.js の新しいバンドルを読み込み済み（上部）
+   - new Function は使わない
+   - parse -> traverse -> symbol check -> compile -> evaluate の流れ
+   =============================== */
+
+const exprInput = document.getElementById('exprInput');
+const runBtn = document.getElementById('runBtn');
+const cancelBtn = document.getElementById('cancelBtn');
+const resetBtn = document.getElementById('resetBtn');
+const progressBadge = document.getElementById('progressBadge');
+const stats = document.getElementById('stats');
+const lastErrorDiv = document.getElementById('lastError');
+const viewMode = document.getElementById('viewMode');
+
+const t0El = document.getElementById('t0'), v0El = document.getElementById('v0'), x0El = document.getElementById('x0');
+const tmaxEl = document.getElementById('tmax'), stepsEl = document.getElementById('steps');
+
+const mEl = document.getElementById('m'), kEl = document.getElementById('k'), cEl = document.getElementById('c'),
+      FEl = document.getElementById('F'), omegaEl = document.getElementById('omega'), gEl = document.getElementById('g');
+
+const presets = document.querySelectorAll('.preset');
+presets.forEach(p => p.addEventListener('click', ()=> { exprInput.value = p.dataset.expr; progressBadge.textContent='プリセット読み込み'; }));
+
+/* Chart.js */
+const ctx = document.getElementById('odeChart').getContext('2d');
+let odeChart = new Chart(ctx, {
+  type:'line',
+  data:{datasets:[
+    {label:'x(t)', data:[], borderColor:'#2b6cff', borderWidth:2, pointRadius:0, tension:0.12},
+    {label:'v(t)', data:[], borderColor:'#2ca77b', borderWidth:2, pointRadius:0, tension:0.12}
+  ]},
+  options:{
+    animation:false, responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'top'}},
+    scales:{x:{type:'linear', title:{display:true, text:'t'}}, y:{title:{display:true, text:'value'}}}
+  }
+});
+
+/* helper: 安全コンパイル */
+function compileExpression(expr) {
+  try {
+    const node = math.parse(expr);
+    const usedSymbols = new Set();
+    node.traverse(function(n){
+      if (n.isSymbolNode) usedSymbols.add(n.name);
+    });
+    // 許可する名前
+    const allowed = new Set(['t','v','x','m','k','c','F','omega','g']);
+    // math の関数は許可（sin, cos, log, etc.）
+    const bad = Array.from(usedSymbols).filter(s => !allowed.has(s) && typeof math[s] !== 'function');
+    if (bad.length) throw new Error('未定義の変数/名前が含まれています: ' + bad.join(', '));
+    const compiled = node.compile();
+    return compiled;
+  } catch (e) {
+    throw e;
+  }
+}
+
+/* RK4 チャンク版 */
+let cancelling = false;
+async function integrateRK4(compiled, params, t0, v0, x0, tMax, steps, onProgress) {
+  const dt = (tMax - t0) / steps;
+  let t = t0, v = v0, x = x0;
+  const times = new Array(steps+1), xs = new Array(steps+1), vs = new Array(steps+1);
+  times[0]=t; xs[0]=x; vs[0]=v;
+  const chunk = Math.max(100, Math.floor(steps/200));
+  const start = performance.now();
+  for (let i=1;i<=steps;i++){
+    if (cancelling) throw new Error('cancelled');
+    // k1
+    const k1x = dt * v;
+    const k1v = dt * Number(compiled.evaluate(Object.assign({t, v, x}, params)));
+    // k2
+    const k2x = dt * (v + 0.5*k1v);
+    const k2v = dt * Number(compiled.evaluate(Object.assign({t: t + dt/2, v: v + 0.5*k1v, x: x + 0.5*k1x}, params)));
+    // k3
+    const k3x = dt * (v + 0.5*k2v);
+    const k3v = dt * Number(compiled.evaluate(Object.assign({t: t + dt/2, v: v + 0.5*k2v, x: x + 0.5*k2x}, params)));
+    // k4
+    const k4x = dt * (v + k3v);
+    const k4v = dt * Number(compiled.evaluate(Object.assign({t: t + dt, v: v + k3v, x: x + k3x}, params)));
+
+    x = x + (k1x + 2*k2x + 2*k3x + k4x)/6;
+    v = v + (k1v + 2*k2v + 2*k3v + k4v)/6;
+    t = t + dt;
+
+    times[i]=t; xs[i]=x; vs[i]=v;
+
+    if (i % chunk === 0) {
+      if (onProgress) onProgress(i, steps, Math.round(performance.now() - start));
+      await new Promise(res => setTimeout(res,0));
+    }
+  }
+  return {times, xs, vs, elapsed: Math.round(performance.now() - start)};
+}
+
+/* 実行処理 */
+runBtn.addEventListener('click', async () => {
+  progressBadge.textContent = '検証中...'; lastErrorDiv.style.display='none'; lastErrorDiv.textContent='';
+  runBtn.disabled = true; cancelBtn.disabled = false; cancelling = false;
+  const expr = exprInput.value.trim();
+  const params = {
+    m: Number(mEl.value) || 1,
+    k: Number(kEl.value) || 0,
+    c: Number(cEl.value) || 0,
+    F: Number(FEl.value) || 0,
+    omega: Number(omegaEl.value) || 0,
+    g: Number(gEl.value) || 9.8
+  };
+  const t0 = Number(t0El.value) || 0, v0 = Number(v0El.value) || 0, x0 = Number(x0El.value) || 0;
+  const tMax = Number(tmaxEl.value) || 10, steps = Math.max(10, Math.min(1000000, Number(stepsEl.value) || 5000));
+  if (!expr) { alert('式を入力してください'); runBtn.disabled=false; cancelBtn.disabled=true; progressBadge.textContent='準備OK'; return; }
+
+  let compiled;
+  try {
+    compiled = compileExpression(expr);
+  } catch (e) {
+    lastErrorDiv.style.display='block'; lastErrorDiv.textContent = '構文/名前エラー: ' + e.message;
+    runBtn.disabled=false; cancelBtn.disabled=true; progressBadge.textContent='エラー';
+    return;
+  }
+
+  try {
+    progressBadge.textContent = '計算中...';
+    const result = await integrateRK4(compiled, params, t0, v0, x0, tMax, steps, (i,N,elapsed)=>{
+      const p = Math.round((i/N)*100);
+      progressBadge.textContent = `進捗 ${p}%`;
+      stats.textContent = `点数: ${i}/${N} • 経過: ${elapsed} ms`;
+    });
+
+    // 表示
+    const mode = viewMode.value;
+    if (mode === 'time') {
+      odeChart.data.datasets[0].data = result.times.map((tt,i)=>({x:tt,y:result.xs[i]}));
+      odeChart.data.datasets[1].data = result.times.map((tt,i)=>({x:tt,y:result.vs[i]}));
+      odeChart.data.datasets[0].label = 'x(t)';
+      odeChart.data.datasets[1].label = 'v(t)';
+      odeChart.options.scales.x.type='linear';
+      odeChart.options.scales.x.title.text = 't';
+      odeChart.update('none');
+      document.getElementById('infoHint').textContent = '';
+    } else if (mode === 'phase') {
+      // x vs v -> use dataset[0] as phase, clear dataset[1]
+      odeChart.data.datasets[0].data = result.xs.map((x,i)=>({x:result.xs[i], y:result.vs[i]}));
+      odeChart.data.datasets[0].label = 'Phase (x vs v)';
+      odeChart.data.datasets[1].data = [];
+      odeChart.options.scales.x.type='linear';
+      odeChart.options.scales.x.title.text = 'x';
+      odeChart.update('none');
+      document.getElementById('infoHint').textContent = '位相図表示: x を横軸に, v を縦軸に取っています';
+    } else {
+      // energy (if m and k exist)
+      const m = params.m, k=params.k;
+      if (!m || !k) {
+        lastErrorDiv.style.display='block'; lastErrorDiv.textContent = 'エネルギーを出すには m, k を設定してください';
+      } else {
+        // energy: E = 1/2 m v^2 + 1/2 k x^2 (駆動/摩擦があると非保存)
+        odeChart.data.datasets[0].data = result.times.map((t,i)=>({x:t,y: 0.5*m*(result.vs[i]**2) + 0.5*k*(result.xs[i]**2)}));
+        odeChart.data.datasets[0].label = 'Energy E(t)';
+        odeChart.data.datasets[1].data = [];
+        odeChart.options.scales.x.title.text = 't';
+        odeChart.update('none');
+        document.getElementById('infoHint').textContent = '注意: 外力/摩擦があるとエネルギーは時間で変化します';
+      }
+    }
+
+    stats.textContent = `点数: ${result.times.length} • 総経過: ${result.elapsed} ms`;
+    progressBadge.textContent = '完了';
+    // 保存のために結果を保持
+    odeChart._lastResults = {times: result.times, xs: result.xs, vs: result.vs, expr, params};
+    lastErrorDiv.style.display='none';
+
+  } catch (e) {
+    if (e.message === 'cancelled') {
+      progressBadge.textContent = 'キャンセルされました';
+      lastErrorDiv.style.display='block'; lastErrorDiv.textContent='計算はキャンセルされました';
+    } else {
+      progressBadge.textContent = 'エラー';
+      lastErrorDiv.style.display='block'; lastErrorDiv.textContent='実行エラー: ' + e.message;
+    }
+  } finally {
+    runBtn.disabled=false; cancelBtn.disabled=true; cancelling=false;
+  }
+});
+
+/* cancel / reset / export */
+cancelBtn.addEventListener('click', ()=>{ cancelling = true; progressBadge.textContent='キャンセル中...' });
+
+resetBtn.addEventListener('click', ()=> {
+  exprInput.value=''; t0El.value=0; v0El.value=0; x0El.value=1; tmaxEl.value=20; stepsEl.value=5000;
+  mEl.value=1; kEl.value=4; cEl.value=0.5; FEl.value=0; omegaEl.value=1; gEl.value=9.8;
+  odeChart.data.datasets[0].data=[]; odeChart.data.datasets[1].data=[]; odeChart.update();
+  progressBadge.textContent='リセット完了'; stats.textContent='点数: 0 • 時間: 0 ms'; lastErrorDiv.style.display='none';
+  odeChart._lastResults = null;
+});
+
+document.getElementById('exportPng').addEventListener('click', ()=> {
+  const link = document.createElement('a'); link.href = document.getElementById('odeChart').toDataURL('image/png'); link.download='ode2-plot.png'; link.click();
+});
+
+document.getElementById('exportCsv').addEventListener('click', ()=> {
+  const r = odeChart._lastResults;
+  if (!r) { alert('保存する結果がありません'); return; }
+  let csv = 't,x,v\n';
+  for (let i=0;i<r.times.length;i++) csv += `${r.times[i]},${r.xs[i]},${r.vs[i]}\n`;
+  const blob = new Blob([csv], {type:'text/csv'}); const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='ode2-data.csv'; a.click(); URL.revokeObjectURL(url);
+});
+
+/* view mode change -> re-render from last results if present */
+viewMode.addEventListener('change', ()=> {
+  const r = odeChart._lastResults;
+  if (r) {
+    // trigger a re-display using the stored results
+    const tmpExpr = exprInput.value; // keep expr as is
+    exprInput.value = r.expr;
+    // emulate pressing run but without re-computation: restore data
+    if (viewMode.value === 'time') {
+      odeChart.data.datasets[0].data = r.times.map((tt,i)=>({x:tt,y:r.xs[i]}));
+      odeChart.data.datasets[1].data = r.times.map((tt,i)=>({x:tt,y:r.vs[i]}));
+      odeChart.update('none');
+    } else if (viewMode.value === 'phase') {
+      odeChart.data.datasets[0].data = r.xs.map((x,i)=>({x:r.xs[i], y:r.vs[i]}));
+      odeChart.data.datasets[1].data = [];
+      odeChart.update('none');
+    } else {
+      const m=Number(mEl.value), k=Number(kEl.value);
+      if (!m || !k) { alert('エネルギー表示には m,k が必要です'); }
+      else {
+        odeChart.data.datasets[0].data = r.times.map((t,i)=>({x:t, y:0.5*m*(r.vs[i]**2) + 0.5*k*(r.xs[i]**2)}));
+        odeChart.data.datasets[1].data=[];
+        odeChart.update('none');
+      }
+    }
+    exprInput.value = tmpExpr;
+  }
+});
+
+/* keyboard: Ctrl+Enter to run */
+window.addEventListener('keydown', (e)=>{ if ((e.ctrlKey||e.metaKey) && e.key==='Enter') runBtn.click(); });
+
+/* エクストラ: 最後に load エラーが出たら user にヒント */
+window.addEventListener('load', ()=> {
+  if (typeof math === 'undefined') {
+    alert('math.js の読み込みに失敗しました。ネットワーク接続を確認してください。');
+  }
+});
+</script>
+</body>
+</html>

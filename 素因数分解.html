@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>高速素因数分解ツール</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6fbff;
+  --card:#ffffff;
+  --muted:#6b7280;
+  --accent:#2563eb;
+  --accent-2:#10b981;
+  --glass: rgba(255,255,255,0.7);
+  --radius:12px;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; font-family:Inter,system-ui,-apple-system,"Noto Sans JP",sans-serif;
+  background: linear-gradient(180deg,#f8fbff,#fbfff7);
+  color:#0b1220; padding:18px;
+  -webkit-font-smoothing:antialiased;
+}
+.container{max-width:1100px;margin:0 auto}
+.header{display:flex;gap:14px;align-items:center;margin-bottom:14px}
+.logo{width:64px;height:64px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;color:white;font-weight:700}
+h1{margin:0;font-size:1.3rem}
+.lead{color:var(--muted);margin-top:6px;font-size:0.95rem}
+
+/* layout */
+.grid{display:grid;grid-template-columns:1fr 360px;gap:18px}
+@media(max-width:980px){ .grid{grid-template-columns:1fr} }
+
+/* card */
+.card{background:var(--card);padding:14px;border-radius:12px;border:1px solid rgba(10,20,40,0.04);box-shadow:0 8px 28px rgba(11,20,30,0.04)}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input[type="text"]{padding:10px;border-radius:8px;border:1px solid #eef5ff;width:100%;font-family:monospace}
+.small{font-size:0.9rem;color:var(--muted)}
+.btn{background:linear-gradient(180deg,#fff,#f2f7ff);border:1px solid rgba(0,0,0,0.06);padding:8px 12px;border-radius:999px;cursor:pointer;font-weight:700}
+.btn-primary{background:linear-gradient(90deg,var(--accent),#184bd8);color:#fff;border:none}
+.row{display:flex;gap:8px;align-items:center}
+.status{margin-top:10px;color:var(--muted);font-size:0.9rem}
+
+/* result */
+.result-block{margin-top:12px}
+.result-pre{white-space:pre-wrap;background:#0f1724;color:#e6f2ff;padding:12px;border-radius:8px;font-family:monospace}
+.pills{display:flex;gap:8px;flex-wrap:wrap}
+.pill{padding:6px 10px;border-radius:999px;background:#f1f7ff;color:#184bd8;font-weight:700;border:1px solid rgba(24,75,216,0.08);font-size:0.85rem}
+
+/* history */
+.history-list{max-height:360px;overflow:auto;margin-top:8px;border-radius:8px;padding:8px;border:1px dashed rgba(10,20,40,0.03)}
+.history-item{padding:8px;border-radius:8px;background:linear-gradient(180deg,#fff,#fbfdff);margin-bottom:8px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.small-muted{color:var(--muted);font-size:0.85rem}
+
+/* footer */
+.footer{margin-top:14px;color:var(--muted);font-size:0.9rem;text-align:center}
+kbd{background:#f3f4f6;border-radius:6px;padding:2px 6px;font-family:monospace;border:1px solid rgba(0,0,0,0.04)}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="logo">√</div>
+    <div>
+      <h1>素因数分解 — FastFactor</h1>
+      <div class="lead">大きめの整数にも対応するブラウザ内素因数分解器。試し割り＋Miller-Rabin＋Pollard-Rho で高速化。</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- 左: メイン -->
+    <div class="card">
+      <div><strong>入力（10進）</strong></div>
+      <div style="margin-top:8px">
+        <input id="inputBox" type="text" placeholder="例: 1234567891011121314151617（任意桁）">
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn btn-primary" id="factorBtn">Factor（分解）</button>
+        <button class="btn" id="cancelBtn" disabled>Cancel</button>
+        <button class="btn" id="clearBtn">Clear</button>
+        <div style="margin-left:auto" class="small-muted">進捗は下に表示</div>
+      </div>
+
+      <div class="status" id="status">状態: 待機中</div>
+
+      <div class="result-block" id="results">
+        <h3 style="margin-top:12px;margin-bottom:6px">結果</h3>
+        <div id="summary" class="small muted"></div>
+        <div id="factorsArea" style="margin-top:8px"></div>
+        <div id="treeArea" style="margin-top:10px"></div>
+        <div style="margin-top:12px" class="pills" id="actionPills"></div>
+      </div>
+    </div>
+
+    <!-- 右: サイド（履歴・設定） -->
+    <aside>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong>設定</strong>
+          <small class="small-muted">安全：コード入力不要</small>
+        </div>
+        <div style="margin-top:8px" class="small">Miller-Rabin ラウンド数:
+          <select id="mrRounds">
+            <option value="3">自動（高速）</option>
+            <option value="5">中（推奨）</option>
+            <option value="10">厳しめ（確率低）</option>
+          </select>
+        </div>
+        <div style="margin-top:8px" class="small">小さな素数を先に試す上限:
+          <input id="trialLimit" type="number" min="0" max="100000" value="10000" style="width:100px">
+        </div>
+        <div style="margin-top:10px" class="small muted">注意: とても大きい数（桁数100以上など）は分解に時間がかかることがあります。</div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong>履歴</strong>
+          <button class="btn" id="clearHistory">消去</button>
+        </div>
+        <div class="history-list" id="history"></div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <strong>操作</strong>
+        <div style="margin-top:8px" class="row">
+          <button class="btn" id="copyBtn">結果をコピー</button>
+          <button class="btn" id="downloadCsv">CSV ダウンロード</button>
+        </div>
+        <div style="margin-top:8px" class="small-muted">ショートカット: <kbd>Enter</kbd> で分解、<kbd>Esc</kbd> でキャンセル</div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+/* ======= ユーティリティ（BigInt版） ======= */
+const toBigInt = s => {
+  // remove spaces, commas
+  const t = String(s).replace(/[,\s]/g,'');
+  if(!/^\d+$/.test(t)) return null;
+  try { return BigInt(t); } catch(e){ return null; }
+};
+
+const now = () => performance.now();
+
+function sleep(ms=0){ return new Promise(r=>setTimeout(r,ms)); }
+
+/* gcd for BigInt */
+function gcd(a,b){
+  a = a < 0n ? -a : a; b = b < 0n ? -b : b;
+  while(b){
+    const t = a % b;
+    a = b; b = t;
+  }
+  return a;
+}
+
+/* modular exponentiation: base^exp mod mod */
+function modPow(base, exp, mod){
+  base = base % mod;
+  let result = 1n;
+  while(exp > 0n){
+    if(exp & 1n) result = (result * base) % mod;
+    base = (base * base) % mod;
+    exp >>= 1n;
+  }
+  return result;
+}
+
+/* Miller-Rabin (probabilistic). rounds controls accuracy */
+function isProbablePrime(n, rounds=5){
+  if(n < 2n) return false;
+  const smallPrimes = [2n,3n,5n,7n,11n,13n,17n,19n,23n,29n];
+  for(const p of smallPrimes){ if(n === p) return true; if(n % p === 0n) return false; }
+  // write n-1 as d*2^s
+  let d = n - 1n; let s = 0n;
+  while((d & 1n) === 0n){ d >>= 1n; s += 1n; }
+  const bases = [];
+  // deterministic small choices for 64-bit numbers
+  const det64 = [2n,325n,9375n,28178n,450775n,9780504n,1795265022n];
+  if(n < (1n<<64n)) {
+    for(const a of det64) if(a % n) bases.push(a % n);
+  } else {
+    // pseudo-random bases, but deterministic in this function for repeatability
+    const seedBases = [2n,3n,5n,7n,11n,13n,17n,19n,23n];
+    for(let i=0;i<Math.min(rounds,seedBases.length);i++) bases.push(seedBases[i]);
+    // if rounds larger, add more derived bases
+    for(let i=bases.length;i<rounds;i++) bases.push(BigInt(2 + i*2));
+  }
+
+  for(const a of bases){
+    if(a === 0n) continue;
+    let x = modPow(a, d, n);
+    if(x === 1n || x === n-1n) continue;
+    let cont = false;
+    for(let r=1n;r<s;r++){
+      x = (x * x) % n;
+      if(x === n-1n){ cont = true; break; }
+    }
+    if(cont) continue;
+    return false;
+  }
+  return true;
+}
+
+/* Brent's variant of Pollard's Rho */
+function pollardsRho(n, rndState) {
+  if(n % 2n === 0n) return 2n;
+  if(n % 3n === 0n) return 3n;
+  const rand = () => {
+    // simple LCG based on rndState (BigInt)
+    rndState = (rndState * 6364136223846793005n + 1442695040888963407n) & ((1n<<64n)-1n);
+    return rndState;
+  };
+  const seed = BigInt(Number(rand() % (n-2n))) + 2n;
+  let y = seed;
+  let c = BigInt(Number(rand() % (n-1n))) + 1n;
+  let m = 128n;
+  let g = 1n, r = 1n, q = 1n;
+  let x, ys;
+  while(g === 1n){
+    x = y;
+    for(let i=0n;i<r;i++) y = ( (y*y % n) + c ) % n;
+    let k = 0n;
+    while(k < r && g === 1n){
+      ys = y;
+      let lim = (m < r-k) ? m : r-k;
+      for(let i=0n;i<lim;i++){
+        y = ( (y*y % n) + c ) % n;
+        q = (q * (x>y ? x-y : y-x)) % n;
+      }
+      g = gcd(q < 0n ? -q : q, n);
+      k += lim;
+    }
+    r <<= 1n;
+  }
+  if(g === n){
+    do {
+      ys = ( (ys*ys % n) + c ) % n;
+      g = gcd(x>ys ? x-ys : ys-x, n);
+    } while(g === 1n);
+  }
+  return g;
+}
+
+/* Precompute small primes up to a limit (sieve) */
+function sievePrimes(limit) {
+  const lim = Number(limit);
+  const sieve = new Uint8Array(lim+1);
+  const primes = [];
+  for(let i=2;i<=lim;i++){
+    if(!sieve[i]){
+      primes.push(BigInt(i));
+      if(i * i <= lim){
+        for(let j = i*i; j<=lim; j+=i) sieve[j]=1;
+      }
+    }
+  }
+  return primes;
+}
+
+/* Global control (cancel) */
+let abortFlag = false;
+
+/* Factorization main function (async to allow UI updates and cancellation) */
+async function factorBigInt(n, options={}, progressCb=()=>{}) {
+  /* options:
+      - trialLimit: integer for trial sieve bound
+      - mrRounds: number of MR rounds
+  */
+  abortFlag = false;
+  const start = now();
+  const n0 = n;
+  const primes = sievePrimes(options.trialLimit || 10000);
+  const factors = [];
+
+  // trial division
+  for(const p of primes){
+    if(abortFlag) throw new Error('aborted');
+    if(p*p > n) break;
+    while(n % p === 0n){
+      factors.push(p);
+      n /= p;
+    }
+  }
+
+  if(n === 1n){
+    return {factors, time: now()-start};
+  }
+
+  // recursive function using Pollard Rho
+  async function factorRecursive(m){
+    if(abortFlag) throw new Error('aborted');
+    if(m === 1n) return;
+    if(isProbablePrime(m, options.mrRounds)){
+      factors.push(m);
+      return;
+    }
+    // try small divisors quickly
+    for(const p of primes){
+      if(p*p > m) break;
+      if(m % p === 0n){
+        while(m % p === 0n){ factors.push(p); m /= p; }
+        await factorRecursive(m);
+        return;
+      }
+    }
+
+    // Pollard-Rho loop
+    let divisor = null;
+    let tries = 0;
+    let rnd = BigInt(Math.floor(Math.random()*2**31));
+    while(tries < 20 && !divisor){
+      if(abortFlag) throw new Error('aborted');
+      divisor = pollardsRho(m, rnd);
+      if(divisor === m) divisor = null;
+      tries++;
+      rnd += 1n;
+      // yield to UI occasionally
+      if(tries % 3 === 0) await sleep(0);
+    }
+    if(!divisor){
+      // fallback: treat as probable prime (rare)
+      factors.push(m);
+      return;
+    }
+    await factorRecursive(divisor);
+    await factorRecursive(m / divisor);
+  }
+
+  await factorRecursive(n);
+
+  const elapsed = now()-start;
+  return {factors, time: elapsed};
+}
+
+/* format factors into exponent map and display strings */
+function formatFactorList(ary){
+  // ary: array of BigInt factors (not necessarily sorted)
+  const sorted = ary.map(x=>x).sort((a,b)=> (a<b?-1: a>b?1:0));
+  const map = new Map();
+  for(const f of sorted){
+    const key = f.toString();
+    map.set(key, (map.get(key)||0) + 1);
+  }
+  const expo = Array.from(map.entries()).map(([k,v])=> ({prime: BigInt(k), exp:v}));
+  return {sorted, expo};
+}
+
+/* ======= UI wiring ======= */
+const inputBox = document.getElementById('inputBox');
+const factorBtn = document.getElementById('factorBtn');
+const cancelBtn = document.getElementById('cancelBtn');
+const clearBtn = document.getElementById('clearBtn');
+const status = document.getElementById('status');
+const factorsArea = document.getElementById('factorsArea');
+const treeArea = document.getElementById('treeArea');
+const summary = document.getElementById('summary');
+const actionPills = document.getElementById('actionPills');
+
+const historyEl = document.getElementById('history');
+const mrSelect = document.getElementById('mrRounds');
+const trialLimitInput = document.getElementById('trialLimit');
+const copyBtn = document.getElementById('copyBtn');
+const downloadCsv = document.getElementById('downloadCsv');
+const clearHistoryBtn = document.getElementById('clearHistory');
+
+let lastResult = null;
+
+/* history in localStorage */
+function pushHistory(numStr, expo, timeMs){
+  const rec = {num:numStr, expo: expo.map(e=>({p:e.prime.toString(), exp:e.exp})), time:timeMs, timeStamp: Date.now()};
+  const key = 'fastfactor_history_v1';
+  const arr = JSON.parse(localStorage.getItem(key) || '[]');
+  arr.unshift(rec);
+  if(arr.length>50) arr.pop();
+  localStorage.setItem(key, JSON.stringify(arr));
+  renderHistory();
+}
+function renderHistory(){
+  const key='fastfactor_history_v1';
+  const arr = JSON.parse(localStorage.getItem(key) || '[]');
+  historyEl.innerHTML = '';
+  for(const r of arr){
+    const el = document.createElement('div');
+    el.className = 'history-item';
+    const left = document.createElement('div');
+    left.innerHTML = `<div style="font-family:monospace">${r.num}</div><div class="small-muted">${new Date(r.timeStamp).toLocaleString()}</div>`;
+    const right = document.createElement('div');
+    right.innerHTML = `<div style="text-align:right"><strong>${r.expo.map(x=>`${x.p}${x.exp>1? '^'+x.exp:''}`).join(' × ')}</strong><div class="small-muted">${(r.time/1000).toFixed(3)} s</div></div>`;
+    const loadBtn = document.createElement('button');
+    loadBtn.className = 'btn';
+    loadBtn.textContent = '再表示';
+    loadBtn.addEventListener('click', ()=>{ inputBox.value = r.num; runFactor(); });
+    right.appendChild(loadBtn);
+    el.appendChild(left); el.appendChild(right);
+    historyEl.appendChild(el);
+  }
+}
+
+clearHistoryBtn.addEventListener('click', ()=>{
+  localStorage.removeItem('fastfactor_history_v1');
+  renderHistory();
+});
+
+/* main run */
+async function runFactor(){
+  const text = inputBox.value.trim();
+  if(!text){ status.textContent = '状態: 入力してください'; return; }
+  const big = toBigInt(text);
+  if(big === null){ status.textContent = 'エラー: 入力は 10 進の整数のみ。カンマやスペースは取り除いてください。'; return; }
+  if(big < 2n){ status.textContent = '入力は 2 以上の整数にしてください。'; return; }
+  // warn long numbers
+  if(text.length > 200){
+    if(!confirm('桁数が非常に多い（>200桁）です。ブラウザでの分解は非常に時間がかかる可能性があります。続行しますか？')) return;
+  }
+  // set up options
+  const mrRounds = (mrSelect.value === '3') ? Math.max(3, Math.floor(text.length/50)+3) : Number(mrSelect.value);
+  const trialLimit = Number(trialLimitInput.value) || 10000;
+
+  // UI prepare
+  status.textContent = '準備中...';
+  factorBtn.disabled = true;
+  cancelBtn.disabled = false;
+  clearBtn.disabled = true;
+  actionPills.innerHTML = '';
+  factorsArea.innerHTML = '';
+  treeArea.innerHTML = '';
+  summary.textContent = '';
+
+  lastResult = null;
+  abortFlag = false;
+
+  const start = now();
+  try {
+    status.textContent = '試し割りと分割中...';
+    const result = await factorBigInt(big, {trialLimit, mrRounds}, (s)=>{ status.textContent = s; });
+    // result.factors is array of BigInt, maybe unsorted
+    const {sorted, expo} = formatFactorList(result.factors);
+    lastResult = {num:text, sorted, expo, time: result.time};
+
+    // display
+    displayResult(lastResult);
+    pushHistory(text, expo, result.time);
+    status.textContent = `完了: ${(result.time/1000).toFixed(3)} 秒`;
+  } catch(err){
+    if(err && err.message === 'aborted'){
+      status.textContent = 'キャンセルしました';
+    } else {
+      console.error(err);
+      status.textContent = 'エラー: ' + String(err);
+    }
+  } finally {
+    factorBtn.disabled = false;
+    cancelBtn.disabled = true;
+    clearBtn.disabled = false;
+  }
+}
+
+/* display helper */
+function displayResult(res){
+  if(!res) return;
+  const {num, sorted, expo, time} = res;
+  // summary
+  summary.innerHTML = `<div class="small-muted">入力: <span style="font-family:monospace">${num}</span> ／ ${sorted.length} 因子 （重複含む） ／ ${expo.length} 異なる素因数 ／ ${(time/1000).toFixed(3)} s</div>`;
+  // exponent display
+  const el = document.createElement('div');
+  el.innerHTML = `<div><strong>指数表示</strong></div>`;
+  const s = expo.map(e=>`${e.prime.toString()}${e.exp>1? '^'+e.exp:''}`).join(' × ');
+  const pre = document.createElement('div');
+  pre.className = 'result-pre';
+  pre.textContent = s || '(素数または未分解)';
+  el.appendChild(pre);
+  factorsArea.innerHTML = '';
+  factorsArea.appendChild(el);
+
+  // flat list
+  const flat = document.createElement('div');
+  flat.style.marginTop = '8px';
+  flat.innerHTML = `<div><strong>素因数（昇順、重複あり）</strong></div><div class="result-pre">${sorted.map(x=>x.toString()).join(' × ')}</div>`;
+  factorsArea.appendChild(flat);
+
+  // factor tree (simple)
+  const tree = document.createElement('div');
+  tree.innerHTML = `<div><strong>因子ツリー（簡易）</strong></div>`;
+  const ul = document.createElement('ul');
+  ul.style.lineHeight = '1.6';
+  for(const e of expo){
+    const li = document.createElement('li');
+    li.innerHTML = `<span style="font-family:monospace">${e.prime.toString()}</span> <span class="small-muted">^ ${e.exp}</span>`;
+    ul.appendChild(li);
+  }
+  tree.appendChild(ul);
+  treeArea.innerHTML = '';
+  treeArea.appendChild(tree);
+
+  // actions
+  actionPills.innerHTML = '';
+  const copyP = document.createElement('span'); copyP.className = 'pill'; copyP.textContent = 'コピー';
+  copyP.addEventListener('click', ()=>{ navigator.clipboard.writeText(s).then(()=>alert('コピーしました')); });
+  actionPills.appendChild(copyP);
+
+  const copyAll = document.createElement('span'); copyAll.className='pill'; copyAll.textContent='全文コピー';
+  copyAll.addEventListener('click', ()=>{ navigator.clipboard.writeText(`${num} = ${s}`); alert('コピーしました'); });
+  actionPills.appendChild(copyAll);
+}
+
+/* abort */
+factorBtn.addEventListener('click', ()=> runFactor());
+cancelBtn.addEventListener('click', ()=>{ abortFlag = true; status.textContent='キャンセル処理中...'; });
+clearBtn.addEventListener('click', ()=>{ inputBox.value=''; status.textContent='状態: 待機中'; factorsArea.innerHTML=''; treeArea.innerHTML=''; summary.innerHTML=''; });
+
+/* copy/download */
+copyBtn.addEventListener('click', async ()=>{
+  if(!lastResult) return alert('まだ結果がありません');
+  const s = lastResult.expo.map(e=>`${e.prime.toString()}${e.exp>1? '^'+e.exp:''}`).join(' × ');
+  await navigator.clipboard.writeText(`${lastResult.num} = ${s}`);
+  alert('クリップボードにコピーしました');
+});
+downloadCsv.addEventListener('click', ()=>{
+  if(!lastResult) return alert('まだ結果がありません');
+  const rows = [['number','prime','exp']].concat(lastResult.expo.map(e=>[lastResult.num, e.prime.toString(), String(e.exp)]));
+  const csv = rows.map(r=>r.join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `factors_${lastResult.num}.csv`; a.click();
+});
+
+/* keyboard shortcuts */
+inputBox.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){ e.preventDefault(); runFactor(); }
+  if(e.key === 'Escape'){ abortFlag = true; status.textContent='キャンセル処理中...'; }
+});
+
+renderHistory();
+</script>
+</body>
+</html>

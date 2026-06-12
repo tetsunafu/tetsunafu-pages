@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>多項式の複素根 — 高精度 & 使いやすく</title>
+
+<!-- KaTeX -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+
+<!-- Decimal.js (高精度) -->
+<script src="https://cdn.jsdelivr.net/npm/decimal.js@10.4.3/decimal.min.js"></script>
+
+<!-- Fraction.js (有理数検証) -->
+<script src="https://cdn.jsdelivr.net/npm/fraction.js@4.2.0/fraction.min.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f8fafc;--card:#ffffff;--muted:#64748b;--accent:#0ea5a4;--accent-2:#06b6d4}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP",sans-serif;background:var(--bg);color:#0b1220;padding:18px}
+.container{max-width:1100px;margin:0 auto}
+header{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+.logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:18px}
+h1{margin:0;font-size:1.2rem}
+.lead{color:var(--muted);font-size:0.95rem;margin-top:6px}
+.card{background:var(--card);padding:14px;border-radius:12px;border:1px solid rgba(11,20,30,0.04);box-shadow:0 8px 24px rgba(11,20,30,0.04)}
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.input-small{width:110px;padding:6px;border-radius:8px;border:1px solid #e6eef6}
+.grid{display:grid;grid-template-columns:1fr 360px;gap:18px;margin-top:14px}
+@media(max-width:980px){.grid{grid-template-columns:1fr}}
+.matrix{width:100%;overflow:auto;border-radius:8px;padding:12px;background:#f1fdfc;border:1px solid rgba(11,20,30,0.04)}
+.coeff-row{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+.coeff-row input, textarea{width:100%;padding:8px;border-radius:8px;border:1px solid #e6eef6;font-family:monospace}
+.btn{padding:8px 12px;border-radius:999px;border:1px solid rgba(11,20,30,0.06);cursor:pointer;background:transparent}
+.btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;border:none;font-weight:700}
+.small{font-size:0.9rem;color:var(--muted)}
+.result{margin-top:12px}
+.root-card{padding:10px;border-radius:8px;background:#fff;border:1px solid rgba(11,20,30,0.04);margin-bottom:8px}
+.katex-block{padding:6px;background:#fff;border-radius:6px;border:1px solid rgba(11,20,30,0.04);margin-top:6px}
+.footer{margin-top:14px;color:var(--muted);font-size:0.9rem;text-align:center}
+.note{font-size:0.85rem;color:var(--muted);margin-top:8px}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="logo">Roots</div>
+    <div>
+      <h1>多項式の複素根 — 高精度版</h1>
+      <div class="lead">高精度（Decimal.js）な Durand–Kerner 法での多項式の複素数解数値計算。</div>
+    </div>
+  </header>
+
+  <div class="card controls">
+    <div>
+      <label class="small">次数 (n)</label><br>
+      <input id="degree" type="number" min="1" value="4" class="input-small">
+    </div>
+
+    <div>
+      <label class="small">有効桁数（precision）</label><br>
+      <input id="prec" type="number" min="16" max="300" value="80" class="input-small">
+    </div>
+
+    <div>
+      <label class="small">最大反復回数</label><br>
+      <input id="maxIter" type="number" min="1" value="200" class="input-small">
+    </div>
+
+    <div>
+      <label class="small">収束許容差（絶対）</label><br>
+      <input id="tol" type="text" value="1e-30" class="input-small">
+    </div>
+
+    <div style="align-self:end">
+      <button id="gen" class="btn btn-primary">係数入力を生成</button>
+    </div>
+
+    <div style="margin-left:auto;text-align:right">
+      <div class="small">ワンライン入力から直接実行できます（下の「係数を直接入力」参照）。</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- 左：入力 -->
+    <main class="card">
+      <strong>係数入力（最高次→定数項）</strong>
+      <div class="matrix" id="coeffArea">
+        <div class="note">係数を一括で入力したい場合は下の「係数を直接入力」欄にカンマ区切りで書いて「一行で解く」を押すと最小操作で解けます。</div>
+        <div style="margin-top:8px;">
+          <div style="margin-bottom:6px"><textarea id="coeffLine" rows="2" placeholder="例: 1, 0, -3, 2  （1*x^3 + 0*x^2 -3*x + 2）"></textarea></div>
+          <div style="display:flex;gap:8px">
+            <button id="solveLineBtn" class="btn btn-primary">一行で解く</button>
+            <button id="parseBtn" class="btn">個別入力フォームに展開</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+        <button id="solveBtn" class="btn btn-primary">解く</button>
+        <button id="clearBtn" class="btn">クリア</button>
+        <button id="plotBtn" class="btn">複素平面でプロット</button>
+        <button id="copyBtn" class="btn">結果をコピー</button>
+      </div>
+
+      <div id="resultArea" class="result"></div>
+    </main>
+
+    <!-- 右：説明 -->
+    <aside class="card">
+      <strong>使い方 & 注意</strong>
+      <div class="small" style="margin-top:8px">
+        <ol>
+          <li>次数を入力して「係数入力を生成」または「係数を直接入力」にカンマで入力。</li>
+          <li>最高次係数は 0 にしないでください。</li>
+          <li>有効桁数 (precision) を指定すると、表示はその精度で四捨五入されます（内部計算もその精度）。</li>
+          <li>根の絶対値が 10^{-precision} より小さい場合は「0 か」を検証します（係数が整数のときは厳密検証）。</li>
+          <li>各根の残差 |p(z)| を見て精度を判断してください。</li>
+        </ol>
+      </div>
+
+      <details style="margin-top:10px">
+        <summary>アルゴリズム（要点）</summary>
+        <div class="small" style="margin-top:8px">
+          Durand–Kerner（DK）法を使います。分母が小さくなる場合は小さな摂動で安定化。係数が整数のとき、実根は Fraction.js を使って正確性を厳密に検証します。
+        </div>
+      </details>
+    </aside>
+  </div>
+</div>
+
+<script>
+/* ---------- ユーティリティ / 高精度複素数クラス ---------- */
+const D = Decimal; // alias
+
+class ComplexD {
+  constructor(re, im){
+    this.re = new D(re);
+    this.im = new D(im||0);
+  }
+  clone(){ return new ComplexD(this.re, this.im); }
+  add(b){ return new ComplexD(this.re.plus(b.re), this.im.plus(b.im)); }
+  sub(b){ return new ComplexD(this.re.minus(b.re), this.im.minus(b.im)); }
+  mul(b){ // (a+bi)(c+di)
+    const a=this.re, bb=this.im, c=b.re, d=b.im;
+    return new ComplexD(a.times(c).minus(bb.times(d)), a.times(d).plus(bb.times(c)));
+  }
+  div(b){
+    const a=this.re, bb=this.im, c=b.re, d=b.im;
+    const denom = c.times(c).plus(d.times(d));
+    if(denom.isZero()) return new ComplexD(new D(NaN), new D(NaN));
+    const re = a.times(c).plus(bb.times(d)).div(denom);
+    const im = bb.times(c).minus(a.times(d)).div(denom);
+    return new ComplexD(re, im);
+  }
+  abs(){ return this.re.times(this.re).plus(this.im.times(this.im)).sqrt(); }
+  isFinite(){ return this.re.isFinite() && this.im.isFinite(); }
+}
+
+/* ---------- DOM 参照 ---------- */
+const degreeEl = document.getElementById('degree');
+const genBtn = document.getElementById('gen');
+const coeffArea = document.getElementById('coeffArea');
+const solveBtn = document.getElementById('solveBtn');
+const clearBtn = document.getElementById('clearBtn');
+const resultArea = document.getElementById('resultArea');
+const precEl = document.getElementById('prec');
+const tolEl = document.getElementById('tol');
+const maxIterEl = document.getElementById('maxIter');
+const coeffLine = document.getElementById('coeffLine');
+const solveLineBtn = document.getElementById('solveLineBtn');
+const parseBtn = document.getElementById('parseBtn');
+const copyBtn = document.getElementById('copyBtn');
+const plotBtn = document.getElementById('plotBtn');
+
+/* ---------- 入力支援: 個別入力フォームを生成 ---------- */
+function generateCoeffsInputs(){
+  coeffArea.innerHTML = '';
+  const n = Math.max(1, Math.floor(Number(degreeEl.value) || 1));
+  const wrapper = document.createElement('div');
+  wrapper.className = 'matrix-inner';
+  for(let k = n; k >= 0; k--){
+    const row = document.createElement('div');
+    row.className = 'coeff-row';
+    const lbl = document.createElement('div');
+    lbl.style.minWidth = '120px';
+    lbl.textContent = (k===0) ? `定数項 (x^0)` : `x^${k} 項`;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = (k===n) ? '最高次係数（例: 1）' : '係数 (例: -2.5)';
+    input.dataset.pow = String(k);
+    row.appendChild(lbl);
+    row.appendChild(input);
+    wrapper.appendChild(row);
+  }
+  coeffArea.appendChild(wrapper);
+}
+
+/* parse one-line coefficients into array of strings (highest→lowest) */
+function parseCoeffLineToArray(line){
+  if(!line) return null;
+  // split by comma or whitespace
+  const items = line.split(/[,;\s]+/).map(s=>s.trim()).filter(s=>s.length>0);
+  if(items.length===0) return null;
+  return items;
+}
+
+/* fill generated inputs from one-line */
+function fillInputsFromLine(arr){
+  // ensure inputs exist
+  const inputs = coeffArea.querySelectorAll('input');
+  if(inputs.length===0){
+    // generate form with appropriate degree
+    degreeEl.value = Math.max( (arr.length-1), 1);
+    generateCoeffsInputs();
+  }
+  const ins = Array.from(coeffArea.querySelectorAll('input'));
+  // if length mismatch, regenerate
+  if(ins.length !== arr.length){
+    degreeEl.value = arr.length - 1;
+    generateCoeffsInputs();
+  }
+  const newIns = Array.from(coeffArea.querySelectorAll('input'));
+  for(let i=0;i<arr.length;i++){
+    newIns[i].value = arr[i];
+  }
+}
+
+/* read coefficients from individual inputs (if present), else from line */
+function readCoeffs(){
+  // try individual inputs
+  const inputs = Array.from(coeffArea.querySelectorAll('input'));
+  if(inputs.length>0){
+    // return array of strings in order as displayed (highest->lowest)
+    return inputs.map(i=> (i.value.trim()==='') ? '0' : i.value.trim());
+  }
+  // else fallback to one-line
+  const line = coeffLine.value.trim();
+  const arr = parseCoeffLineToArray(line);
+  if(arr) return arr;
+  return null;
+}
+
+/* ---------- 表示用フォーマッタ（×10^ 表記、LaTeX 生成） ---------- */
+function decimalToSciLatex(dec, sig){
+  // dec: Decimal instance; sig: significant digits
+  // handle zero
+  if(!(dec instanceof D)) dec = new D(dec);
+  if(!dec.isFinite()) return String(dec);
+  if(dec.isZero()) return '0';
+  // use toExponential(sig-1) -> like "1.2345e+3"
+  const s = dec.toExponential(sig-1);
+  // parse
+  const m = s.match(/^([\-+]?[0-9]*\.?[0-9]+)e([+\-]?\d+)$/i);
+  if(!m) return dec.toString();
+  const mant = m[1];
+  const exp = Number(m[2]);
+  // produce LaTeX: mant × 10^{exp}
+  // trim trailing zeros in mant
+  let mantTrim = mant.replace(/\.?0+$/,'');
+  return `${mantTrim}\\times10^{${exp}}`;
+}
+function complexToLatex(z, sig, integerCoeffs=false, zeroThreshold=null, maybeExactZero=false){
+  // z: ComplexD
+  // if near-zero and maybeExactZero true, special handling done outside
+  const re = z.re, im = z.im;
+  const smallRe = re.abs().lt(zeroThreshold);
+  const smallIm = im.abs().lt(zeroThreshold);
+  // if purely real (after rounding)
+  if(smallIm){
+    // use re rounded
+    return decimalToSciLatex(re.toSignificantDigits(sig), sig);
+  } else if(smallRe){
+    // purely imaginary
+    const imLatex = decimalToSciLatex(im.toSignificantDigits(sig), sig);
+    return `${imLatex} i`;
+  } else {
+    // both nonzero: format as a + b i with both in sci form (no common exponent merging for simplicity)
+    const reLatex = decimalToSciLatex(re.toSignificantDigits(sig), sig);
+    const imLatex = decimalToSciLatex(im.abs().toSignificantDigits(sig), sig);
+    const sign = im.gte(0) ? '+' : '-';
+    return `${reLatex} ${sign} ${imLatex} i`;
+  }
+}
+
+/* ---------- 多項式評価（ComplexD を使う Horner） ---------- */
+function polyEvalComplex(arrCoeffs, z){
+  // arrCoeffs: array of strings [a_n, a_{n-1}, ..., a0]
+  // Horner: res = a_n; for each next coeff: res = res * z + a_k
+  let res = new ComplexD(arrCoeffs[0], 0);
+  for(let i=1;i<arrCoeffs.length;i++){
+    const coeff = new D(arrCoeffs[i]);
+    res = res.mul(z).add(new ComplexD(coeff, 0));
+  }
+  return res;
+}
+
+/* ---------- 多項式評価（Fraction）: 有理検証用 ---------- */
+function polyEvalFraction(intCoeffs, xFrac){
+  // intCoeffs: array of integers or Fraction-compatible; xFrac: Fraction
+  // Horner
+  let res = new Fraction( intCoeffs[0] );
+  for(let i=1;i<intCoeffs.length;i++){
+    res = res.mul(xFrac).add( new Fraction(intCoeffs[i]) );
+  }
+  return res;
+}
+
+/* ---------- Durand–Kerner 実装（Decimal精度で） ---------- */
+function durandKerner(arrCoeffs, prec=80, tolStr='1e-30', maxIter=200){
+  const n = arrCoeffs.length - 1;
+  D.set({precision: prec});
+  const tol = new D(tolStr);
+  const a_n = new D(arrCoeffs[0]).abs();
+  if(a_n.isZero()) throw new Error('最高次係数が 0 です（最高次係数は 0 にできません）');
+  // initial radius R = 1 + max |a_k / a_n|
+  let maxRatio = new D(0);
+  for(let k=1;k<=n;k++){
+    const ratio = new D(arrCoeffs[k]).abs().div(a_n);
+    if(ratio.greaterThan(maxRatio)) maxRatio = ratio;
+  }
+  let R = new D(1).plus(maxRatio);
+  // initial roots: R * exp(2π i * k/n)
+  let roots = [];
+  for(let k=0;k<n;k++){
+    const angle = 2*Math.PI*k/n;
+    const re = R.times(new D(Math.cos(angle)));
+    const im = R.times(new D(Math.sin(angle)));
+    roots.push(new ComplexD(re, im));
+  }
+  // iterate
+  let converged = false;
+  let iter = 0;
+  for(iter=0; iter<maxIter; iter++){
+    let maxChange = new D(0);
+    const newRoots = new Array(n);
+    for(let i=0;i<n;i++){
+      const zi = roots[i];
+      // denominator product
+      let denom = new ComplexD(1,0);
+      for(let j=0;j<n;j++){
+        if(i===j) continue;
+        let diff = zi.sub(roots[j]);
+        // if diff is too small, jitter
+        if(diff.abs().lt(new D(10).pow(-Math.max(prec/2, 20)))){
+          const jitter = new ComplexD(new D(10).pow(-Math.max(prec/2, 20)), new D(0));
+          diff = diff.add(jitter);
+        }
+        denom = denom.mul(diff);
+      }
+      const pzi = polyEvalComplex(arrCoeffs, zi);
+      // delta = p(zi) / denom
+      const delta = pzi.div(denom);
+      const updated = zi.sub(delta);
+      newRoots[i] = updated;
+      const change = zi.sub(updated).abs();
+      if(change.greaterThan(maxChange)) maxChange = change;
+    }
+    roots = newRoots;
+    if(maxChange.lt(tol)){ converged = true; break; }
+  }
+  // residuals
+  const residuals = roots.map(z => polyEvalComplex(arrCoeffs, z).abs());
+  return {roots, residuals, iterations: iter+1, converged};
+}
+
+/* ---------- 有理検証（実数根） ---------- */
+function tryRationalVerification(z, coeffs){
+  // coeffs: array of strings (should be integer strings)
+  const allInt = coeffs.every(s => /^-?\d+$/.test(String(s).trim()));
+  if(!allInt) return null;
+  // check imag is near zero
+  const imagAbs = z.im.abs();
+  // threshold: 10^{-prec}
+  const prec = Math.max(16, parseInt(precEl.value)||80);
+  const thresh = new D(10).pow(-prec);
+  if(imagAbs.greaterThan(thresh)) return null;
+  // attempt Fraction approximation of real part
+  const realDecimal = z.re.toString();
+  let frac;
+  try{
+    frac = new Fraction(realDecimal); // Fraction accepts decimal strings
+  }catch(e){
+    // fallback
+    return null;
+  }
+  // verify p(frac) == 0 exactly (use integer coefficients)
+  const intCoeffs = coeffs.map(s => parseInt(s, 10));
+  const val = polyEvalFraction(intCoeffs, frac);
+  if(val.equals(0)) return frac;
+  return null;
+}
+
+/* ---------- 補助: 小さい値は 0 か検証 ---------- */
+function isNearZeroAndVerify(z, coeffs){
+  // returns {isNear:true/false, exactZero:true/false}
+  const prec = Math.max(16, parseInt(precEl.value)||80);
+  const thresh = new D(10).pow(-prec);
+  const mag = z.abs();
+  if(mag.lt(thresh)){
+    // if coefficients all integers -> check p(0)==0 exactly
+    const allInt = coeffs.every(s => /^-?\d+$/.test(String(s).trim()));
+    if(allInt){
+      const intCoeffs = coeffs.map(x => parseInt(x,10));
+      // p(0) is just constant term a0
+      const a0 = intCoeffs[intCoeffs.length - 1];
+      return {isNear:true, exactZero: (a0 === 0)};
+    } else {
+      // not integer coefficients -> use approximate residual at 0
+      // but p(0) = constant term; if its magnitude < thresh then maybe zero
+      const a0 = new D(coeffs[coeffs.length - 1]);
+      return {isNear:true, exactZero: a0.abs().lt(thresh)};
+    }
+  }
+  return {isNear:false, exactZero:false};
+}
+
+/* ---------- 表示（LaTeX）とロジック統合 ---------- */
+function renderResults(arrCoeffs, res){
+  resultArea.innerHTML = '';
+  const prec = Math.max(16, parseInt(precEl.value)||80);
+  // threshold for near-zero detection: 10^{-prec}
+  const thresh = new D(10).pow(-prec);
+  const info = document.createElement('div');
+  info.className = 'small';
+  info.textContent = `反復: ${res.iterations} 回 — 収束: ${res.converged ? 'はい' : 'いいえ'} — 表示精度: ${prec} 有効桁`;
+  resultArea.appendChild(info);
+
+  // sort roots by real then imag (for stable display)
+  const indexed = res.roots.map((z,i)=>({z,i,residual:res.residuals[i]}));
+  indexed.sort((a,b)=>{
+    const ar = a.z.re, br = b.z.re;
+    if(!ar.eq(br)) return ar.minus(br).toNumber();
+    return a.z.im.minus(b.z.im).toNumber();
+  });
+
+  // integer coeffs?
+  const allInt = arrCoeffs.every(s => /^-?\d+$/.test(String(s).trim()));
+
+  for(const item of indexed){
+    const z = item.z;
+    const residual = item.residual;
+    const card = document.createElement('div'); card.className='root-card';
+    // check near-zero
+    const near = isNearZeroAndVerify(z, arrCoeffs);
+    let latex;
+    if(near.isNear && near.exactZero){
+      // exact integer zero
+      latex = `x_{${item.i+1}} = 0 \\quad (\\text{正確な 0}) \\\\ |p(z)| = ${decimalToSciLatex(residual.toSignificantDigits(prec), prec)}`;
+    } else {
+      // try rational verification if applicable
+      let frac = null;
+      if(allInt){
+        try{ frac = tryRationalVerification(z, arrCoeffs); }catch(e){ frac=null; }
+      }
+      if(frac){
+        // exact rational root
+        // format fraction to LaTeX
+        const fstr = frac.toFraction(true);
+        const latexFrac = fstr.includes('/') ? `\\dfrac{${Math.abs(frac.n)}}{${frac.d}}` : `${Math.abs(frac.n)}`;
+        const sign = (frac.s<0) ? '-' : '';
+        latex = `x_{${item.i+1}} = ${sign}${latexFrac} \\quad (正確) \\\\ \\text{近似 } ${complexToLatex(z, prec, allInt, thresh)} ,\\; |p(z)| = ${decimalToSciLatex(residual.toSignificantDigits(prec), prec)}`;
+      } else {
+        // normal approximate display: round to precision and format scientific ×10^
+        // if near but not exact zero, indicate "近似0（非ゼロ）"
+        if(near.isNear && !near.exactZero){
+          latex = `x_{${item.i+1}} \\approx 0 \\; (\\text{近似 0 — ただし非ゼロ}) \\\\ |p(z)| = ${decimalToSciLatex(residual.toSignificantDigits(prec), prec)}`;
+        } else {
+          // general complex
+          const cz = complexToLatex(z, prec, allInt, thresh);
+          latex = `x_{${item.i+1}} \\approx ${cz} \\\\ |p(z)| = ${decimalToSciLatex(residual.toSignificantDigits(prec), prec)}`;
+        }
+      }
+    }
+    // render KaTeX
+    const latexDiv = document.createElement('div'); latexDiv.className='katex-block';
+    try{
+      katex.render(latex, latexDiv, {throwOnError:false, displayMode:false});
+    }catch(e){
+      latexDiv.textContent = latex;
+    }
+    card.appendChild(latexDiv);
+    resultArea.appendChild(card);
+  }
+
+  // final note
+  const note = document.createElement('div');
+  note.className = 'note';
+  note.innerHTML = `注意: 内部計算は指定した有効桁（${prec}）で行われます。表示は同じ精度で丸めています。残差が小さいほど信頼できます。`;
+  resultArea.appendChild(note);
+}
+
+/* ---------- Solve ハンドラ（行入力 or 個別入力から） ---------- */
+async function solveFromCoeffs(arr){
+  if(!arr || arr.length<2){ alert('係数が不正です'); return; }
+  // arr: array strings (highest -> lowest)
+  try{
+    const prec = Math.max(16, parseInt(precEl.value)||80);
+    const maxIter = Math.max(1, parseInt(maxIterEl.value)||200);
+    const tol = tolEl.value || '1e-30';
+    // ensure leading coeff not zero
+    if(new D(arr[0]).isZero()){ alert('最高次係数が 0 です。'); return; }
+    // set Decimal precision
+    D.set({precision: prec});
+    // run DK
+    resultArea.innerHTML = '<div class="small">計算中…（高精度・高次数は時間がかかります）</div>';
+    await new Promise(r=>setTimeout(r,50));
+    const res = durandKerner(arr, prec, tol, maxIter);
+    renderResults(arr, res);
+  }catch(e){
+    resultArea.innerHTML = `<div style="color:#b91c1c">エラー: ${String(e)}</div>`;
+    console.error(e);
+  }
+}
+
+/* ---------- イベント: 一行で解く ---------- */
+solveLineBtn.addEventListener('click', ()=>{
+  const arr = parseCoeffLineToArray(coeffLine.value);
+  if(!arr || arr.length<2){ alert('係数をカンマ区切り等で入力してください。例: 1,0,-3,2'); return; }
+  // trim items
+  const trimmed = arr.map(s=>s.trim());
+  // solve directly
+  solveFromCoeffs(trimmed);
+});
+
+/* ---------- parseBtn: 個別入力に展開 ---------- */
+parseBtn.addEventListener('click', ()=>{
+  const arr = parseCoeffLineToArray(coeffLine.value);
+  if(!arr){ alert('パースできません'); return; }
+  // set degree
+  degreeEl.value = arr.length - 1;
+  generateCoeffsInputs();
+  // fill
+  fillInputsFromLine(arr);
+});
+
+/* ---------- gen: 生成 ---------- */
+genBtn.addEventListener('click', ()=> generateCoeffsInputs());
+
+/* ---------- solveBtn: 個別入力を読む ---------- */
+solveBtn.addEventListener('click', ()=>{
+  const arr = readCoeffs();
+  if(!arr || arr.length<2){ alert('係数が読み取れません。個別入力か一行入力を確認してください。'); return; }
+  solveFromCoeffs(arr);
+});
+
+/* ---------- clear ---------- */
+clearBtn.addEventListener('click', ()=>{
+  coeffLine.value = '';
+  coeffArea.innerHTML = '<div class="note">係数を一括で入力したい場合は上の欄にカンマ区切りで入力してください。</div>';
+  resultArea.innerHTML = '';
+});
+
+/* ---------- copy results ---------- */
+copyBtn.addEventListener('click', ()=>{
+  if(!resultArea.innerText) { alert('結果がありません'); return; }
+  navigator.clipboard?.writeText(resultArea.innerText).then(()=> alert('結果をコピーしました')).catch(()=> alert('コピーに失敗しました'));
+});
+
+/* ---------- 簡易プロット ---------- */
+plotBtn.addEventListener('click', async ()=>{
+  const arr = readCoeffs();
+  if(!arr) { alert('係数がありません'); return; }
+  // small UI panel
+  const panel = document.createElement('div');
+  panel.style.position='fixed'; panel.style.left='50%'; panel.style.top='50%'; panel.style.transform='translate(-50%,-50%)';
+  panel.style.background='#fff'; panel.style.padding='12px'; panel.style.border='1px solid #ddd'; panel.style.borderRadius='8px'; panel.style.zIndex=9999;
+  const canvas = document.createElement('canvas'); canvas.width=640; canvas.height=640; canvas.style.background='#fbfffe'; panel.appendChild(canvas);
+  const close = document.createElement('button'); close.textContent='閉じる'; close.className='btn'; close.style.marginLeft='8px';
+  close.addEventListener('click', ()=> panel.remove());
+  panel.appendChild(close);
+  document.body.appendChild(panel);
+  const ctx = canvas.getContext('2d');
+  try{
+    const prec = Math.max(16, parseInt(precEl.value)||80);
+    const res = durandKerner(arr, prec, tolEl.value||'1e-30', parseInt(maxIterEl.value)||200);
+    const roots = res.roots;
+    // compute bounding box
+    const reVals = roots.map(z=>Number(z.re.toNumber()));
+    const imVals = roots.map(z=>Number(z.im.toNumber()));
+    const minR = Math.min(...reVals), maxR = Math.max(...reVals);
+    const minI = Math.min(...imVals), maxI = Math.max(...imVals);
+    const pad = 1;
+    const xmin = minR - pad, xmax = maxR + pad, ymin = minI - pad, ymax = maxI + pad;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    // axes lines
+    ctx.strokeStyle='#eee'; ctx.lineWidth=1;
+    for(let gx=0; gx<=8; gx++){
+      const x = gx/8*canvas.width;
+      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke();
+    }
+    // plot points
+    for(let i=0;i<roots.length;i++){
+      const z = roots[i];
+      const x = Number(z.re.toNumber()), y = Number(z.im.toNumber());
+      const px = ( (x - xmin) / (xmax - xmin) ) * canvas.width;
+      const py = canvas.height - ( (y - ymin) / (ymax - ymin) ) * canvas.height;
+      ctx.fillStyle = '#0ea5a4';
+      ctx.beginPath(); ctx.arc(px,py,6,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#000'; ctx.font='12px monospace';
+      ctx.fillText(`z${i+1}`, px+8, py+4);
+    }
+  }catch(e){
+    ctx.fillStyle='#b91c1c'; ctx.fillText('プロット失敗: '+String(e), 10, 20);
+  }
+});
+</script>
+</body>
+</html>

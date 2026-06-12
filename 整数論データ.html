@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>整数論データ 生成</title>
+    
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=BIZ+UDMincho&display=swap" rel="stylesheet">
+
+    <style>
+        /* 和風の落ち着いたベース設定 */
+        body {
+            font-family: 'BIZ UDMincho', serif;
+            background-color: #f5f5f0; /* 生成り色 */
+            color: #44403c; /* 墨色グレー */
+        }
+        .MathJax {
+            font-size: 1.05em !important;
+        }
+        dialog::backdrop {
+            background-color: rgba(28, 25, 23, 0.6);
+            backdrop-filter: blur(4px);
+        }
+        /* スクロールバーの調整 */
+        .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #e7e5e4; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #a8a29e; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #78716c; }
+    </style>
+</head>
+<body class="min-h-screen p-4 sm:p-6 md:p-8 flex flex-col items-center">
+
+    <main class="w-full max-w-5xl bg-[#fafaf9] rounded-md shadow-lg shadow-stone-300/50 p-6 md:p-8 border-2 border-stone-200 relative">
+        
+        <header class="mb-8 text-center border-b border-stone-300 pb-6">
+            <h1 class="text-2xl md:text-3xl font-bold text-stone-800 tracking-widest">整数論データ 生成</h1>
+            <p class="text-sm text-stone-500 mt-2 tracking-widest">Number Theory Data</p>
+        </header>
+
+        <div class="space-y-8">
+            
+            <section>
+                <h2 class="text-lg font-bold text-stone-700 mb-4 flex items-center gap-2">
+                    <span class="flex items-center justify-center w-6 h-6 border border-stone-400 bg-stone-100 text-stone-700 text-sm font-sans">1</span>
+                    抽出するデータを選択
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3" id="deta_choice">
+                    <div>
+                        <input type="checkbox" value="yakusuu" name="check" id="check1" class="peer hidden" checked>
+                        <label for="check1" class="block h-full p-3 bg-stone-50 border border-stone-300 rounded-sm cursor-pointer transition-all hover:bg-stone-100 peer-checked:bg-[#e8ece5] peer-checked:border-[#5c6e58] peer-checked:text-[#3f4b3b]">
+                            <span class="font-bold text-sm block mb-1 tracking-wide">i. 正の約数</span>
+                            <span class="text-xs opacity-80">\(\{x\in\mathbb{N}\mid n|x\}\)</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="checkbox" value="yaku_kosuu" name="check" id="check2" class="peer hidden" checked>
+                        <label for="check2" class="block h-full p-3 bg-stone-50 border border-stone-300 rounded-sm cursor-pointer transition-all hover:bg-stone-100 peer-checked:bg-[#e8ece5] peer-checked:border-[#5c6e58] peer-checked:text-[#3f4b3b]">
+                            <span class="font-bold text-sm block mb-1 tracking-wide">ii. 正の約数の個数</span>
+                            <span class="text-xs opacity-80">\(\lvert\{x\in\mathbb{N}\mid n|x\}\rvert\)</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="checkbox" value="soinsuu" name="check" id="check3" class="peer hidden" checked>
+                        <label for="check3" class="block h-full p-3 bg-stone-50 border border-stone-300 rounded-sm cursor-pointer transition-all hover:bg-stone-100 peer-checked:bg-[#e8ece5] peer-checked:border-[#5c6e58] peer-checked:text-[#3f4b3b]">
+                            <span class="font-bold text-sm block mb-1 tracking-wide">iii. 素因数分解</span>
+                            <span class="text-xs opacity-80">\(\{p\in\mathbb{P}\mid n|p\}\)</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="checkbox" value="sosuu" name="check" id="check4" class="peer hidden">
+                        <label for="check4" class="block h-full p-3 bg-stone-50 border border-stone-300 rounded-sm cursor-pointer transition-all hover:bg-stone-100 peer-checked:bg-[#e8ece5] peer-checked:border-[#5c6e58] peer-checked:text-[#3f4b3b]">
+                            <span class="font-bold text-sm block mb-1 tracking-wide">iv. 以下の素数の個数</span>
+                            <span class="text-xs opacity-80">\(\lvert\mathbb{P}_{\leq n}\rvert\)</span>
+                        </label>
+                    </div>
+                    <div class="md:col-span-2">
+                        <input type="checkbox" value="sosuu" name="check" id="check5" class="peer hidden">
+                        <label for="check5" class="block h-full p-3 bg-stone-50 border border-stone-300 rounded-sm cursor-pointer transition-all hover:bg-stone-100 peer-checked:bg-[#e8ece5] peer-checked:border-[#5c6e58] peer-checked:text-[#3f4b3b]">
+                            <span class="font-bold text-sm block mb-1 tracking-wide">v. 以下の最大の素数砂漠の長さ</span>
+                            <span class="text-[10px] opacity-80">\((i,j)\in\{(a,b)\in\mathbb{N}_{\leq n}^2\mid\forall x\in[a,b]\Rightarrow x\notin\mathbb{P}\},\max\lvert j-i\rvert\)</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="checkbox" value="kinji1" name="check" id="check6" class="peer hidden">
+                        <label for="check6" class="block h-full p-3 bg-stone-50 border border-stone-300 rounded-sm cursor-pointer transition-all hover:bg-stone-100 peer-checked:bg-[#e8ece5] peer-checked:border-[#5c6e58] peer-checked:text-[#3f4b3b]">
+                            <span class="font-bold text-sm block mb-1 tracking-wide">vi. 素数計数関数の近似①</span>
+                            <span class="text-xs opacity-80">\(\dfrac{n}{\log n}\)</span>
+                        </label>
+                    </div>
+                    <div class="md:col-span-2">
+                        <input type="checkbox" value="kinji2" name="check" id="check7" class="peer hidden">
+                        <label for="check7" class="block h-full p-3 bg-stone-50 border border-stone-300 rounded-sm cursor-pointer transition-all hover:bg-stone-100 peer-checked:bg-[#e8ece5] peer-checked:border-[#5c6e58] peer-checked:text-[#3f4b3b]">
+                            <span class="font-bold text-sm block mb-1 tracking-wide">vii. 素数計数関数の近似②</span>
+                            <span class="text-xs opacity-80">\(\displaystyle\int^n_2\dfrac{dt}{\log t}\)</span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <hr class="border-stone-300 border-dashed">
+
+            <section class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                
+                <div>
+                    <h2 class="text-lg font-bold text-stone-700 mb-4 flex items-center gap-2">
+                        <span class="flex items-center justify-center w-6 h-6 border border-stone-400 bg-stone-100 text-stone-700 text-sm font-sans">2</span>
+                        表示範囲 (\(n\)) を設定
+                    </h2>
+                    <div class="flex items-center gap-3 bg-stone-50 p-3 rounded-sm border border-stone-300 w-fit">
+                        <label class="flex items-center gap-2 text-sm font-bold text-stone-600">
+                            下限
+                            <input type="number" id="input_min" min="2" value="2" class="w-20 px-2 py-1.5 border border-stone-300 rounded focus:outline-none focus:border-[#5c6e58] focus:ring-1 focus:ring-[#5c6e58] text-center bg-white">
+                        </label>
+                        <span class="font-bold text-stone-400">\(\leq n \leq\)</span>
+                        <label class="flex items-center gap-2 text-sm font-bold text-stone-600">
+                            上限
+                            <input type="number" id="input_max" min="2" value="20" class="w-20 px-2 py-1.5 border border-stone-300 rounded focus:outline-none focus:border-[#5c6e58] focus:ring-1 focus:ring-[#5c6e58] text-center bg-white">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
+                    <button onclick="handleAction('TABLE')" id="btn-table" class="flex-1 md:flex-none bg-[#5c6e58] hover:bg-[#3f4b3b] text-white font-bold py-3 px-8 rounded-sm shadow transition-colors whitespace-nowrap tracking-widest">
+                        表を作成
+                    </button>
+                    <button onclick="handleAction('GRAPH')" id="btn-graph" class="flex-1 md:flex-none bg-[#1d334a] hover:bg-[#111e2c] text-white font-bold py-3 px-8 rounded-sm shadow transition-colors whitespace-nowrap tracking-widest">
+                        グラフ作成
+                    </button>
+                </div>
+
+            </section>
+        </div>
+
+        <div id="loading" class="hidden my-12 text-center text-[#5c6e58] font-bold animate-pulse flex flex-col items-center justify-center gap-3">
+            <svg class="animate-spin h-8 w-8 text-[#5c6e58]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="tracking-widest">計算中… しばらくお待ちください</span>
+        </div>
+
+        <div class="mt-10">
+            <div id="lineGraph" class="w-full"></div>
+            
+            <div class="overflow-x-auto overflow-y-auto max-h-[500px] custom-scrollbar rounded-sm border border-stone-300 hidden" id="table_container">
+                <table class="w-full text-sm text-left whitespace-nowrap border-separate border-spacing-0" id="table_sp">
+                    </table>
+            </div>
+        </div>
+
+    </main>
+
+    <div class="fixed bottom-6 right-6 z-40">
+        <button id="info_opn" class="w-12 h-12 rounded-full bg-[#3f4b3b] text-[#f5f5f0] font-bold text-xl shadow-lg shadow-stone-900/30 hover:bg-[#2a3227] active:scale-95 transition flex items-center justify-center border-2 border-[#5c6e58]">?</button>
+    </div>
+
+    <dialog id="dialog" class="w-[90vw] max-w-md bg-[#fafaf9] rounded-md shadow-2xl border-2 border-stone-300 p-6 text-stone-700">
+        <header class="text-center border-b border-stone-300 pb-3 mb-4">
+            <h2 class="text-lg font-bold text-stone-800 tracking-widest">使い方</h2>
+        </header>
+        <div class="overflow-y-auto max-h-[60vh] pr-2 text-sm leading-relaxed text-stone-600">
+            <ul class="list-disc pl-5 space-y-2">
+                <li>整数論に関するデータを表とグラフで出力します。</li>
+                <li>抽出させるデータを選択した後、データを表示させる上限と下限を入力してください。</li>
+                <li>「正の約数」「素因数分解」はグラフには表示されません。</li>
+                <li>範囲が広い場合、計算に時間がかかる場合がありますのでご注意ください。</li>
+            </ul>
+        </div>
+        <footer class="text-center border-t border-stone-300 pt-4 mt-4">
+            <button id="info_cls" class="bg-stone-200 hover:bg-stone-300 text-stone-800 font-bold px-8 py-2 rounded-sm transition tracking-widest w-full">閉じる</button>
+        </footer>
+    </dialog>
+
+</body>
+
+<script>
+    // モーダル制御
+    const dialog = document.getElementById("dialog");
+    const showButton = document.getElementById("info_opn");
+    const closeButton = document.getElementById("info_cls");
+    showButton.addEventListener("click", () => dialog.showModal());
+    closeButton.addEventListener("click", () => dialog.close());
+
+    // 要素取得
+    const table_container = document.getElementById('table_container');
+    const table_elemenet = document.getElementById('table_sp');
+    const lineGraph = document.getElementById('lineGraph');
+    const loading = document.getElementById('loading');
+    const deta_element = document.getElementById('deta_choice');
+    
+    const inputMin = document.getElementById('input_min');
+    const inputMax = document.getElementById('input_max');
+    
+    let min = 2, max = 2, detaset = [1,1,1,1,1,1,1];
+    
+    const headers_text = [
+        "正の約数", "正の約数の個数", "素因数分解", "以下の素数の個数", 
+        "最大の素数砂漠", "素数計数近似①", "素数計数近似②"
+    ];
+
+    // エラトステネスの篩による高速・安全な素数テーブル生成
+    function generatePrimes(upTo) {
+        let isPrimeArr = new Array(upTo + 1).fill(true);
+        isPrimeArr[0] = isPrimeArr[1] = false;
+        let primesArr = [];
+        for (let p = 2; p <= upTo; p++) {
+            if (isPrimeArr[p]) {
+                primesArr.push(p);
+                for (let i = p * p; i <= upTo; i += p) {
+                    isPrimeArr[i] = false;
+                }
+            }
+        }
+        return { primes: primesArr, isPrime: isPrimeArr };
+    }
+
+    function handleAction(type) {
+        table_container.classList.add('hidden');
+        table_elemenet.innerHTML = '';
+        Plotly.purge(lineGraph);
+        loading.classList.remove('hidden');
+
+        // 表示の更新を確実に行うためのディレイ
+        setTimeout(() => {
+            try {
+                if (type === 'TABLE') TABLE();
+                if (type === 'GRAPH') GRAPH();
+            } catch (error) {
+                console.error(error);
+                alert("計算中にエラーが発生しました。\n入力値が正しく設定されているかご確認ください。");
+            } finally {
+                loading.classList.add('hidden');
+            }
+        }, 50);
+    }
+
+    // 表（テーブル）作成
+    function TABLE() {
+        min = Number(inputMin.value);
+        max = Number(inputMax.value);
+        
+        if (!Number.isInteger(min) || min < 2) return alert('下限が2以上の整数ではありません');
+        if (!Number.isInteger(max) || max < 2) return alert('上限が2以上の整数ではありません');
+        if (max < min) return alert('下限と上限の大小関係が誤っています');
+
+        for (let i = 0; i < 7; i++) {
+            detaset[i] = deta_element.children[i].children[0].checked ? 1 : 0;
+        }
+
+        // 事前に素数テーブルを用意して無限ループを防止
+        let primeData = generatePrimes(max);
+        let primes = primeData.primes;
+
+        // 見出し行を固定するために各thに bg-[#f0eee9] と sticky top-0 z-10 を付与
+        let htmlString = '<thead class="text-xs text-stone-700 uppercase"><tr><th class="px-4 py-3 border-r border-b border-stone-300 bg-[#f0eee9] sticky top-0 z-10 text-center">n</th>';
+        
+        for (let i = 0; i < 7; i++) {
+            if (detaset[i]) htmlString += `<th class="px-4 py-3 border-r border-b border-stone-300 tracking-wider bg-[#f0eee9] sticky top-0 z-10 text-center">${headers_text[i]}</th>`;
+        }
+        htmlString += '</tr></thead><tbody>';
+
+        let kinji_sekibun = 0;
+        if (detaset[6] && min > 2) {
+            // 台形公式を用いた超高速な定積分近似 (区間ごとに1000分割で十分な精度を担保)
+            for (let curr = 3; curr <= min; curr++) {
+                let start = curr - 1;
+                let end = curr;
+                let steps = 1000;
+                let h = (end - start) / steps;
+                for (let i = 0; i < steps; i++) {
+                    let t1 = start + i * h;
+                    let t2 = start + (i + 1) * h;
+                    kinji_sekibun += 0.5 * h * (1 / Math.log(t1) + 1 / Math.log(t2));
+                }
+            }
+        }
+
+        for (let a = min; a <= max; a++) {
+            htmlString += `<tr class="bg-white border-b border-stone-200 hover:bg-[#faf9f6] transition-colors"><td class="px-4 py-2 font-bold text-stone-800 border-r border-stone-200 text-center bg-white">${a}</td>`;
+            
+            // i. 正の約数
+            if (detaset[0]) {
+                let tdtext = '<math xmlns="block"><mo>{</mo><mn>1</mn>';
+                for (let b = 2; b <= a/2; b++) {
+                    if (a % b == 0) tdtext += '<mi>,</mi><mn>' + b + '</mn>';
+                }
+                if (a > 1) tdtext += '<mi>,</mi><mn>' + a + '</mn>';
+                tdtext += '<mo>}</mo></math>';
+                htmlString += `<td class="px-4 py-2 border-r border-stone-200">${tdtext}</td>`;
+            }
+
+            // ii. 正の約数の個数
+            if (detaset[1]) {
+                let nyakusuu = 0;
+                for (let b = 1; b <= a; b++) { if (a % b == 0) nyakusuu++; }
+                htmlString += `<td class="px-4 py-2 border-r border-stone-200 text-center">${nyakusuu}</td>`;
+            }
+
+            // 各種素数関連データの計算
+            if (detaset[2] || detaset[3] || detaset[4]) {
+                let temp = a;
+                let soinsuu = [], soinsuu_sisuu = [];
+                for (let p of primes) {
+                    if (p * p > temp) break;
+                    if (temp % p === 0) {
+                        soinsuu.push(p);
+                        let count = 0;
+                        while (temp % p === 0) {
+                            count++;
+                            temp /= p;
+                        }
+                        soinsuu_sisuu.push(count);
+                    }
+                }
+                if (temp > 1) {
+                    soinsuu.push(temp);
+                    soinsuu_sisuu.push(1);
+                }
+
+                // iv. 以下の素数の個数
+                if (detaset[3]) {
+                    let count = primes.filter(p => p <= a).length;
+                    htmlString += `<td class="px-4 py-2 border-r border-stone-200 text-center">${count}</td>`;
+                }
+                
+                // v. 以下の最大の素数砂漠の長さ
+                if (detaset[4]) {
+                    let currentPrimes = primes.filter(p => p <= a);
+                    let maxSabaku = 1;
+                    if (currentPrimes.length > 0) {
+                        let lastP = 2;
+                        for (let p of currentPrimes) {
+                            if (p - lastP > maxSabaku) maxSabaku = p - lastP;
+                            lastP = p;
+                        }
+                        if (a - lastP > maxSabaku) maxSabaku = a - lastP;
+                    } else {
+                        maxSabaku = a - 1;
+                    }
+                    htmlString += `<td class="px-4 py-2 border-r border-stone-200 text-center">${maxSabaku}</td>`;
+                }
+
+                // iii. 素因数分解のMathML形式出力
+                if (detaset[2]) {
+                    let tdtext = '<math xmlns="block">';
+                    for (let i = 0; i < soinsuu.length; i++) {
+                        if (soinsuu_sisuu[i] === 1) {
+                            tdtext += '<mn>' + soinsuu[i] + '</mn>';
+                        } else {
+                            tdtext += '<msup><mn>' + soinsuu[i] + '</mn><mn>' + soinsuu_sisuu[i] + '</mn></msup>';
+                        }
+                        if (i < soinsuu.length - 1) {
+                            tdtext += '<mo>\u{00d7}</mo>';
+                        }
+                    }
+                    tdtext += '</math>';
+                    htmlString += `<td class="px-4 py-2 border-r border-stone-200">${tdtext}</td>`;
+                }
+            }
+
+            // vi. 近似①
+            if (detaset[5]) htmlString += `<td class="px-4 py-2 border-r border-stone-200">${(a / Math.log(a)).toFixed(6)}</td>`;
+            
+            // vii. 近似②
+            if (detaset[6]) {
+                if (a > min) {
+                    let start = a - 1;
+                    let end = a;
+                    let steps = 1000;
+                    let h = (end - start) / steps;
+                    for (let i = 0; i < steps; i++) {
+                        let t1 = start + i * h;
+                        let t2 = start + (i + 1) * h;
+                        kinji_sekibun += 0.5 * h * (1 / Math.log(t1) + 1 / Math.log(t2));
+                    }
+                }
+                htmlString += `<td class="px-4 py-2 border-r border-stone-200">${kinji_sekibun.toFixed(6)}</td>`;
+            }
+            htmlString += '</tr>';
+        }
+        
+        htmlString += '</tbody>';
+        table_elemenet.innerHTML = htmlString;
+        table_container.classList.remove('hidden');
+
+        if(window.MathJax) {
+            MathJax.typesetPromise([table_elemenet]);
+        }
+    }
+
+    // グラフ作成
+    function GRAPH() {
+        min = Number(inputMin.value);
+        max = Number(inputMax.value);
+        
+        if (!Number.isInteger(min) || min < 2) return alert('下限が2以上の整数ではありません');
+        if (!Number.isInteger(max) || max < 2) return alert('上限が2以上の整数ではありません');
+        if (max < min) return alert('下限と上限の大小関係が誤っています');
+
+        for (let i = 0; i < 7; i++) {
+            detaset[i] = deta_element.children[i].children[0].checked ? 1 : 0;
+        }
+
+        let primeData = generatePrimes(max);
+        let primes = primeData.primes;
+
+        let axes_x = [min];
+        let graph_datalog = [0.5 * (Math.log(min)) ** 2];
+        let graph_dataroot = [Math.sqrt(min)];
+        
+        let graph_data1 = [];
+        let graph_data3 = [];
+        let graph_data4 = [];
+        let graph_data5 = [];
+        let graph_data6 = [];
+
+        // 下限時点での初期プロットデータの算出
+        if (detaset[1]) {
+            let nyakusuu_min = 0;
+            for (let b = 1; b <= min; b++) { if (min % b == 0) nyakusuu_min++; }
+            graph_data1.push(nyakusuu_min);
+        }
+        if (detaset[3]) {
+            graph_data3.push(primes.filter(p => p <= min).length);
+        }
+        if (detaset[4]) {
+            let currentPrimes = primes.filter(p => p <= min);
+            let maxSabaku = 1;
+            if (currentPrimes.length > 0) {
+                let lastP = 2;
+                for (let p of currentPrimes) {
+                    if (p - lastP > maxSabaku) maxSabaku = p - lastP;
+                    lastP = p;
+                }
+                if (min - lastP > maxSabaku) maxSabaku = min - lastP;
+            } else {
+                maxSabaku = min - 1;
+            }
+            graph_data4.push(maxSabaku);
+        }
+        if (detaset[5]) {
+            graph_data5.push(min / Math.log(min));
+        }
+        
+        let kinji_sekibun = 0;
+        if (detaset[6] && min > 2) {
+            for (let curr = 3; curr <= min; curr++) {
+                let start = curr - 1;
+                let end = curr;
+                let steps = 1000;
+                let h = (end - start) / steps;
+                for (let k = 0; k < steps; k++) {
+                    let t1 = start + k * h;
+                    let t2 = start + (k + 1) * h;
+                    kinji_sekibun += 0.5 * h * (1 / Math.log(t1) + 1 / Math.log(t2));
+                }
+            }
+        }
+        if (detaset[6]) {
+            graph_data6.push(kinji_sekibun);
+        }
+
+        // 下限から上限までの連続・高精度プロット
+        for (let a = min + 1; a <= max; a++) {
+            let nyakusuu = 0;
+            if (detaset[1]) {
+                for (let b = 1; b <= a; b++) { if (a % b == 0) nyakusuu++; }
+            }
+            let currentPrimesCount = detaset[3] ? primes.filter(p => p <= a).length : 0;
+            
+            let maxSabaku = 1;
+            if (detaset[4]) {
+                let currentPrimes = primes.filter(p => p <= a);
+                if (currentPrimes.length > 0) {
+                    let lastP = 2;
+                    for (let p of currentPrimes) {
+                        if (p - lastP > maxSabaku) maxSabaku = p - lastP;
+                        lastP = p;
+                    }
+                    if (a - lastP > maxSabaku) maxSabaku = a - lastP;
+                } else {
+                    maxSabaku = a - 1;
+                }
+            }
+
+            // 整数点の間を100分割して滑らかに描画 (各データの配列長を完全に統一)
+            for (let i = 1; i <= 100; i++) {
+                let x_val = (a - 1) + 0.01 * i;
+                axes_x.push(x_val);
+                graph_datalog.push(0.5 * (Math.log(x_val)) ** 2);
+                graph_dataroot.push(Math.sqrt(x_val));
+                
+                if (detaset[1]) graph_data1.push(nyakusuu);
+                if (detaset[3]) graph_data3.push(currentPrimesCount);
+                if (detaset[4]) graph_data4.push(maxSabaku);
+                if (detaset[5]) graph_data5.push(x_val / Math.log(x_val));
+                
+                if (detaset[6]) {
+                    let start = (a - 1) + 0.01 * (i - 1);
+                    let end = x_val;
+                    let steps = 10;
+                    let h = (end - start) / steps;
+                    for (let j = 0; j < steps; j++) {
+                        let t1 = start + j * h;
+                        let t2 = start + (j + 1) * h;
+                        kinji_sekibun += 0.5 * h * (1 / Math.log(t1) + 1 / Math.log(t2));
+                    }
+                    graph_data6.push(kinji_sekibun);
+                }
+            }
+        }
+
+        // 和風のカラーパレットを適用
+        var data = [
+            { x: axes_x, y: graph_datalog, mode: 'lines', name: '(log x)²/2', line: {color: '#8b4513'} }, 
+            { x: axes_x, y: graph_dataroot, mode: 'lines', name: '√x', line: {color: '#556b2f'} } 
+        ];
+
+        if (detaset[1]) data.push({ x: axes_x, y: graph_data1, mode: 'lines', name: 'ii.約数個数', line: {color: '#5c6e58'} }); 
+        if (detaset[3]) data.push({ x: axes_x, y: graph_data3, mode: 'lines', name: 'iv.素数個数', line: {color: '#1d334a'} }); 
+        if (detaset[4]) data.push({ x: axes_x, y: graph_data4, mode: 'lines', name: 'v.素数砂漠', line: {color: '#8f2e14'} }); 
+        if (detaset[5]) data.push({ x: axes_x, y: graph_data5, mode: 'lines', name: 'vi.近似①', line: {color: '#4b5b6e'} }); 
+        if (detaset[6]) data.push({ x: axes_x, y: graph_data6, mode: 'lines', name: 'vii.近似②', line: {color: '#a08967'} }); 
+
+        var layout = {
+            title: { text: 'データ推移グラフ', font: { family: 'BIZ UDMincho, serif', size: 20 } },
+            xaxis: { title: 'n', gridcolor: '#e7e5e4' },
+            yaxis: { title: '出力', gridcolor: '#e7e5e4' },
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            font: { family: 'BIZ UDMincho, serif', color: '#44403c' }
+        };
+
+        Plotly.newPlot('lineGraph', data, layout);
+    }
+</script>
+</html>

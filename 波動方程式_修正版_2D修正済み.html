@@ -1,0 +1,2964 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Wave Atelier — 波動方程式シミュレーター</title>
+
+<!-- 数式・式入力の安全なパース -->
+<script src="https://cdn.jsdelivr.net/npm/mathjs@12.2.1/lib/browser/math.min.js"></script>
+
+<!-- ちょっとした演出 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+
+<!-- 数式表示 -->
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<style>
+:root{
+    --bg0: #f7fbff;
+    --bg1: #eef7ff;
+    --card: rgba(255,255,255,0.9);
+    --card2: rgba(250,253,255,0.98);
+    --line: rgba(26, 90, 140, 0.12);
+    --text: #14324a;
+    --muted: #5e7285;
+    --accent: #2a9df4;
+    --accent2: #67d1ff;
+    --accent3: #11c5c6;
+    --warn: #f59e0b;
+    --good: #16a34a;
+    --bad: #ef4444;
+    --shadow: 0 20px 60px rgba(29, 78, 128, 0.08);
+    --shadow2: 0 10px 24px rgba(29, 78, 128, 0.10);
+    --radius: 20px;
+    --radius2: 14px;
+    --mono: "JetBrains Mono", "Cascadia Mono", "Consolas", monospace;
+    --sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    --serif: "Noto Serif JP", "Yu Mincho", serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+    margin:0;
+    color:var(--text);
+    font-family:var(--sans);
+    background:
+        radial-gradient(circle at 15% 15%, rgba(103,209,255,0.22), transparent 28%),
+        radial-gradient(circle at 85% 0%, rgba(42,157,244,0.12), transparent 18%),
+        linear-gradient(180deg,var(--bg0),var(--bg1));
+    overflow-x:hidden;
+}
+body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    background:
+        linear-gradient(rgba(255,255,255,0.15), rgba(255,255,255,0.15)),
+        repeating-linear-gradient(90deg, transparent 0 24px, rgba(20,50,74,0.015) 24px 25px),
+        repeating-linear-gradient(0deg, transparent 0 24px, rgba(20,50,74,0.015) 24px 25px);
+    pointer-events:none;
+    z-index:-1;
+}
+
+.app{
+    max-width: 1500px;
+    margin:0 auto;
+    padding: 18px;
+}
+.hero{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    padding:18px 18px 10px;
+    margin-bottom: 10px;
+}
+.logo{
+    width:68px;
+    height:68px;
+    border-radius:20px;
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    color:white;
+    display:grid;
+    place-items:center;
+    font-size: 31px;
+    font-weight: 800;
+    box-shadow: 0 14px 40px rgba(42,157,244,0.26);
+    flex:0 0 auto;
+}
+.hero h1{
+    margin:0;
+    font-size: clamp(1.35rem, 2.1vw, 2.2rem);
+    line-height:1.15;
+}
+.hero p{
+    margin:7px 0 0;
+    color:var(--muted);
+    line-height:1.55;
+    font-size: 0.96rem;
+}
+.badges{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:10px;
+}
+.badge{
+    padding:6px 10px;
+    border-radius:999px;
+    background: rgba(255,255,255,0.85);
+    border:1px solid var(--line);
+    color:var(--muted);
+    font-size:0.86rem;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.03);
+}
+
+.layout{
+    display:grid;
+    grid-template-columns: minmax(320px, 430px) minmax(0, 1fr);
+    gap: 16px;
+    align-items:start;
+}
+@media (max-width: 1100px){
+    .layout{grid-template-columns:1fr}
+}
+
+.panel{
+    background: var(--card);
+    border:1px solid rgba(255,255,255,0.9);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(10px);
+    border-radius: var(--radius);
+    overflow:hidden;
+}
+.panel-header{
+    padding: 14px 16px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    border-bottom:1px solid var(--line);
+    background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(245,250,255,0.92));
+}
+.panel-header h2{
+    margin:0;
+    font-size: 1rem;
+}
+.panel-header .sub{
+    color:var(--muted);
+    font-size:0.84rem;
+}
+.panel-body{
+    padding: 16px;
+}
+
+.section{
+    margin-bottom: 14px;
+    padding: 14px;
+    border:1px solid rgba(42,157,244,0.12);
+    border-radius: 16px;
+    background: rgba(255,255,255,0.7);
+}
+.section h3{
+    margin:0 0 10px;
+    font-size: 0.98rem;
+}
+.section p.desc{
+    margin:0 0 10px;
+    color:var(--muted);
+    font-size:0.88rem;
+    line-height:1.55;
+}
+
+.pills{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+}
+.pill{
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--text);
+    border-radius:999px;
+    padding:8px 12px;
+    cursor:pointer;
+    transition: .18s transform, .18s background, .18s border-color, .18s color;
+    user-select:none;
+    font-weight:600;
+}
+.pill:hover{transform:translateY(-1px)}
+.pill.active{
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    border-color: transparent;
+    color:white;
+    box-shadow: 0 10px 24px rgba(42,157,244,0.24);
+}
+
+.grid-2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+.grid-3{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+}
+@media (max-width: 560px){
+    .grid-2,.grid-3{grid-template-columns:1fr}
+}
+
+.field{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+}
+.field label{
+    color:var(--muted);
+    font-size:0.84rem;
+}
+.field input, .field select, .field textarea{
+    width:100%;
+    border:1px solid rgba(20,50,74,0.14);
+    border-radius: 12px;
+    padding: 10px 11px;
+    background:#fff;
+    color:var(--text);
+    font: inherit;
+    outline:none;
+    transition: .18s border-color, .18s box-shadow, .18s transform;
+}
+.field input:focus, .field select:focus, .field textarea:focus{
+    border-color: rgba(42,157,244,0.55);
+    box-shadow: 0 0 0 4px rgba(42,157,244,0.08);
+}
+.field textarea{
+    min-height: 92px;
+    resize: vertical;
+    font-family: var(--mono);
+    font-size: 0.92rem;
+    line-height:1.45;
+}
+
+.btn-row{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+}
+button.btn{
+    appearance:none;
+    border:none;
+    border-radius: 14px;
+    padding: 10px 14px;
+    cursor:pointer;
+    font-weight:700;
+    transition: .18s transform, .18s box-shadow, .18s opacity, .18s background;
+}
+button.btn:hover{transform:translateY(-1px)}
+button.primary{
+    background: linear-gradient(135deg, var(--accent), #4cc6ff);
+    color:white;
+    box-shadow: 0 12px 30px rgba(42,157,244,0.22);
+}
+button.soft{
+    background: rgba(42,157,244,0.09);
+    color: var(--text);
+    border:1px solid rgba(42,157,244,0.12);
+}
+button.ghost{
+    background:#fff;
+    color:var(--text);
+    border:1px solid rgba(20,50,74,0.12);
+}
+button.warn{
+    background: rgba(245,158,11,0.12);
+    color:#8a5a00;
+    border:1px solid rgba(245,158,11,0.18);
+}
+button.danger{
+    background: rgba(239,68,68,0.10);
+    color:#a61e1e;
+    border:1px solid rgba(239,68,68,0.16);
+}
+
+.katexBox, .statusBox, .noteBox, .infoBox{
+    border-radius: 14px;
+    border:1px solid var(--line);
+    background: rgba(255,255,255,0.82);
+    padding: 12px;
+}
+.noteBox{
+    color: var(--muted);
+    font-size:0.88rem;
+    line-height:1.6;
+}
+.statusBox{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px 16px;
+    align-items:center;
+    justify-content:space-between;
+}
+.statusItem{
+    display:flex;
+    gap:8px;
+    align-items:baseline;
+}
+.statusLabel{
+    color:var(--muted);
+    font-size:0.84rem;
+}
+.statusValue{
+    font-family: var(--mono);
+    font-size: 0.96rem;
+    font-weight:700;
+}
+
+.stageWrap{
+    display:grid;
+    gap: 16px;
+}
+.stage{
+    background: var(--card2);
+    border-radius: var(--radius);
+    border:1px solid rgba(255,255,255,0.9);
+    box-shadow: var(--shadow);
+    overflow:hidden;
+}
+.stageHeader{
+    padding: 14px 16px;
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:center;
+    border-bottom:1px solid var(--line);
+    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,250,255,0.94));
+}
+.stageHeader h2{
+    margin:0;
+    font-size: 1rem;
+}
+.stageHeader .small{
+    color:var(--muted);
+    font-size:0.84rem;
+}
+.stageBody{
+    padding: 12px;
+}
+.canvasFrame{
+    position:relative;
+    width:100%;
+    border-radius: 18px;
+    overflow:hidden;
+    border:1px solid rgba(20,50,74,0.10);
+    background: linear-gradient(180deg, #ffffff, #f7fbff);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+}
+.canvasFrame.line{
+    aspect-ratio: 16 / 7;
+    min-height: 280px;
+}
+.canvasFrame.plane{
+    aspect-ratio: 16 / 9;
+    min-height: 320px;
+}
+.canvasFrame canvas{
+    display:block;
+    width:100%;
+    height:100%;
+}
+.legend{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    margin-top:10px;
+}
+.legend .strip{
+    flex:1;
+    min-width: 220px;
+    height: 12px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background: linear-gradient(90deg, #14324a, #2672c9, #35c2ff, #a9f0ff, #ffffff);
+}
+.legend .scale{
+    display:flex;
+    justify-content:space-between;
+    font-size:0.8rem;
+    color:var(--muted);
+    font-family:var(--mono);
+}
+.hidden{display:none !important}
+
+.tabs{
+    display:flex;
+    gap:8px;
+    padding:12px 16px 0;
+    flex-wrap:wrap;
+}
+.tab{
+    border-radius: 999px;
+    padding: 9px 13px;
+    border:1px solid rgba(20,50,74,0.12);
+    background:#fff;
+    cursor:pointer;
+    font-weight:700;
+}
+.tab.active{
+    background: linear-gradient(135deg, rgba(42,157,244,0.16), rgba(17,197,198,0.12));
+    border-color: rgba(42,157,244,0.28);
+}
+
+.helpList{
+    margin:0;
+    padding-left: 1.1rem;
+    line-height:1.7;
+    color:var(--text);
+}
+.helpList li{margin:4px 0}
+
+footer{
+    padding: 14px 6px 2px;
+    color: var(--muted);
+    font-size:0.86rem;
+    text-align:center;
+}
+
+.gridParam{
+    display:grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap:10px;
+}
+@media (max-width: 1100px){
+    .gridParam{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width: 560px){
+    .gridParam{grid-template-columns:1fr}
+}
+.mono{font-family:var(--mono)}
+.smallText{font-size:0.84rem;color:var(--muted)}
+.mathBox{
+    border-radius: 16px;
+    border:1px dashed rgba(42,157,244,0.25);
+    background: rgba(255,255,255,0.72);
+    padding: 12px 14px;
+}
+</style>
+</head>
+<body>
+<div class="app">
+    <header class="hero">
+        <div class="logo">波</div>
+        <div>
+            <h1>波動方程式を視よう！</h1>
+            <p>
+                一次元上の波動と，二次元上の波動を，パラメータをいじりながらリアルタイムで描画するシミュレーターです．
+            </p>
+        </div>
+    </header>
+
+    <div class="layout">
+        <!-- 左側: 操作パネル -->
+        <section class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2>操作パネル</h2>
+                    <div class="sub">種々の設定</div>
+                </div>
+                <div class="sub mono" id="stabilityBadge">stability: -</div>
+            </div>
+
+            <div class="panel-body">
+                <div class="section">
+                    <h3>0. モードを選ぶ</h3>
+                    <p class="desc">直線 1D は弦の振動，平面 2D は膜や水面のような波</p>
+                    <div class="pills" id="modePills">
+                        <div class="pill active" data-mode="1d">直線（1D）</div>
+                        <div class="pill" data-mode="2d">平面（2D）</div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>1. 共通パラメータ</h3>
+                    <div class="grid-2">
+                        <div class="field">
+                            <label>波の速さ \(c\)</label>
+                            <input id="c" type="number" step="0.01" value="1.00">
+                        </div>
+                        <div class="field">
+                            <label>減衰係数 \(\gamma\)</label>
+                            <input id="gamma" type="number" step="0.001" value="0.00">
+                        </div>
+                        <div class="field">
+                            <label>描画速度倍率</label>
+                            <input id="playSpeed" type="number" step="0.1" value="1.0">
+                        </div>
+                        <div class="field">
+                            <label>時間刻み \(dt\)</label>
+                            <input id="dt" type="number" step="0.0001" value="0.0030">
+                        </div>
+                    </div>
+                    <div class="btn-row" style="margin-top:10px">
+                        <button class="btn soft" id="btnPlay">再生</button>
+                        <button class="btn ghost" id="btnPause">停止</button>
+                        <button class="btn warn" id="btnStep">1ステップ</button>
+                        <button class="btn danger" id="btnReset">リセット</button>
+                    </div>
+                </div>
+
+                <div class="section" id="box1d">
+                    <h3>2. 直線 1D の設定</h3>
+                    <p class="desc">弦の振動に代表される一次元上の波動</p>
+
+                    <div class="grid-2">
+                        <div class="field">
+                            <label>長さ \(L\)</label>
+                            <input id="L1" type="number" step="0.1" value="1.0">
+                        </div>
+                        <div class="field">
+                            <label>格子点数 \(N\)</label>
+                            <input id="N1" type="number" step="1" value="180" min="32" max="600">
+                        </div>
+                        <div class="field">
+                            <label>境界条件</label>
+                            <select id="bc1">
+                                <option value="fixed">固定端（Dirichlet）</option>
+                                <option value="neumann">自由端（Neumann）</option>
+                                <option value="periodic">周期境界</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>描画方法</label>
+                            <select id="view1">
+                                <option value="line">線グラフ</option>
+                                <option value="fill">塗りつぶし</option>
+                                <option value="both">線 + 塗り</option>
+                                <option value="phase">位相平面（u-v）</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="field" style="margin-top:10px">
+                        <label>初期変位 \(u(x,0)\)</label>
+                        <textarea id="u01" spellcheck="false" placeholder="例: 0.6*exp(-120*(x-0.35)^2)"></textarea>
+                    </div>
+                    <div class="field" style="margin-top:10px">
+                        <label>初期速度 \(u_t(x,0)\)</label>
+                        <textarea id="v01" spellcheck="false" placeholder="例: 0"></textarea>
+                    </div>
+                    <div class="field" style="margin-top:10px">
+                        <label>外力 \(f(x,t)\)</label>
+                        <textarea id="s1" spellcheck="false" placeholder="例: 0  （無外力なら 0）"></textarea>
+                    </div>
+
+                    <div class="btn-row" style="margin-top:10px">
+                        <button class="btn soft" data-sample="1d-gauss">ガウス</button>
+                        <button class="btn soft" data-sample="1d-sine">正弦モード</button>
+                        <button class="btn soft" data-sample="1d-pluck">弦をはじく</button>
+                    </div>
+                </div>
+
+                <div class="section hidden" id="box2d">
+                    <h3>2. 平面 2D の設定</h3>
+                    <p class="desc">膜や水面に代表される二次元上の波動．平面描画は heatmap / relief / contour で切り替え</p>
+
+                    <div class="grid-2">
+                        <div class="field">
+                            <label>横幅 \(L_x\)</label>
+                            <input id="Lx" type="number" step="0.1" value="1.0">
+                        </div>
+                        <div class="field">
+                            <label>縦幅 \(L_y\)</label>
+                            <input id="Ly" type="number" step="0.1" value="1.0">
+                        </div>
+                        <div class="field">
+                            <label>\(N_x\)</label>
+                            <input id="Nx" type="number" step="1" value="120" min="16" max="240">
+                        </div>
+                        <div class="field">
+                            <label>\(N_y\)</label>
+                            <input id="Ny" type="number" step="1" value="90" min="16" max="240">
+                        </div>
+                        <div class="field">
+                            <label>境界条件</label>
+                            <select id="bc2">
+                                <option value="fixed">固定端</option>
+                                <option value="neumann">自由端</option>
+                                <option value="periodic">周期境界</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>描画方法</label>
+                            <select id="view2">
+                                <option value="heat">ヒートマップ</option>
+                                <option value="relief">レリーフ</option>
+                                <option value="contour">等高線</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="field" style="margin-top:10px">
+                        <label>初期変位 \(u(x,y,0)\)</label>
+                        <textarea id="u02" spellcheck="false" placeholder="例: 0.85*exp(-60*((x-0.35)^2+(y-0.5)^2))"></textarea>
+                    </div>
+                    <div class="field" style="margin-top:10px">
+                        <label>初期速度 \(u_t(x,y,0)\)</label>
+                        <textarea id="v02" spellcheck="false" placeholder="例: 0"></textarea>
+                    </div>
+                    <div class="field" style="margin-top:10px">
+                        <label>外力 \(f(x,y,t)\)</label>
+                        <textarea id="s2" spellcheck="false" placeholder="例: 0"></textarea>
+                    </div>
+
+                    <div class="btn-row" style="margin-top:10px">
+                        <button class="btn soft" data-sample="2d-gauss">中央ガウス</button>
+                        <button class="btn soft" data-sample="2d-ring">リング波</button>
+                        <button class="btn soft" data-sample="2d-double">二重源</button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>3. 描画の調整</h3>
+                    <div class="grid-3">
+                        <div class="field">
+                            <label>1D 振幅拡大</label>
+                            <input id="amp1" type="number" step="0.1" value="1.0">
+                        </div>
+                        <div class="field">
+                            <label>2D 振幅拡大</label>
+                            <input id="amp2" type="number" step="0.1" value="1.0">
+                        </div>
+                        <div class="field">
+                            <label>2D 色彩</label>
+                            <select id="palette">
+                                <option value="sky">スカイ</option>
+                                <option value="fire">ファイア</option>
+                                <option value="mono">モノクロ</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>4. 数式とガイド</h3>
+                    <div class="mathBox">
+                        \[
+                        u_{tt} = c^2 \Delta u - \gamma u_t + f
+                        \]
+                    </div>
+                    <div class="noteBox" style="margin-top:10px">
+                        <strong>操作の流れ</strong><br>
+                        1. 直線か平面を選択<br>
+                        2. 境界条件と格子数を決定<br>
+                        3. 初期変位・初期速度・外力を入力<br>
+                        4. 再生<br>
+                        5. 形が荒いときは \(dt\) を小さく，格子数を増やす<br>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>5. 状態表示</h3>
+                    <div class="statusBox">
+                        <div class="statusItem"><span class="statusLabel">時刻</span><span class="statusValue" id="timeView">0.000</span></div>
+                        <div class="statusItem"><span class="statusLabel">エネルギー</span><span class="statusValue" id="energyView">0.000</span></div>
+                        <div class="statusItem"><span class="statusLabel">推奨 \(dt\)</span><span class="statusValue" id="dtHint">-</span></div>
+                    </div>
+                    <div class="infoBox" style="margin-top:10px" id="messageBox">
+                        警告・補足
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 右側: 表示パネル -->
+        <section class="stageWrap">
+            <div class="stage">
+                <div class="stageHeader">
+                    <div>
+                        <h2>直線の描画</h2>
+                        <div class="small">一次元上の波動</div>
+                    </div>
+                    <div class="small mono" id="modeTag1">mode: 1D</div>
+                </div>
+                <div class="stageBody">
+                    <div class="canvasFrame line" id="frame1">
+                        <canvas id="canvas1d"></canvas>
+                    </div>
+                    <div class="legend">
+                        <div class="strip" id="legend1"></div>
+                        <div class="scale" style="width:100%">
+                            <span>-\(A\)</span><span>\(0\)</span><span>+\(A\)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stage">
+                <div class="stageHeader">
+                    <div>
+                        <h2>平面の描画</h2>
+                        <div class="small">二次元上の波動</div>
+                    </div>
+                    <div class="small mono" id="modeTag2">mode: 2D</div>
+                </div>
+                <div class="stageBody">
+                    <div class="canvasFrame plane" id="frame2">
+                        <canvas id="canvas2d"></canvas>
+                    </div>
+                    <div class="legend">
+                        <div class="strip" id="legend2"></div>
+                        <div class="scale" style="width:100%">
+                            <span>-\(A\)</span><span>\(0\)</span><span>+\(A\)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+</div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   基本ユーティリティ
+   ========================================================= */
+
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+const math = window.math;
+
+const ui = {
+    // mode
+    modePills: $("#modePills"),
+    box1d: $("#box1d"),
+    box2d: $("#box2d"),
+    modeTag1: $("#modeTag1"),
+    modeTag2: $("#modeTag2"),
+
+    // common
+    c: $("#c"),
+    gamma: $("#gamma"),
+    playSpeed: $("#playSpeed"),
+    dt: $("#dt"),
+
+    // 1D
+    L1: $("#L1"),
+    N1: $("#N1"),
+    bc1: $("#bc1"),
+    view1: $("#view1"),
+    u01: $("#u01"),
+    v01: $("#v01"),
+    s1: $("#s1"),
+    amp1: $("#amp1"),
+
+    // 2D
+    Lx: $("#Lx"),
+    Ly: $("#Ly"),
+    Nx: $("#Nx"),
+    Ny: $("#Ny"),
+    bc2: $("#bc2"),
+    view2: $("#view2"),
+    u02: $("#u02"),
+    v02: $("#v02"),
+    s2: $("#s2"),
+    amp2: $("#amp2"),
+    palette: $("#palette"),
+
+    // buttons
+    btnPlay: $("#btnPlay"),
+    btnPause: $("#btnPause"),
+    btnStep: $("#btnStep"),
+    btnReset: $("#btnReset"),
+
+    // display
+    canvas1d: $("#canvas1d"),
+    canvas2d: $("#canvas2d"),
+    frame1: $("#frame1"),
+    frame2: $("#frame2"),
+    legend1: $("#legend1"),
+    legend2: $("#legend2"),
+    timeView: $("#timeView"),
+    energyView: $("#energyView"),
+    dtHint: $("#dtHint"),
+    stabilityBadge: $("#stabilityBadge"),
+    messageBox: $("#messageBox")
+};
+
+/* =========================================================
+   文字入力を安全に数式へ変換するコンパイラ
+   - JS を eval しない
+   - math.js のパーサを使う
+   ========================================================= */
+
+function compileExpression(expr) {
+    const s = String(expr ?? "").trim();
+    if (!s || s === "0") {
+        return null;
+    }
+    const node = math.parse(s);
+    return node.compile();
+}
+
+function makeEvaluator(expr) {
+    const code = compileExpression(expr);
+    if (!code) {
+        return () => 0;
+    }
+    return (scope) => {
+        const v = code.evaluate(scope);
+        if (typeof v === "number") {
+            return Number.isFinite(v) ? v : 0;
+        }
+        if (v && typeof v.valueOf === "function") {
+            const n = Number(v.valueOf());
+            return Number.isFinite(n) ? n : 0;
+        }
+        const n = Number(v);
+        return Number.isFinite(n) ? n : 0;
+    };
+}
+
+/* =========================================================
+   色と描画のユーティリティ
+   ========================================================= */
+
+function clamp(x, a, b) {
+    return Math.max(a, Math.min(b, x));
+}
+
+function signSafe(x) {
+    if (Math.abs(x) < 1e-12) return 0;
+    return x;
+}
+
+function roundTo(x, p = 3) {
+    const f = Math.pow(10, p);
+    return Math.round(x * f) / f;
+}
+
+function formatNum(x, p = 4) {
+    if (!Number.isFinite(x)) return "NaN";
+    const a = Math.abs(x);
+    if (a !== 0 && (a >= 1e7 || a < 1e-6)) {
+        const e = Math.floor(Math.log10(a));
+        const m = x / Math.pow(10, e);
+        return `${roundTo(m, 4)}×10^${e}`;
+    }
+    return String(roundTo(x, p));
+}
+
+/* =========================================================
+   状態管理
+   ========================================================= */
+
+const state = {
+    mode: "1d",
+    running: false,
+    t: 0,
+    acc: 0,
+    lastTs: 0,
+
+    // 1D
+    s1d: null,
+    cfg1d: null,
+
+    // 2D
+    s2d: null,
+    cfg2d: null
+};
+
+function setMessage(html, kind = "info") {
+    ui.messageBox.innerHTML = html;
+    ui.messageBox.style.borderColor =
+        kind === "good" ? "rgba(22,163,74,0.25)" :
+        kind === "bad" ? "rgba(239,68,68,0.25)" :
+        kind === "warn" ? "rgba(245,158,11,0.25)" :
+        "rgba(42,157,244,0.20)";
+}
+
+function setMode(mode) {
+    state.mode = mode;
+    $$(".pill", ui.modePills).forEach(el => {
+        el.classList.toggle("active", el.dataset.mode === mode);
+    });
+    ui.box1d.classList.toggle("hidden", mode !== "1d");
+    ui.box2d.classList.toggle("hidden", mode !== "2d");
+    ui.modeTag1.textContent = `mode: ${mode === "1d" ? "1D" : "—"}`;
+    ui.modeTag2.textContent = `mode: ${mode === "2d" ? "2D" : "—"}`;
+
+    anime({
+        targets: [ui.frame1, ui.frame2],
+        scale: [0.995, 1],
+        duration: 260,
+        easing: "easeOutQuad"
+    });
+
+    resetSimulation(false);
+}
+
+ui.modePills.addEventListener("click", (ev) => {
+    const pill = ev.target.closest(".pill");
+    if (!pill) return;
+    setMode(pill.dataset.mode);
+});
+
+function updateTimeEnergy(t, e) {
+    ui.timeView.textContent = formatNum(t, 3);
+    ui.energyView.textContent = formatNum(e, 3);
+}
+
+/* =========================================================
+   1D シミュレーション
+   方程式: u_tt = c^2 u_xx - gamma * u_t + f(x,t)
+   ========================================================= */
+
+function read1DConfig() {
+    const L = Math.max(1e-6, Number(ui.L1.value));
+    const N = clamp(Math.floor(Number(ui.N1.value)), 32, 600);
+    const c = Math.max(1e-6, Number(ui.c.value));
+    const gamma = Math.max(0, Number(ui.gamma.value));
+    const dt = Math.max(1e-6, Number(ui.dt.value));
+    const boundary = ui.bc1.value;
+    const renderMode = ui.view1.value;
+    const amp = Math.max(0.01, Number(ui.amp1.value));
+    const x0 = makeEvaluator(ui.u01.value);
+    const v0 = makeEvaluator(ui.v01.value);
+    const src = makeEvaluator(ui.s1.value);
+
+    return {
+        L, N, c, gamma, dt, boundary, renderMode, amp,
+        dx: L / (N - 1),
+        u0: x0,
+        v0: v0,
+        src
+    };
+}
+
+function init1D() {
+    const cfg = read1DConfig();
+    const N = cfg.N;
+    const u = new Float64Array(N);
+    const v = new Float64Array(N);
+
+    for (let i = 0; i < N; i++) {
+        const x = i * cfg.dx;
+        u[i] = cfg.u0({ x, t: 0, pi: Math.PI, e: Math.E });
+        v[i] = cfg.v0({ x, t: 0, pi: Math.PI, e: Math.E });
+    }
+    applyBoundary1D(u, v, cfg);
+    state.cfg1d = cfg;
+    state.s1d = { u, v };
+}
+
+function applyBoundary1D(u, v, cfg) {
+    const N = u.length;
+    const bc = cfg.boundary;
+
+    if (bc === "fixed") {
+        u[0] = 0; u[N - 1] = 0;
+        v[0] = 0; v[N - 1] = 0;
+    } else if (bc === "neumann") {
+        u[0] = u[1]; u[N - 1] = u[N - 2];
+        v[0] = v[1]; v[N - 1] = v[N - 2];
+    } else if (bc === "periodic") {
+        u[0] = u[N - 2];
+        u[N - 1] = u[1];
+        v[0] = v[N - 2];
+        v[N - 1] = v[1];
+    }
+}
+
+function lap1D(u, i, cfg) {
+    const N = u.length;
+    const dx2 = cfg.dx * cfg.dx;
+    const bc = cfg.boundary;
+
+    if (i === 0) {
+        if (bc === "periodic") return (u[1] - 2 * u[0] + u[N - 2]) / dx2;
+        if (bc === "neumann") return 2 * (u[1] - u[0]) / dx2;
+        return 0;
+    }
+    if (i === N - 1) {
+        if (bc === "periodic") return (u[1] - 2 * u[N - 1] + u[N - 2]) / dx2;
+        if (bc === "neumann") return 2 * (u[N - 2] - u[N - 1]) / dx2;
+        return 0;
+    }
+    return (u[i + 1] - 2 * u[i] + u[i - 1]) / dx2;
+}
+
+function deriv1D(st, t, cfg) {
+    const N = st.u.length;
+    const du = new Float64Array(N);
+    const dv = new Float64Array(N);
+
+    for (let i = 0; i < N; i++) {
+        const x = i * cfg.dx;
+        du[i] = st.v[i];
+        dv[i] = (cfg.c * cfg.c) * lap1D(st.u, i, cfg) - cfg.gamma * st.v[i] + cfg.src({ x, t, pi: Math.PI, e: Math.E });
+    }
+    return { u: du, v: dv };
+}
+
+function addState1D(base, delta, scale) {
+    const N = base.u.length;
+    const u = new Float64Array(N);
+    const v = new Float64Array(N);
+    for (let i = 0; i < N; i++) {
+        u[i] = base.u[i] + scale * delta.u[i];
+        v[i] = base.v[i] + scale * delta.v[i];
+    }
+    return { u, v };
+}
+
+function step1D(dt) {
+    const cfg = state.cfg1d;
+    const st = state.s1d;
+    const k1 = deriv1D(st, state.t, cfg);
+    const k2 = deriv1D(addState1D(st, k1, dt / 2), state.t + dt / 2, cfg);
+    const k3 = deriv1D(addState1D(st, k2, dt / 2), state.t + dt / 2, cfg);
+    const k4 = deriv1D(addState1D(st, k3, dt), state.t + dt, cfg);
+
+    const N = st.u.length;
+    const nu = new Float64Array(N);
+    const nv = new Float64Array(N);
+
+    for (let i = 0; i < N; i++) {
+        nu[i] = st.u[i] + dt * (k1.u[i] + 2 * k2.u[i] + 2 * k3.u[i] + k4.u[i]) / 6;
+        nv[i] = st.v[i] + dt * (k1.v[i] + 2 * k2.v[i] + 2 * k3.v[i] + k4.v[i]) / 6;
+    }
+
+    state.s1d = { u: nu, v: nv };
+    state.t += dt;
+    applyBoundary1D(state.s1d.u, state.s1d.v, cfg);
+}
+
+function energy1D() {
+    const cfg = state.cfg1d;
+    const st = state.s1d;
+    if (!st) return 0;
+    let e = 0;
+    for (let i = 1; i < st.u.length - 1; i++) {
+        const ux = (st.u[i + 1] - st.u[i - 1]) / (2 * cfg.dx);
+        e += 0.5 * (st.v[i] * st.v[i] + (cfg.c * cfg.c) * ux * ux);
+    }
+    return e * cfg.dx;
+}
+
+/* =========================================================
+   2D シミュレーション
+   方程式: u_tt = c^2 (u_xx + u_yy) - gamma * u_t + f(x,y,t)
+   ========================================================= */
+
+function read2DConfig() {
+    const Lx = Math.max(1e-6, Number(ui.Lx.value));
+    const Ly = Math.max(1e-6, Number(ui.Ly.value));
+    const Nx = clamp(Math.floor(Number(ui.Nx.value)), 16, 240);
+    const Ny = clamp(Math.floor(Number(ui.Ny.value)), 16, 240);
+    const c = Math.max(1e-6, Number(ui.c.value));
+    const gamma = Math.max(0, Number(ui.gamma.value));
+    const dt = Math.max(1e-6, Number(ui.dt.value));
+    const boundary = ui.bc2.value;
+    const renderMode = ui.view2.value;
+    const amp = Math.max(0.01, Number(ui.amp2.value));
+    const u0 = makeEvaluator(ui.u02.value);
+    const v0 = makeEvaluator(ui.v02.value);
+    const src = makeEvaluator(ui.s2.value);
+
+    return {
+        Lx, Ly, Nx, Ny, c, gamma, dt, boundary, renderMode, amp,
+        dx: Lx / (Nx - 1),
+        dy: Ly / (Ny - 1),
+        u0, v0, src
+    };
+}
+
+function idx2(i, j, Nx) {
+    return j * Nx + i;
+}
+
+function init2D() {
+    const cfg = read2DConfig();
+    const size = cfg.Nx * cfg.Ny;
+    const u = new Float64Array(size);
+    const v = new Float64Array(size);
+
+    for (let j = 0; j < cfg.Ny; j++) {
+        for (let i = 0; i < cfg.Nx; i++) {
+            const x = i * cfg.dx;
+            const y = j * cfg.dy;
+            const k = idx2(i, j, cfg.Nx);
+            u[k] = cfg.u0({ x, y, t: 0, pi: Math.PI, e: Math.E });
+            v[k] = cfg.v0({ x, y, t: 0, pi: Math.PI, e: Math.E });
+        }
+    }
+    applyBoundary2D(u, v, cfg);
+    state.cfg2d = cfg;
+    state.s2d = { u, v };
+}
+
+function applyBoundary2D(u, v, cfg) {
+    const { Nx, Ny, boundary } = cfg;
+
+    if (boundary === "fixed") {
+        for (let i = 0; i < Nx; i++) {
+            u[idx2(i, 0, Nx)] = 0;
+            u[idx2(i, Ny - 1, Nx)] = 0;
+            v[idx2(i, 0, Nx)] = 0;
+            v[idx2(i, Ny - 1, Nx)] = 0;
+        }
+        for (let j = 0; j < Ny; j++) {
+            u[idx2(0, j, Nx)] = 0;
+            u[idx2(Nx - 1, j, Nx)] = 0;
+            v[idx2(0, j, Nx)] = 0;
+            v[idx2(Nx - 1, j, Nx)] = 0;
+        }
+    } else if (boundary === "neumann") {
+        for (let i = 0; i < Nx; i++) {
+            u[idx2(i, 0, Nx)] = u[idx2(i, 1, Nx)];
+            u[idx2(i, Ny - 1, Nx)] = u[idx2(i, Ny - 2, Nx)];
+            v[idx2(i, 0, Nx)] = v[idx2(i, 1, Nx)];
+            v[idx2(i, Ny - 1, Nx)] = v[idx2(i, Ny - 2, Nx)];
+        }
+        for (let j = 0; j < Ny; j++) {
+            u[idx2(0, j, Nx)] = u[idx2(1, j, Nx)];
+            u[idx2(Nx - 1, j, Nx)] = u[idx2(Nx - 2, j, Nx)];
+            v[idx2(0, j, Nx)] = v[idx2(1, j, Nx)];
+            v[idx2(Nx - 1, j, Nx)] = v[idx2(Nx - 2, j, Nx)];
+        }
+    }
+}
+
+function lap2D(u, i, j, cfg) {
+    const { Nx, Ny, dx, dy, boundary } = cfg;
+    const dx2 = dx * dx;
+    const dy2 = dy * dy;
+
+    const inRange = (ii, jj) => idx2(ii, jj, Nx);
+
+    const get = (ii, jj) => {
+        if (boundary === "periodic") {
+            if (ii < 0) ii += Nx;
+            if (ii >= Nx) ii -= Nx;
+            if (jj < 0) jj += Ny;
+            if (jj >= Ny) jj -= Ny;
+            return u[inRange(ii, jj)];
+        }
+        if (ii < 0 || ii >= Nx || jj < 0 || jj >= Ny) {
+            // 固定端や自由端の外側は一旦境界値のコピーで近似
+            const ci = clamp(ii, 0, Nx - 1);
+            const cj = clamp(jj, 0, Ny - 1);
+            return u[inRange(ci, cj)];
+        }
+        return u[inRange(ii, jj)];
+    };
+
+    const c = u[inRange(i, j)];
+    const ux = (get(i + 1, j) - 2 * c + get(i - 1, j)) / dx2;
+    const uy = (get(i, j + 1) - 2 * c + get(i, j - 1)) / dy2;
+    return ux + uy;
+}
+
+function deriv2D(st, t, cfg) {
+    const { Nx, Ny } = cfg;
+    const size = Nx * Ny;
+    const du = new Float64Array(size);
+    const dv = new Float64Array(size);
+
+    for (let j = 0; j < Ny; j++) {
+        for (let i = 0; i < Nx; i++) {
+            const k = idx2(i, j, Nx);
+            const x = i * cfg.dx;
+            const y = j * cfg.dy;
+            du[k] = st.v[k];
+            dv[k] = (cfg.c * cfg.c) * lap2D(st.u, i, j, cfg) - cfg.gamma * st.v[k] + cfg.src({ x, y, t, pi: Math.PI, e: Math.E });
+        }
+    }
+    return { u: du, v: dv };
+}
+
+function addState2D(base, delta, scale) {
+    const size = base.u.length;
+    const u = new Float64Array(size);
+    const v = new Float64Array(size);
+    for (let i = 0; i < size; i++) {
+        u[i] = base.u[i] + scale * delta.u[i];
+        v[i] = base.v[i] + scale * delta.v[i];
+    }
+    return { u, v };
+}
+
+function step2D(dt) {
+    const cfg = state.cfg2d;
+    const st = state.s2d;
+    const k1 = deriv2D(st, state.t, cfg);
+    const k2 = deriv2D(addState2D(st, k1, dt / 2), state.t + dt / 2, cfg);
+    const k3 = deriv2D(addState2D(st, k2, dt / 2), state.t + dt / 2, cfg);
+    const k4 = deriv2D(addState2D(st, k3, dt), state.t + dt, cfg);
+
+    const size = st.u.length;
+    const nu = new Float64Array(size);
+    const nv = new Float64Array(size);
+
+    for (let i = 0; i < size; i++) {
+        nu[i] = st.u[i] + dt * (k1.u[i] + 2 * k2.u[i] + 2 * k3.u[i] + k4.u[i]) / 6;
+        nv[i] = st.v[i] + dt * (k1.v[i] + 2 * k2.v[i] + 2 * k3.v[i] + k4.v[i]) / 6;
+    }
+
+    state.s2d = { u: nu, v: nv };
+    state.t += dt;
+    applyBoundary2D(state.s2d.u, state.s2d.v, cfg);
+}
+
+function energy2D() {
+    const cfg = state.cfg2d;
+    const st = state.s2d;
+    if (!st) return 0;
+    let e = 0;
+    const { Nx, Ny, dx, dy, c } = cfg;
+    for (let j = 1; j < Ny - 1; j++) {
+        for (let i = 1; i < Nx - 1; i++) {
+            const k = idx2(i, j, Nx);
+            const ux = (st.u[idx2(i + 1, j, Nx)] - st.u[idx2(i - 1, j, Nx)]) / (2 * dx);
+            const uy = (st.u[idx2(i, j + 1, Nx)] - st.u[idx2(i, j - 1, Nx)]) / (2 * dy);
+            e += 0.5 * (st.v[k] * st.v[k] + c * c * (ux * ux + uy * uy));
+        }
+    }
+    return e * dx * dy;
+}
+
+/* =========================================================
+   描画
+   ========================================================= */
+
+function resizeCanvas(canvas) {
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+    canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+function drawAxes(ctx, w, h, margin = 38) {
+    ctx.save();
+    ctx.strokeStyle = "rgba(20,50,74,0.16)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(margin, h - margin);
+    ctx.lineTo(w - margin, h - margin);
+    ctx.moveTo(margin, margin);
+    ctx.lineTo(margin, h - margin);
+    ctx.stroke();
+    ctx.restore();
+}
+
+function drawGrid(ctx, w, h, margin = 38, nx = 10, ny = 6) {
+    ctx.save();
+    ctx.strokeStyle = "rgba(20,50,74,0.05)";
+    ctx.lineWidth = 1;
+    for (let i = 1; i < nx; i++) {
+        const x = margin + (w - 2 * margin) * i / nx;
+        ctx.beginPath();
+        ctx.moveTo(x, margin);
+        ctx.lineTo(x, h - margin);
+        ctx.stroke();
+    }
+    for (let j = 1; j < ny; j++) {
+        const y = margin + (h - 2 * margin) * j / ny;
+        ctx.beginPath();
+        ctx.moveTo(margin, y);
+        ctx.lineTo(w - margin, y);
+        ctx.stroke();
+    }
+    ctx.restore();
+}
+
+function draw1D() {
+    const canvas = ui.canvas1d;
+    resizeCanvas(canvas);
+    const ctx = canvas.getContext("2d");
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, w, h);
+
+    if (!state.s1d || !state.cfg1d) return;
+
+    const cfg = state.cfg1d;
+    const st = state.s1d;
+    const ampScale = Math.max(0.01, Number(ui.amp1.value));
+    const mode = ui.view1.value;
+    const margin = 38;
+
+    drawGrid(ctx, w, h, margin, 12, 8);
+    drawAxes(ctx, w, h, margin);
+
+    const N = st.u.length;
+    let maxAbs = 1e-12;
+    for (let i = 0; i < N; i++) maxAbs = Math.max(maxAbs, Math.abs(st.u[i]));
+    maxAbs *= ampScale;
+
+    const plotX = (i) => margin + (w - 2 * margin) * i / (N - 1);
+    const plotY = (val) => h / 2 - (val / maxAbs) * (h * 0.36);
+
+    // 軸ラベル
+    ctx.save();
+    ctx.fillStyle = "rgba(20,50,74,0.8)";
+    ctx.font = "12px var(--sans)";
+    ctx.fillText("u(x,t)", 10, 18);
+    ctx.fillText("x", w - 18, h - 12);
+    ctx.fillText(`t = ${formatNum(state.t, 3)}`, margin + 6, 18);
+    ctx.restore();
+
+    // 波の描画
+    ctx.save();
+    ctx.lineWidth = 2.4;
+    ctx.strokeStyle = "#1976d2";
+    ctx.fillStyle = "rgba(42,157,244,0.16)";
+
+    if (mode === "phase") {
+        // 位相平面: u-v
+        const pad = 44;
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(0, 0, w, h);
+        drawGrid(ctx, w, h, pad, 8, 8);
+        drawAxes(ctx, w, h, pad);
+
+        let maxU = 1e-12, maxV = 1e-12;
+        for (let i = 0; i < N; i++) {
+            maxU = Math.max(maxU, Math.abs(st.u[i]));
+            maxV = Math.max(maxV, Math.abs(st.v[i]));
+        }
+        maxU *= ampScale;
+        maxV *= ampScale;
+
+        const px = (u) => pad + (w - 2 * pad) * (u / (2 * maxU) + 0.5);
+        const py = (v) => h - pad - (h - 2 * pad) * (v / (2 * maxV) + 0.5);
+
+        ctx.strokeStyle = "#10b981";
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        for (let i = 0; i < N; i++) {
+            const x = px(st.u[i]);
+            const y = py(st.v[i]);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        ctx.fillStyle = "rgba(16,185,129,0.18)";
+        ctx.beginPath();
+        for (let i = 0; i < N; i++) {
+            const x = px(st.u[i]);
+            const y = py(st.v[i]);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.fill();
+
+        ctx.fillStyle = "rgba(20,50,74,0.8)";
+        ctx.font = "12px var(--sans)";
+        ctx.fillText("phase portrait: u-v", 10, 18);
+        ctx.fillText("u", w - 16, h - 12);
+        ctx.fillText("v", 8, 18);
+        ctx.restore();
+        return;
+    }
+
+    ctx.beginPath();
+    for (let i = 0; i < N; i++) {
+        const x = plotX(i);
+        const y = plotY(st.u[i]);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    }
+
+    if (mode === "fill" || mode === "both") {
+        const baseY = h / 2;
+        ctx.lineTo(plotX(N - 1), baseY);
+        ctx.lineTo(plotX(0), baseY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        for (let i = 0; i < N; i++) {
+            const x = plotX(i);
+            const y = plotY(st.u[i]);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+    }
+
+    ctx.stroke();
+
+    if (mode === "both") {
+        ctx.save();
+        ctx.fillStyle = "#1d4ed8";
+        for (let i = 0; i < N; i += Math.max(1, Math.floor(N / 22))) {
+            const x = plotX(i);
+            const y = plotY(st.u[i]);
+            ctx.beginPath();
+            ctx.arc(x, y, 2.4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+
+    ctx.fillStyle = "rgba(20,50,74,0.8)";
+    ctx.font = "12px var(--sans)";
+    ctx.fillText(`max |u| ≈ ${formatNum(maxAbs, 3)}`, 10, 18);
+    ctx.fillText(`boundary: ${cfg.boundary}`, 10, h - 12);
+    ctx.restore();
+}
+
+function paletteColor(t, palette = "sky") {
+    t = clamp(t, 0, 1);
+    if (palette === "mono") {
+        const g = Math.round(255 * t);
+        return [g, g, g];
+    }
+    if (palette === "fire") {
+        const r = Math.round(255 * clamp(1.4 * t, 0, 1));
+        const g = Math.round(255 * clamp(1.8 * (t - 0.15), 0, 1));
+        const b = Math.round(255 * clamp(1.3 * (t - 0.6), 0, 1));
+        return [r, g, b];
+    }
+    const hue = 200 + 140 * t;
+    const sat = 70;
+    const light = 34 + 43 * t;
+    return hslToRgb(hue / 360, sat / 100, light / 100);
+}
+
+function hslToRgb(h, s, l) {
+    let r, g, b;
+    if (s === 0) {
+        r = g = b = l;
+    } else {
+        const hue2rgb = function hue2rgb(p, q, t) {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1 / 6) return p + (q - p) * 6 * t;
+            if (t < 1 / 2) return q;
+            if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+            return p;
+        };
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1 / 3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1 / 3);
+    }
+    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+}
+
+function drawContourOverlay(ctx, imgData, w, h, cfg, levels) {
+    // コンターを簡易描画する
+    const { Nx, Ny } = cfg;
+    const data = imgData;
+    const cellW = w / Nx;
+    const cellH = h / Ny;
+
+    ctx.save();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(0,0,0,0.85)";
+
+    const val = (i, j) => data[idx2(i, j, Nx)];
+
+    for (const lev of levels) {
+        ctx.beginPath();
+        for (let j = 0; j < Ny - 1; j++) {
+            for (let i = 0; i < Nx - 1; i++) {
+                const v00 = val(i, j), v10 = val(i + 1, j), v01 = val(i, j + 1), v11 = val(i + 1, j + 1);
+                const p = [];
+
+                const interp = (a, b) => (lev - a) / (b - a + 1e-12);
+
+                // 上
+                if ((v00 - lev) * (v10 - lev) <= 0 && v00 !== v10) {
+                    p.push([i + interp(v00, v10), j]);
+                }
+                // 右
+                if ((v10 - lev) * (v11 - lev) <= 0 && v10 !== v11) {
+                    p.push([i + 1, j + interp(v10, v11)]);
+                }
+                // 下
+                if ((v01 - lev) * (v11 - lev) <= 0 && v01 !== v11) {
+                    p.push([i + interp(v01, v11), j + 1]);
+                }
+                // 左
+                if ((v00 - lev) * (v01 - lev) <= 0 && v00 !== v01) {
+                    p.push([i, j + interp(v00, v01)]);
+                }
+
+                if (p.length >= 2) {
+                    const a = p[0], b = p[1];
+                    ctx.moveTo(a[0] * cellW, a[1] * cellH);
+                    ctx.lineTo(b[0] * cellW, b[1] * cellH);
+                }
+            }
+        }
+        ctx.stroke();
+    }
+    ctx.restore();
+}
+
+
+function draw2D() {
+    const canvas = ui.canvas2d;
+    resizeCanvas(canvas);
+    const ctx = canvas.getContext("2d");
+
+    // CSS 表示サイズ（レイアウト用）
+    const cssW = canvas.clientWidth;
+    const cssH = canvas.clientHeight;
+
+    // 実ピクセルサイズ（putImageData 用）
+    const pxW = canvas.width;
+    const pxH = canvas.height;
+
+    ctx.clearRect(0, 0, cssW, cssH);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, cssW, cssH);
+
+    if (!state.s2d || !state.cfg2d) return;
+
+    const cfg = state.cfg2d;
+    const st = state.s2d;
+    const palette = ui.palette.value;
+    const ampScale = Math.max(0.01, Number(ui.amp2.value));
+    const mode = ui.view2.value;
+
+    const { Nx, Ny } = cfg;
+    const size = Nx * Ny;
+
+    let maxAbs = 1e-12;
+    for (let k = 0; k < size; k++) {
+        maxAbs = Math.max(maxAbs, Math.abs(st.u[k]));
+    }
+    maxAbs *= ampScale;
+
+    /*
+        重要:
+        2D の heatmap / relief は putImageData を使っているため、
+        CSSサイズではなく canvas の実ピクセルサイズ(pxW, pxH) で
+        画像データを作らないと、左上に縮んで見える。
+        ここを backing store に合わせている。
+    */
+    const image = ctx.createImageData(pxW, pxH);
+    const pixels = image.data;
+
+    for (let py = 0; py < pxH; py++) {
+        const j = Math.min(Ny - 1, Math.max(0, Math.floor((py / pxH) * Ny)));
+        for (let px = 0; px < pxW; px++) {
+            const i = Math.min(Nx - 1, Math.max(0, Math.floor((px / pxW) * Nx)));
+            const k = idx2(i, j, Nx);
+            const v = clamp(st.u[k] / maxAbs, -1, 1);
+            const t = (v + 1) / 2;
+            const [r, g, b] = paletteColor(t, palette);
+            const p = 4 * (py * pxW + px);
+            pixels[p] = r;
+            pixels[p + 1] = g;
+            pixels[p + 2] = b;
+            pixels[p + 3] = 255;
+        }
+    }
+    ctx.putImageData(image, 0, 0);
+
+    if (mode === "relief") {
+        // 立体感を少し足す
+        const grad = ctx.createLinearGradient(0, 0, cssW, cssH);
+        grad.addColorStop(0, "rgba(255,255,255,0.18)");
+        grad.addColorStop(0.45, "rgba(255,255,255,0.00)");
+        grad.addColorStop(1, "rgba(0,0,0,0.14)");
+        ctx.save();
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, cssW, cssH);
+        ctx.restore();
+    }
+
+    if (mode === "contour") {
+        const field = new Float64Array(size);
+        for (let k = 0; k < size; k++) field[k] = st.u[k] / maxAbs;
+        drawContourOverlay(ctx, field, cssW, cssH, cfg, [-0.75, -0.45, 0, 0.45, 0.75]);
+    }
+
+    // 軸ラベル
+    ctx.save();
+    ctx.fillStyle = "rgba(255,255,255,0.82)";
+    ctx.fillRect(10, 10, 180, 46);
+    ctx.fillStyle = "rgba(20,50,74,0.9)";
+    ctx.font = "12px var(--sans)";
+    ctx.fillText(`t = ${formatNum(state.t, 3)}`, 18, 28);
+    ctx.fillText(`max |u| ≈ ${formatNum(maxAbs, 3)}`, 18, 44);
+    ctx.restore();
+
+    ctx.save();
+    ctx.strokeStyle = "rgba(255,255,255,0.7)";
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(0.5, 0.5, cssW - 1, cssH - 1);
+    ctx.restore();
+}
+
+
+/* =========================================================
+   状態表示
+   ========================================================= */
+
+function updateStabilityHint() {
+    const dt = Number(ui.dt.value);
+    const c = Number(ui.c.value);
+    const cfg1 = read1DConfig();
+    const cfg2 = read2DConfig();
+
+    const recommended1 = 0.40 * cfg1.dx / c;
+    const recommended2 = 0.22 * Math.min(cfg2.dx, cfg2.dy) / c;
+    const recommended = state.mode === "1d" ? recommended1 : recommended2;
+
+    ui.dtHint.textContent = formatNum(recommended, 4);
+
+    const ratio = dt / recommended;
+    if (ratio > 1.4) {
+        ui.stabilityBadge.textContent = "stability: 注意";
+        ui.stabilityBadge.style.color = "var(--bad)";
+        setMessage(`dt がやや大きいです．波が乱れやすいので，<strong>dt を小さく</strong>するか，格子数を少し下げてみてください．`, "warn");
+    } else if (ratio > 1.0) {
+        ui.stabilityBadge.textContent = "stability: 警告";
+        ui.stabilityBadge.style.color = "var(--warn)";
+        setMessage(`dt は安定条件に近いです．少しだけ dt を下げると綺麗に見える可能性があります．`, "warn");
+    } else {
+        ui.stabilityBadge.textContent = "stability: 良好";
+        ui.stabilityBadge.style.color = "var(--good)";
+    }
+}
+
+function refreshReadouts() {
+    if (state.mode === "1d") {
+        updateTimeEnergy(state.t, energy1D());
+    } else {
+        updateTimeEnergy(state.t, energy2D());
+    }
+    updateStabilityHint();
+}
+
+/* =========================================================
+   初期条件サンプル
+   ========================================================= */
+
+function loadSample(key) {
+    if (key === "1d-gauss") {
+        setMode("1d");
+        ui.u01.value = "0.75*exp(-140*(x-0.32)^2)";
+        ui.v01.value = "0";
+        ui.s1.value = "0";
+        ui.bc1.value = "fixed";
+        ui.view1.value = "both";
+        ui.amp1.value = "1.0";
+    } else if (key === "1d-sine") {
+        setMode("1d");
+        ui.u01.value = "sin(3*pi*x/L)";
+        ui.v01.value = "0";
+        ui.s1.value = "0";
+        ui.bc1.value = "fixed";
+        ui.view1.value = "line";
+    } else if (key === "1d-pluck") {
+        setMode("1d");
+        ui.u01.value = "x < 0.35 ? (x/0.35) : (x < 0.7 ? (1-(x-0.35)/0.35) : 0)";
+        ui.v01.value = "0";
+        ui.s1.value = "0";
+        ui.bc1.value = "fixed";
+        ui.view1.value = "both";
+    } else if (key === "2d-gauss") {
+        setMode("2d");
+        ui.u02.value = "0.9*exp(-60*((x-0.5)^2+(y-0.5)^2))";
+        ui.v02.value = "0";
+        ui.s2.value = "0";
+        ui.bc2.value = "fixed";
+        ui.view2.value = "heat";
+        ui.palette.value = "sky";
+    } else if (key === "2d-ring") {
+        setMode("2d");
+        ui.u02.value = "0.7*exp(-120*(sqrt((x-0.5)^2+(y-0.5)^2)-0.18)^2)";
+        ui.v02.value = "0";
+        ui.s2.value = "0";
+        ui.bc2.value = "fixed";
+        ui.view2.value = "contour";
+        ui.palette.value = "fire";
+    } else if (key === "2d-double") {
+        setMode("2d");
+        ui.u02.value = "0.55*exp(-120*((x-0.32)^2+(y-0.35)^2)) + 0.55*exp(-120*((x-0.68)^2+(y-0.65)^2))";
+        ui.v02.value = "0";
+        ui.s2.value = "0";
+        ui.bc2.value = "fixed";
+        ui.view2.value = "relief";
+        ui.palette.value = "sky";
+    }
+    resetSimulation(false);
+}
+
+/* =========================================================
+   1D / 2D 再構築
+   ========================================================= */
+
+function resetSimulation(keepMessage = true) {
+    state.running = false;
+    state.t = 0;
+    state.acc = 0;
+    state.lastTs = 0;
+
+    if (state.mode === "1d") {
+        init1D();
+        updateTimeEnergy(0, energy1D());
+        draw1D();
+        if (!keepMessage) {
+            setMessage("1D の設定を更新しました．再生を押すと動き出します．", "good");
+        }
+    } else {
+        init2D();
+        updateTimeEnergy(0, energy2D());
+        draw2D();
+        if (!keepMessage) {
+            setMessage("2D の設定を更新しました．再生を押すと動き出します．", "good");
+        }
+    }
+    refreshReadouts();
+}
+
+/* =========================================================
+   アニメーションループ
+   ========================================================= */
+
+function tick(ts) {
+    if (!state.running) return;
+
+    if (!state.lastTs) state.lastTs = ts;
+    const elapsed = (ts - state.lastTs) / 1000;
+    state.lastTs = ts;
+    state.acc += elapsed;
+
+    const speed = Math.max(0.1, Number(ui.playSpeed.value));
+    const dt = Number(ui.dt.value) * speed;
+
+    // 1フレーム中に複数回進める
+    const maxSteps = 8;
+    let steps = 0;
+    while (state.acc >= dt && steps < maxSteps) {
+        if (state.mode === "1d") {
+            step1D(dt);
+        } else {
+            step2D(dt);
+        }
+        state.acc -= dt;
+        state.t += 0; // step関数側で時刻加算済み
+        steps++;
+    }
+
+    if (state.mode === "1d") draw1D();
+    else draw2D();
+
+    refreshReadouts();
+    requestAnimationFrame(tick);
+}
+
+/* step で加算するためのラッパ */
+const _step1D = step1D;
+step1D = function(dt) {
+    _step1D(dt);
+};
+const _step2D = step2D;
+step2D = function(dt) {
+    _step2D(dt);
+};
+
+/* 上のラッパで state.t を加算していないので、ここで補正 */
+function advanceOnce() {
+    const dt = Number(ui.dt.value);
+    if (state.mode === "1d") {
+        const before = state.t;
+        _step1D(dt);
+        state.t = before + dt;
+        draw1D();
+    } else {
+        const before = state.t;
+        _step2D(dt);
+        state.t = before + dt;
+        draw2D();
+    }
+    refreshReadouts();
+}
+
+function play() {
+    if (!state.s1d || !state.s2d) {
+        resetSimulation();
+    }
+    state.running = true;
+    state.lastTs = 0;
+    setMessage("再生中です．パラメータを変えた場合は停止してから更新してください．", "good");
+    requestAnimationFrame(tick);
+}
+
+function pause() {
+    state.running = false;
+    setMessage("停止中です．パラメータはこのまま調整できます．", "info");
+}
+
+/* =========================================================
+   イベント接続
+   ========================================================= */
+
+ui.btnPlay.addEventListener("click", () => {
+    if (state.mode === "1d") {
+        init1D();
+    } else {
+        init2D();
+    }
+    refreshReadouts();
+    play();
+});
+
+ui.btnPause.addEventListener("click", pause);
+
+ui.btnStep.addEventListener("click", () => {
+    pause();
+    if (!state.s1d || !state.s2d) resetSimulation();
+    advanceOnce();
+});
+
+ui.btnReset.addEventListener("click", () => {
+    pause();
+    resetSimulation(false);
+});
+
+[
+    ui.c, ui.gamma, ui.playSpeed, ui.dt,
+    ui.L1, ui.N1, ui.bc1, ui.view1, ui.u01, ui.v01, ui.s1, ui.amp1,
+    ui.Lx, ui.Ly, ui.Nx, ui.Ny, ui.bc2, ui.view2, ui.u02, ui.v02, ui.s2, ui.amp2, ui.palette
+].forEach(el => {
+    el.addEventListener("input", () => {
+        refreshReadouts();
+        if (!state.running) {
+            if (state.mode === "1d") {
+                init1D();
+                draw1D();
+            } else {
+                init2D();
+                draw2D();
+            }
+        }
+    });
+});
+
+$$("button[data-sample]").forEach(btn => {
+    btn.addEventListener("click", () => loadSample(btn.dataset.sample));
+});
+
+[ui.view1, ui.view2, ui.palette, ui.bc1, ui.bc2].forEach(el => {
+    el.addEventListener("change", () => {
+        if (state.mode === "1d") draw1D();
+        else draw2D();
+    });
+});
+
+window.addEventListener("resize", () => {
+    if (state.mode === "1d") draw1D();
+    else draw2D();
+});
+
+/* =========================================================
+   初期化
+   ========================================================= */
+
+function init() {
+    // 既定サンプル
+    ui.u01.value = "0.75*exp(-140*(x-0.32)^2)";
+    ui.v01.value = "0";
+    ui.s1.value = "0";
+
+    ui.u02.value = "0.9*exp(-60*((x-0.5)^2+(y-0.5)^2))";
+    ui.v02.value = "0";
+    ui.s2.value = "0";
+
+    setMode("1d");
+    resetSimulation(false);
+
+    anime({
+        targets: ".logo",
+        scale: [0.85, 1],
+        rotate: [-8, 0],
+        duration: 900,
+        easing: "easeOutElastic(1, .7)"
+    });
+
+    anime({
+        targets: ".panel, .stage",
+        opacity: [0, 1],
+        translateY: [10, 0],
+        delay: anime.stagger(70),
+        duration: 620,
+        easing: "easeOutQuad"
+    });
+
+    anime({
+        targets: [ui.frame1, ui.frame2],
+        boxShadow: [
+            "0 0 0 rgba(0,0,0,0)",
+            "0 20px 60px rgba(29, 78, 128, 0.08)"
+        ],
+        duration: 1000,
+        easing: "easeOutQuad"
+    });
+}
+init();
+</script>
+
+<style id="wave-atelier-patch-style">
+.app{
+    max-width: 1380px;
+    padding: 14px 14px 18px;
+}
+.hero{
+    padding: 12px 10px 8px;
+    gap: 12px;
+}
+.logo{
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    font-size: 26px;
+}
+.hero p{
+    font-size: 0.92rem;
+}
+.badges{
+    margin-top: 8px;
+}
+.badge{
+    padding: 5px 9px;
+    font-size: 0.82rem;
+}
+
+.layout{
+    gap: 12px;
+}
+.panel,
+.stage{
+    border-radius: 18px;
+}
+.panel-header,
+.stageHeader{
+    padding: 12px 14px;
+}
+.panel-body,
+.stageBody{
+    padding: 12px;
+}
+
+.section{
+    padding: 12px;
+    margin-bottom: 12px;
+    border-radius: 14px;
+}
+.section h3{
+    font-size: 0.95rem;
+}
+.section p.desc{
+    font-size: 0.84rem;
+    margin-bottom: 8px;
+}
+.field textarea{
+    min-height: 76px;
+}
+.field input,
+.field select,
+.field textarea{
+    padding: 9px 10px;
+    border-radius: 11px;
+}
+button.btn{
+    padding: 9px 12px;
+    border-radius: 12px;
+    font-size: 0.92rem;
+}
+.btn-row{
+    gap: 8px;
+}
+
+.canvasFrame.line{
+    min-height: 240px;
+    aspect-ratio: 16 / 6.5;
+}
+.canvasFrame.plane{
+    min-height: 270px;
+    aspect-ratio: 16 / 9;
+}
+.legend{
+    margin-top: 8px;
+}
+.legend .strip{
+    min-width: 0;
+}
+.statusBox{
+    gap: 8px 12px;
+}
+.statusValue{
+    font-size: 0.92rem;
+}
+.noteBox{
+    font-size: 0.84rem;
+}
+.mathBox{
+    padding: 10px 12px;
+}
+
+@media (max-width: 720px){
+    .app{
+        padding: 10px;
+    }
+    .hero{
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 8px 4px 8px;
+    }
+    .layout{
+        gap: 10px;
+    }
+    .panel-body,
+    .stageBody{
+        padding: 10px;
+    }
+    .section{
+        padding: 10px;
+    }
+    .grid-2,
+    .grid-3{
+        grid-template-columns: 1fr;
+    }
+    .canvasFrame.line{
+        min-height: 220px;
+    }
+    .canvasFrame.plane{
+        min-height: 240px;
+    }
+    .hero h1{
+        font-size: 1.18rem;
+    }
+    .badge{
+        font-size: 0.8rem;
+    }
+    .statusBox{
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+</style>
+
+<script>
+/* =========================================================
+   固定表示レンジ
+   - ここだけ調整すれば見え方を変えられる
+   - 自動ズームはしない
+   ========================================================= */
+const VIEW_RANGE_1D = 1.5;     // 1D の縦表示範囲: [-1.5, +1.5]
+const VIEW_RANGE_PHASE = 1.5;   // 位相平面の表示範囲
+const VIEW_RANGE_2D = 1.0;      // 2D の色表示範囲: [-1.0, +1.0]
+
+function clamp(x, a, b) {
+    return Math.max(a, Math.min(b, x));
+}
+
+function roundTo(x, p = 3) {
+    const f = Math.pow(10, p);
+    return Math.round(x * f) / f;
+}
+
+function formatNum(x, p = 4) {
+    if (!Number.isFinite(x)) return "NaN";
+    const a = Math.abs(x);
+    if (a !== 0 && (a >= 1e7 || a < 1e-6)) {
+        const e = Math.floor(Math.log10(a));
+        const m = x / Math.pow(10, e);
+        return `${roundTo(m, 4)}×10^${e}`;
+    }
+    return String(roundTo(x, p));
+}
+
+/* =========================================================
+   共通の canvas リサイズ
+   ========================================================= */
+function resizeCanvas(canvas) {
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+    canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+function drawAxes(ctx, w, h, margin = 38) {
+    ctx.save();
+    ctx.strokeStyle = "rgba(20,50,74,0.16)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(margin, h - margin);
+    ctx.lineTo(w - margin, h - margin);
+    ctx.moveTo(margin, margin);
+    ctx.lineTo(margin, h - margin);
+    ctx.stroke();
+    ctx.restore();
+}
+
+function drawGrid(ctx, w, h, margin = 38, nx = 10, ny = 6) {
+    ctx.save();
+    ctx.strokeStyle = "rgba(20,50,74,0.05)";
+    ctx.lineWidth = 1;
+    for (let i = 1; i < nx; i++) {
+        const x = margin + (w - 2 * margin) * i / nx;
+        ctx.beginPath();
+        ctx.moveTo(x, margin);
+        ctx.lineTo(x, h - margin);
+        ctx.stroke();
+    }
+    for (let j = 1; j < ny; j++) {
+        const y = margin + (h - 2 * margin) * j / ny;
+        ctx.beginPath();
+        ctx.moveTo(margin, y);
+        ctx.lineTo(w - margin, y);
+        ctx.stroke();
+    }
+    ctx.restore();
+}
+
+/* =========================================================
+   1D 描画
+   - その時点の最大値では正規化しない
+   - 固定レンジ [-VIEW_RANGE_1D, +VIEW_RANGE_1D]
+   - 範囲外はクリップ表示
+   ========================================================= */
+function draw1D() {
+    const canvas = ui.canvas1d;
+    resizeCanvas(canvas);
+    const ctx = canvas.getContext("2d");
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, w, h);
+
+    if (!state.s1d || !state.cfg1d) return;
+
+    const cfg = state.cfg1d;
+    const st = state.s1d;
+    const mode = ui.view1.value;
+    const margin = 38;
+    const R = VIEW_RANGE_1D;
+
+    drawGrid(ctx, w, h, margin, 12, 8);
+    drawAxes(ctx, w, h, margin);
+
+    const N = st.u.length;
+    const innerW = w - 2 * margin;
+    const innerH = h - 2 * margin;
+
+    const plotX = (i) => margin + innerW * i / (N - 1);
+
+    // 固定レンジで y を決める
+    const plotY = (val) => {
+        const v = clamp(val, -R, R);
+        return margin + innerH * (1 - (v + R) / (2 * R));
+    };
+
+    // baseline は必ず中央
+    const baseY = margin + innerH / 2;
+
+    // 当前のピークだけ表示するが、スケールには使わない
+    let peak = 0;
+    let clipped = false;
+    for (let i = 0; i < N; i++) {
+        const a = Math.abs(st.u[i]);
+        if (a > peak) peak = a;
+        if (a > R) clipped = true;
+    }
+
+    // 軸ラベル
+    ctx.save();
+    ctx.fillStyle = "rgba(20,50,74,0.85)";
+    ctx.font = "12px var(--sans)";
+    ctx.fillText("u(x,t)", 10, 18);
+    ctx.fillText("x", w - 18, h - 12);
+    ctx.fillText(`t = ${formatNum(state.t, 3)}`, margin + 6, 18);
+    ctx.fillText(`固定表示範囲: ±${formatNum(R, 3)}`, margin + 6, 34);
+    if (clipped) {
+        ctx.fillStyle = "rgba(239,68,68,0.9)";
+        ctx.fillText("※振幅が範囲外の部分はクリップ表示", margin + 6, 50);
+    } else {
+        ctx.fillStyle = "rgba(20,50,74,0.7)";
+        ctx.fillText(`peak |u| ≈ ${formatNum(peak, 3)}`, margin + 6, 50);
+    }
+    ctx.restore();
+
+    ctx.save();
+    ctx.lineWidth = 2.4;
+    ctx.strokeStyle = "#1976d2";
+    ctx.fillStyle = "rgba(42,157,244,0.16)";
+
+    if (mode === "phase") {
+        // 位相平面も固定レンジ
+        const pad = 44;
+        const pw = w - 2 * pad;
+        const ph = h - 2 * pad;
+
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(0, 0, w, h);
+        drawGrid(ctx, w, h, pad, 8, 8);
+        drawAxes(ctx, w, h, pad);
+
+        const px = (u) => pad + pw * (clamp(u, -VIEW_RANGE_PHASE, VIEW_RANGE_PHASE) + VIEW_RANGE_PHASE) / (2 * VIEW_RANGE_PHASE);
+        const py = (v) => h - pad - ph * (clamp(v, -VIEW_RANGE_PHASE, VIEW_RANGE_PHASE) + VIEW_RANGE_PHASE) / (2 * VIEW_RANGE_PHASE);
+
+        ctx.strokeStyle = "#10b981";
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        for (let i = 0; i < N; i++) {
+            const x = px(st.u[i]);
+            const y = py(st.v[i]);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        ctx.fillStyle = "rgba(16,185,129,0.18)";
+        ctx.beginPath();
+        for (let i = 0; i < N; i++) {
+            const x = px(st.u[i]);
+            const y = py(st.v[i]);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.fill();
+
+        ctx.fillStyle = "rgba(20,50,74,0.85)";
+        ctx.font = "12px var(--sans)";
+        ctx.fillText("phase portrait: u-v", 10, 18);
+        ctx.fillText(`固定表示範囲: ±${formatNum(VIEW_RANGE_PHASE, 3)}`, 10, 34);
+        ctx.fillText("u", w - 16, h - 12);
+        ctx.fillText("v", 8, 18);
+        ctx.restore();
+        return;
+    }
+
+    ctx.beginPath();
+    for (let i = 0; i < N; i++) {
+        const x = plotX(i);
+        const y = plotY(st.u[i]);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    }
+
+    if (mode === "fill" || mode === "both") {
+        ctx.lineTo(plotX(N - 1), baseY);
+        ctx.lineTo(plotX(0), baseY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        for (let i = 0; i < N; i++) {
+            const x = plotX(i);
+            const y = plotY(st.u[i]);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+    }
+
+    ctx.stroke();
+
+    if (mode === "both") {
+        ctx.save();
+        ctx.fillStyle = "#1d4ed8";
+        for (let i = 0; i < N; i += Math.max(1, Math.floor(N / 22))) {
+            const x = plotX(i);
+            const y = plotY(st.u[i]);
+            ctx.beginPath();
+            ctx.arc(x, y, 2.4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+    /*
+    ctx.fillStyle = "rgba(20,50,74,0.85)";
+    ctx.font = "12px var(--sans)";
+    ctx.fillText(`固定表示範囲: ±${formatNum(R, 3)}`, 10, 18);
+    ctx.fillText(`boundary: ${cfg.boundary}`, 10, h - 12);
+    ctx.restore();
+    */
+}
+
+/* =========================================================
+   2D 描画
+   - maxAbs で正規化しない
+   - 固定レンジ [-VIEW_RANGE_2D, +VIEW_RANGE_2D]
+   - canvas 全面をそのまま使う
+   ========================================================= */
+
+function paletteColor(t, palette = "sky") {
+    t = clamp(t, 0, 1);
+    if (palette === "mono") {
+        const g = Math.round(255 * t);
+        return [g, g, g];
+    }
+    if (palette === "fire") {
+        const r = Math.round(255 * clamp(1.4 * t, 0, 1));
+        const g = Math.round(255 * clamp(1.8 * (t - 0.15), 0, 1));
+        const b = Math.round(255 * clamp(1.3 * (t - 0.6), 0, 1));
+        return [r, g, b];
+    }
+    const hue = 200 + 140 * t;
+    const sat = 70;
+    const light = 34 + 43 * t;
+    return hslToRgb(hue / 360, sat / 100, light / 100);
+}
+
+function hslToRgb(h, s, l) {
+    let r, g, b;
+    if (s === 0) {
+        r = g = b = l;
+    } else {
+        const hue2rgb = function hue2rgb(p, q, t) {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1 / 6) return p + (q - p) * 6 * t;
+            if (t < 1 / 2) return q;
+            if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+            return p;
+        };
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1 / 3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1 / 3);
+    }
+    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+}
+
+function drawContourOverlay(ctx, imgData, w, h, cfg, levels) {
+    const { Nx, Ny } = cfg;
+    const data = imgData;
+    const cellW = w / Nx;
+    const cellH = h / Ny;
+
+    ctx.save();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(0,0,0,0.85)";
+
+    const val = (i, j) => data[idx2(i, j, Nx)];
+
+    for (const lev of levels) {
+        ctx.beginPath();
+        for (let j = 0; j < Ny - 1; j++) {
+            for (let i = 0; i < Nx - 1; i++) {
+                const v00 = val(i, j), v10 = val(i + 1, j), v01 = val(i, j + 1), v11 = val(i + 1, j + 1);
+                const p = [];
+                const interp = (a, b) => (lev - a) / (b - a + 1e-12);
+
+                if ((v00 - lev) * (v10 - lev) <= 0 && v00 !== v10) p.push([i + interp(v00, v10), j]);
+                if ((v10 - lev) * (v11 - lev) <= 0 && v10 !== v11) p.push([i + 1, j + interp(v10, v11)]);
+                if ((v01 - lev) * (v11 - lev) <= 0 && v01 !== v11) p.push([i + interp(v01, v11), j + 1]);
+                if ((v00 - lev) * (v01 - lev) <= 0 && v00 !== v01) p.push([i, j + interp(v00, v01)]);
+
+                if (p.length >= 2) {
+                    const a = p[0], b = p[1];
+                    ctx.moveTo(a[0] * cellW, a[1] * cellH);
+                    ctx.lineTo(b[0] * cellW, b[1] * cellH);
+                }
+            }
+        }
+        ctx.stroke();
+    }
+    ctx.restore();
+}
+
+
+function draw2D() {
+    const canvas = ui.canvas2d;
+    resizeCanvas(canvas);
+    const ctx = canvas.getContext("2d");
+
+    // CSS 表示サイズ（レイアウト用）
+    const cssW = canvas.clientWidth;
+    const cssH = canvas.clientHeight;
+
+    // 実ピクセルサイズ（putImageData 用）
+    const pxW = canvas.width;
+    const pxH = canvas.height;
+
+    ctx.clearRect(0, 0, cssW, cssH);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, cssW, cssH);
+
+    if (!state.s2d || !state.cfg2d) return;
+
+    const cfg = state.cfg2d;
+    const st = state.s2d;
+    const palette = ui.palette.value;
+    const ampScale = Math.max(0.01, Number(ui.amp2.value));
+    const mode = ui.view2.value;
+
+    const { Nx, Ny } = cfg;
+    const size = Nx * Ny;
+
+    let maxAbs = 1e-12;
+    for (let k = 0; k < size; k++) {
+        maxAbs = Math.max(maxAbs, Math.abs(st.u[k]));
+    }
+    maxAbs *= ampScale;
+
+    /*
+        重要:
+        2D の heatmap / relief は putImageData を使っているため、
+        CSSサイズではなく canvas の実ピクセルサイズ(pxW, pxH) で
+        画像データを作らないと、左上に縮んで見える。
+        ここを backing store に合わせている。
+    */
+    const image = ctx.createImageData(pxW, pxH);
+    const pixels = image.data;
+
+    for (let py = 0; py < pxH; py++) {
+        const j = Math.min(Ny - 1, Math.max(0, Math.floor((py / pxH) * Ny)));
+        for (let px = 0; px < pxW; px++) {
+            const i = Math.min(Nx - 1, Math.max(0, Math.floor((px / pxW) * Nx)));
+            const k = idx2(i, j, Nx);
+            const v = clamp(st.u[k] / maxAbs, -1, 1);
+            const t = (v + 1) / 2;
+            const [r, g, b] = paletteColor(t, palette);
+            const p = 4 * (py * pxW + px);
+            pixels[p] = r;
+            pixels[p + 1] = g;
+            pixels[p + 2] = b;
+            pixels[p + 3] = 255;
+        }
+    }
+    ctx.putImageData(image, 0, 0);
+
+    if (mode === "relief") {
+        // 立体感を少し足す
+        const grad = ctx.createLinearGradient(0, 0, cssW, cssH);
+        grad.addColorStop(0, "rgba(255,255,255,0.18)");
+        grad.addColorStop(0.45, "rgba(255,255,255,0.00)");
+        grad.addColorStop(1, "rgba(0,0,0,0.14)");
+        ctx.save();
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, cssW, cssH);
+        ctx.restore();
+    }
+
+    if (mode === "contour") {
+        const field = new Float64Array(size);
+        for (let k = 0; k < size; k++) field[k] = st.u[k] / maxAbs;
+        drawContourOverlay(ctx, field, cssW, cssH, cfg, [-0.75, -0.45, 0, 0.45, 0.75]);
+    }
+
+    // 軸ラベル
+    ctx.save();
+    ctx.fillStyle = "rgba(255,255,255,0.82)";
+    ctx.fillRect(10, 10, 180, 46);
+    ctx.fillStyle = "rgba(20,50,74,0.9)";
+    ctx.font = "12px var(--sans)";
+    ctx.fillText(`t = ${formatNum(state.t, 3)}`, 18, 28);
+    ctx.fillText(`max |u| ≈ ${formatNum(maxAbs, 3)}`, 18, 44);
+    ctx.restore();
+
+    ctx.save();
+    ctx.strokeStyle = "rgba(255,255,255,0.7)";
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(0.5, 0.5, cssW - 1, cssH - 1);
+    ctx.restore();
+}
+
+
+/* =========================================================
+   状態表示
+   ========================================================= */
+
+function energy1D() {
+    const cfg = state.cfg1d;
+    const st = state.s1d;
+    if (!st) return 0;
+    let e = 0;
+    for (let i = 1; i < st.u.length - 1; i++) {
+        const ux = (st.u[i + 1] - st.u[i - 1]) / (2 * cfg.dx);
+        e += 0.5 * (st.v[i] * st.v[i] + (cfg.c * cfg.c) * ux * ux);
+    }
+    return e * cfg.dx;
+}
+
+function energy2D() {
+    const cfg = state.cfg2d;
+    const st = state.s2d;
+    if (!st) return 0;
+    let e = 0;
+    const { Nx, Ny, dx, dy, c } = cfg;
+    for (let j = 1; j < Ny - 1; j++) {
+        for (let i = 1; i < Nx - 1; i++) {
+            const k = idx2(i, j, Nx);
+            const ux = (st.u[idx2(i + 1, j, Nx)] - st.u[idx2(i - 1, j, Nx)]) / (2 * dx);
+            const uy = (st.u[idx2(i, j + 1, Nx)] - st.u[idx2(i, j - 1, Nx)]) / (2 * dy);
+            e += 0.5 * (st.v[k] * st.v[k] + c * c * (ux * ux + uy * uy));
+        }
+    }
+    return e * dx * dy;
+}
+
+function updateTimeEnergy(t, e) {
+    ui.timeView.textContent = formatNum(t, 3);
+    ui.energyView.textContent = formatNum(e, 3);
+}
+
+function refreshReadouts() {
+    if (state.mode === "1d") {
+        updateTimeEnergy(state.t, energy1D());
+    } else {
+        updateTimeEnergy(state.t, energy2D());
+    }
+    const dt = Number(ui.dt.value);
+    const c = Number(ui.c.value);
+    const cfg1 = read1DConfig();
+    const cfg2 = read2DConfig();
+    const recommended1 = 0.40 * cfg1.dx / c;
+    const recommended2 = 0.22 * Math.min(cfg2.dx, cfg2.dy) / c;
+    const recommended = state.mode === "1d" ? recommended1 : recommended2;
+    ui.dtHint.textContent = formatNum(recommended, 4);
+
+    const ratio = dt / recommended;
+    if (ratio > 1.4) {
+        ui.stabilityBadge.textContent = "stability: 注意";
+        ui.stabilityBadge.style.color = "var(--bad)";
+    } else if (ratio > 1.0) {
+        ui.stabilityBadge.textContent = "stability: 警告";
+        ui.stabilityBadge.style.color = "var(--warn)";
+    } else {
+        ui.stabilityBadge.textContent = "stability: 良好";
+        ui.stabilityBadge.style.color = "var(--good)";
+    }
+}
+</script>
+
+<script id="wave-atelier-patch-script">
+(() => {
+    "use strict";
+
+    if (!window.ui || !window.state || !window.math) return;
+
+    const ui = window.ui;
+    const state = window.state;
+    const orig = {
+        init1D: window.init1D,
+        init2D: window.init2D,
+        draw1D: window.draw1D,
+        draw2D: window.draw2D
+    };
+
+    function roundTo(x, p = 3) {
+        const f = Math.pow(10, p);
+        return Math.round(x * f) / f;
+    }
+
+    function formatNum(x, p = 4) {
+        if (!Number.isFinite(x)) return "NaN";
+        const a = Math.abs(x);
+        if (a !== 0 && (a >= 1e7 || a < 1e-6)) {
+            const e = Math.floor(Math.log10(a));
+            const m = x / Math.pow(10, e);
+            return `${roundTo(m, 4)}×10^${e}`;
+        }
+        return String(roundTo(x, p));
+    }
+
+    function maxAbsArray(arr) {
+        let m = 0;
+        for (let i = 0; i < arr.length; i++) {
+            const a = Math.abs(arr[i]);
+            if (a > m) m = a;
+        }
+        return m;
+    }
+
+    function setViewRange1D() {
+        if (!state.s1d) return;
+        const uMax = maxAbsArray(state.s1d.u);
+        const vMax = maxAbsArray(state.s1d.v);
+        const base = Math.max(uMax, vMax, 0.35);
+        state.viewRange1D = base * 1.55;
+        state.phaseRange1D = base * 1.35;
+    }
+
+    function setViewRange2D() {
+        if (!state.s2d) return;
+        const uMax = maxAbsArray(state.s2d.u);
+        const base = Math.max(uMax, 0.35);
+        state.viewRange2D = base * 1.40;
+    }
+
+    function resizeCanvas(canvas) {
+        const rect = canvas.getBoundingClientRect();
+        const w = Math.max(1, Math.round(rect.width));
+        const h = Math.max(1, Math.round(rect.height));
+        if (canvas.width !== w || canvas.height !== h) {
+            canvas.width = w;
+            canvas.height = h;
+        }
+    }
+
+    function drawGrid(ctx, w, h, margin = 38, nx = 10, ny = 6) {
+        ctx.save();
+        ctx.strokeStyle = "rgba(20,50,74,0.05)";
+        ctx.lineWidth = 1;
+        for (let i = 1; i < nx; i++) {
+            const x = margin + (w - 2 * margin) * i / nx;
+            ctx.beginPath();
+            ctx.moveTo(x, margin);
+            ctx.lineTo(x, h - margin);
+            ctx.stroke();
+        }
+        for (let j = 1; j < ny; j++) {
+            const y = margin + (h - 2 * margin) * j / ny;
+            ctx.beginPath();
+            ctx.moveTo(margin, y);
+            ctx.lineTo(w - margin, y);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
+    function drawAxes(ctx, w, h, margin = 38) {
+        ctx.save();
+        ctx.strokeStyle = "rgba(20,50,74,0.16)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(margin, h - margin);
+        ctx.lineTo(w - margin, h - margin);
+        ctx.moveTo(margin, margin);
+        ctx.lineTo(margin, h - margin);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function draw1D() {
+        const canvas = ui.canvas1d;
+        resizeCanvas(canvas);
+        const ctx = canvas.getContext("2d");
+        const w = canvas.width;
+        const h = canvas.height;
+
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, w, h);
+
+        if (!state.s1d || !state.cfg1d) return;
+        if (!state.viewRange1D) setViewRange1D();
+
+        const cfg = state.cfg1d;
+        const st = state.s1d;
+        const mode = ui.view1.value;
+        const margin = Math.max(30, Math.round(Math.min(w, h) * 0.08));
+        const rangeY = Math.max(1e-6, state.viewRange1D || 1);
+        const rangeP = Math.max(1e-6, state.phaseRange1D || rangeY);
+        const N = st.u.length;
+
+        drawGrid(ctx, w, h, margin, 12, 8);
+        drawAxes(ctx, w, h, margin);
+
+        ctx.save();
+        ctx.fillStyle = "rgba(20,50,74,0.82)";
+        ctx.font = "12px var(--sans)";
+        ctx.fillText(`t = ${formatNum(state.t, 3)}`, margin + 6, 18);
+        ctx.fillText("u(x,t)", 10, 18);
+        ctx.fillText("x", w - 18, h - 12);
+        ctx.restore();
+
+        if (mode === "phase") {
+            const pad = Math.max(34, Math.round(Math.min(w, h) * 0.10));
+            ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = "#fff";
+            ctx.fillRect(0, 0, w, h);
+            drawGrid(ctx, w, h, pad, 8, 8);
+            drawAxes(ctx, w, h, pad);
+
+            const px = (u) => pad + (w - 2 * pad) * (u / (2 * rangeP) + 0.5);
+            const py = (v) => h - pad - (h - 2 * pad) * (v / (2 * rangeP) + 0.5);
+
+            ctx.save();
+            ctx.strokeStyle = "#10b981";
+            ctx.fillStyle = "rgba(16,185,129,0.16)";
+            ctx.lineWidth = 2.2;
+            ctx.beginPath();
+            for (let i = 0; i < N; i++) {
+                const x = px(st.u[i]);
+                const y = py(st.v[i]);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.beginPath();
+            for (let i = 0; i < N; i++) {
+                const x = px(st.u[i]);
+                const y = py(st.v[i]);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.fill();
+            ctx.fillStyle = "rgba(20,50,74,0.82)";
+            ctx.font = "12px var(--sans)";
+            ctx.fillText("phase portrait: u-v", 10, 18);
+            ctx.fillText("u", w - 16, h - 12);
+            ctx.fillText("v", 8, 18);
+            ctx.restore();
+            return;
+        }
+
+        const plotX = (i) => margin + (w - 2 * margin) * i / (N - 1);
+        const plotY = (val) => h / 2 - (val / rangeY) * (h * 0.36);
+
+        ctx.save();
+        ctx.lineWidth = 2.4;
+        ctx.strokeStyle = "#1976d2";
+        ctx.fillStyle = "rgba(42,157,244,0.16)";
+        ctx.beginPath();
+        for (let i = 0; i < N; i++) {
+            const x = plotX(i);
+            const y = plotY(st.u[i]);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+
+        if (mode === "fill" || mode === "both") {
+            const baseY = h / 2;
+            ctx.lineTo(plotX(N - 1), baseY);
+            ctx.lineTo(plotX(0), baseY);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            for (let i = 0; i < N; i++) {
+                const x = plotX(i);
+                const y = plotY(st.u[i]);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+        }
+
+        ctx.stroke();
+
+        if (mode === "both") {
+            ctx.fillStyle = "#1d4ed8";
+            for (let i = 0; i < N; i += Math.max(1, Math.floor(N / 22))) {
+                const x = plotX(i);
+                const y = plotY(st.u[i]);
+                ctx.beginPath();
+                ctx.arc(x, y, 2.4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        ctx.fillStyle = "rgba(20,50,74,0.82)";
+        ctx.font = "12px var(--sans)";
+        ctx.fillText(`display range ±${formatNum(rangeY, 3)}`, 10, 18);
+        ctx.fillText(`boundary: ${cfg.boundary}`, 10, h - 12);
+        ctx.restore();
+    }
+
+    function paletteColor(t, palette = "sky") {
+        t = Math.max(0, Math.min(1, t));
+        if (palette === "mono") {
+            const g = Math.round(255 * t);
+            return [g, g, g];
+        }
+        if (palette === "fire") {
+            const r = Math.round(255 * Math.min(1, 1.4 * t));
+            const g = Math.round(255 * Math.min(1, Math.max(0, 1.8 * (t - 0.15))));
+            const b = Math.round(255 * Math.min(1, Math.max(0, 1.3 * (t - 0.6))));
+            return [r, g, b];
+        }
+        const hue = 200 + 140 * t;
+        const sat = 70;
+        const light = 34 + 43 * t;
+        return hslToRgb(hue / 360, sat / 100, light / 100);
+    }
+
+    function hslToRgb(h, s, l) {
+        let r, g, b;
+        if (s === 0) {
+            r = g = b = l;
+        } else {
+            const hue2rgb = function(p, q, t) {
+                if (t < 0) t += 1;
+                if (t > 1) t -= 1;
+                if (t < 1 / 6) return p + (q - p) * 6 * t;
+                if (t < 1 / 2) return q;
+                if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+                return p;
+            };
+            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            const p = 2 * l - q;
+            r = hue2rgb(p, q, h + 1 / 3);
+            g = hue2rgb(p, q, h);
+            b = hue2rgb(p, q, h - 1 / 3);
+        }
+        return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+    }
+
+    function drawContourOverlay(ctx, imgData, w, h, cfg, levels) {
+        const { Nx, Ny } = cfg;
+        const data = imgData;
+        const cellW = w / Nx;
+        const cellH = h / Ny;
+        ctx.save();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "rgba(0,0,0,0.85)";
+        const val = (i, j) => data[idx2(i, j, Nx)];
+        for (const lev of levels) {
+            ctx.beginPath();
+            for (let j = 0; j < Ny - 1; j++) {
+                for (let i = 0; i < Nx - 1; i++) {
+                    const v00 = val(i, j), v10 = val(i + 1, j), v01 = val(i, j + 1), v11 = val(i + 1, j + 1);
+                    const p = [];
+                    const interp = (a, b) => (lev - a) / (b - a + 1e-12);
+                    if ((v00 - lev) * (v10 - lev) <= 0 && v00 !== v10) p.push([i + interp(v00, v10), j]);
+                    if ((v10 - lev) * (v11 - lev) <= 0 && v10 !== v11) p.push([i + 1, j + interp(v10, v11)]);
+                    if ((v01 - lev) * (v11 - lev) <= 0 && v01 !== v11) p.push([i + interp(v01, v11), j + 1]);
+                    if ((v00 - lev) * (v01 - lev) <= 0 && v00 !== v01) p.push([i, j + interp(v00, v01)]);
+                    if (p.length >= 2) {
+                        const a = p[0], b = p[1];
+                        ctx.moveTo(a[0] * cellW, a[1] * cellH);
+                        ctx.lineTo(b[0] * cellW, b[1] * cellH);
+                    }
+                }
+            }
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
+    function draw2D() {
+        const canvas = ui.canvas2d;
+        resizeCanvas(canvas);
+        const ctx = canvas.getContext("2d");
+        const w = canvas.width;
+        const h = canvas.height;
+
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, w, h);
+
+        if (!state.s2d || !state.cfg2d) return;
+        if (!state.viewRange2D) setViewRange2D();
+
+        const cfg = state.cfg2d;
+        const st = state.s2d;
+        const palette = ui.palette.value;
+        const mode = ui.view2.value;
+        const range = Math.max(1e-6, state.viewRange2D || 1);
+        const { Nx, Ny } = cfg;
+        const size = Nx * Ny;
+
+        const image = ctx.createImageData(w, h);
+        const pixels = image.data;
+
+        for (let py = 0; py < h; py++) {
+            const j = Math.min(Ny - 1, Math.max(0, Math.floor(py / h * Ny)));
+            for (let px = 0; px < w; px++) {
+                const i = Math.min(Nx - 1, Math.max(0, Math.floor(px / w * Nx)));
+                const k = idx2(i, j, Nx);
+                const v = Math.max(-1, Math.min(1, st.u[k] / range));
+                const t = (v + 1) / 2;
+                const [r, g, b] = paletteColor(t, palette);
+                const p = 4 * (py * w + px);
+                pixels[p] = r;
+                pixels[p + 1] = g;
+                pixels[p + 2] = b;
+                pixels[p + 3] = 255;
+            }
+        }
+        ctx.putImageData(image, 0, 0);
+
+        if (mode === "relief") {
+            ctx.save();
+            ctx.globalAlpha = 0.20;
+            const grad = ctx.createLinearGradient(0, 0, w, h);
+            grad.addColorStop(0, "rgba(255,255,255,0.08)");
+            grad.addColorStop(1, "rgba(0,0,0,0.12)");
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, w, h);
+            ctx.restore();
+        }
+
+        if (mode === "contour") {
+            const field = new Float64Array(size);
+            for (let k = 0; k < size; k++) field[k] = st.u[k] / range;
+            drawContourOverlay(ctx, field, w, h, cfg, [-0.75, -0.45, 0, 0.45, 0.75]);
+        }
+
+        ctx.save();
+        ctx.fillStyle = "rgba(255,255,255,0.82)";
+        ctx.fillRect(10, 10, 200, 52);
+        ctx.fillStyle = "rgba(20,50,74,0.9)";
+        ctx.font = "12px var(--sans)";
+        ctx.fillText(`t = ${formatNum(state.t, 3)}`, 18, 28);
+        ctx.fillText(`display range ±${formatNum(range, 3)}`, 18, 44);
+        ctx.fillText(`Nx×Ny = ${Nx}×${Ny}`, 18, 60);
+        ctx.restore();
+
+        ctx.save();
+        ctx.strokeStyle = "rgba(255,255,255,0.7)";
+        ctx.lineWidth = 1.2;
+        ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
+        ctx.restore();
+    }
+
+    window.resizeCanvas = resizeCanvas;
+    window.draw1D = draw1D;
+    window.draw2D = draw2D;
+    window.setViewRange1D = setViewRange1D;
+    window.setViewRange2D = setViewRange2D;
+
+    const originalInit1D = orig.init1D;
+    const originalInit2D = orig.init2D;
+
+    window.init1D = function() {
+        const ret = originalInit1D.apply(this, arguments);
+        setViewRange1D();
+        return ret;
+    };
+
+    window.init2D = function() {
+        const ret = originalInit2D.apply(this, arguments);
+        setViewRange2D();
+        return ret;
+    };
+
+    window.addEventListener("resize", () => {
+        if (state.mode === "1d") draw1D();
+        else draw2D();
+    });
+
+    // 初回表示の補正
+    if (state.mode === "1d") {
+        setViewRange1D();
+        draw1D();
+    } else {
+        setViewRange2D();
+        draw2D();
+    }
+
+    // メッセージと数値表示の整合
+    if (typeof window.refreshReadouts === "function") {
+        window.refreshReadouts();
+    }
+})();
+</script>
+
+</body>
+</html>
