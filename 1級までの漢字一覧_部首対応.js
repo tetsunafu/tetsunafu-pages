@@ -1,4 +1,4 @@
-const KanjiList = {
+export const KanjiList = {
     // 10級
     "一": {
         "grade": "10級",
