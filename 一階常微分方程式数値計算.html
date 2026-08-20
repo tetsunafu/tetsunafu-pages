@@ -1,541 +1,362 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>RK4 — 一階常微分方程式数値計算</title>
-
-<!-- CDN: Plotly + math.js -->
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/mathjs@12.2.1/lib/browser/math.min.js"></script>
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-<style>
-:root{
-  --bg:#f7fafc; --card:#ffffff; --muted:#475569; --accent:#2563eb; --accent-2:#7c3aed;
-  --tile:#60a5fa; --good:#16a34a; --bad:#ef4444; --glass: rgba(2,6,23,0.03);
-}
-*{box-sizing:border-box}
-body{
-  margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP",sans-serif;
-  background: linear-gradient(180deg,#fbfdff,#f4f7fb);
-  color: #0f172a; padding:18px;
-}
-.container{max-width:1200px;margin:0 auto}
-.header{display:flex;gap:12px;align-items:center;margin-bottom:14px}
-.logo{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:24px;box-shadow:0 8px 24px rgba(16,24,40,0.08)}
-.title h1{margin:0;font-size:1.25rem}
-.title p{margin:4px 0 0 0;color:var(--muted);font-size:0.95rem}
-
-/* layout */
-.grid{display:grid;grid-template-columns:1fr 360px;gap:18px}
-@media(max-width:980px){.grid{grid-template-columns:1fr;}.aside{order:2}}
-.card{background:var(--card);padding:14px;border-radius:12px;border:1px solid rgba(2,6,23,0.06);box-shadow:0 6px 20px rgba(2,6,23,0.04)}
-.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.input, textarea, select{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(2,6,23,0.06);background:transparent;color:inherit;font-family:monospace}
-.label{font-size:0.9rem;color:var(--muted);margin-bottom:6px;display:block}
-.row{display:flex;gap:8px;align-items:center}
-.small{font-size:0.9rem;color:var(--muted)}
-.btn{background:transparent;border:1px solid rgba(2,6,23,0.06);color:inherit;padding:8px 12px;border-radius:999px;cursor:pointer}
-.btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));border:none;color:white;font-weight:700}
-.plot-wrap{height:480px;border-radius:10px;overflow:hidden;background:var(--glass);border:1px solid rgba(2,6,23,0.04)}
-.kv{display:flex;gap:8px;align-items:center;margin-top:8px}
-.kv strong{min-width:120px;color:#0b1220}
-.progress{height:10px;background:#e6eef8;border-radius:999px;overflow:hidden}
-.progress > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));width:0%}
-
-/* table */
-.table-wrap{max-height:180px;overflow:auto;border-radius:6px;border:1px solid rgba(2,6,23,0.04);padding:6px;background:#fff}
-table{width:100%;border-collapse:collapse;font-family:monospace}
-th,td{padding:6px;border-bottom:1px dashed rgba(0,0,0,0.04);text-align:right}
-
-/* history list */
-.history-list{max-height:300px;overflow:auto;margin-top:8px}
-.history-item{padding:8px;border-radius:8px;background:linear-gradient(180deg,#fff,#fbfdff);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
-
-/* help */
-.help{font-size:0.95rem;color:var(--muted);margin-top:8px}
-.footer{margin-top:14px;color:var(--muted);text-align:center;font-size:0.9rem}
-.bad{color:var(--bad)}
-.good{color:var(--good)}
-</style>
-<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>一階常微分方程式シミュレーター</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Math.js -->
+  <script src="https://cdn.jsdelivr.net/npm/mathjs@12.2.1/lib/browser/math.min.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <!-- KaTeX -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
-<body>
-<div class="container">
-  <div class="header">
-    <div class="logo">RK4</div>
-    <div class="title">
-      <h1>RK4 — 一階常微分方程式の数値計算</h1>
-      <p>式は安全に解析・評価します。Web Worker 対応で大きな計算も快適。</p>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-[100dvh] lg:h-[100dvh] flex flex-col">
+
+  <!-- ヘッダー -->
+  <header class="bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center z-10 shadow-sm shrink-0">
+    <div>
+      <h1 class="text-lg md:text-xl font-bold text-blue-600 tracking-tight">一階微分方程式</h1>
+      <p class="text-[10px] md:text-xs text-slate-500 font-medium">ルンゲ-クッタ法で数値計算</p>
     </div>
-  </div>
+    <div>
+      <button id="exportCsv" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-1.5 px-3 rounded-md transition shadow-sm border border-slate-200">
+        CSV出力
+      </button>
+    </div>
+  </header>
 
-  <div class="grid">
-    <!-- main -->
-    <main class="card" aria-live="polite">
-      <section>
-        <label class="label">方程式（\(\frac{dy}{dx} = f(x, y)\)） — 例: <span class="small">sin(x) - 0.5*y</span></label>
-        <input id="expr" class="input" placeholder="例: sin(x) - 0.5*y" value="sin(x) - 0.5*y">
-      </section>
-
-      <section style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
-        <div style="flex:1;min-width:160px">
-          <label class="label">初期値 \(x_0\)</label>
-          <input id="x0" class="input" type="number" step="any" value="0">
-        </div>
-        <div style="flex:1;min-width:160px">
-          <label class="label">初期値 \(y(x_0)\)</label>
-          <input id="y0" class="input" type="number" step="any" value="1">
-        </div>
-        <div style="flex:1;min-width:160px">
-          <label class="label">終点 \(x_1\)</label>
-          <input id="x1" class="input" type="number" step="any" value="20">
-        </div>
-        <div style="flex:1;min-width:160px">
-          <label class="label">分割数（\(N\)）</label>
-          <input id="nSteps" class="input" type="number" min="10" max="20000" step="1" value="2000">
-        </div>
-      </section>
-
-      <section style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap">
-        <button id="runBtn" class="btn btn-primary">計算してプロット</button>
-        <button id="cancelBtn" class="btn" disabled>中断</button>
-        <button id="exportCSV" class="btn">CSV ダウンロード</button>
-        <button id="saveHistory" class="btn">履歴に保存</button>
-
-        <div style="margin-left:auto">
-          <label class="small">計算方法</label>
-          <div style="display:flex;gap:8px">
-            <label class="small"><input type="checkbox" id="useWorker" checked> Web Worker 使用</label>
-            <label class="small"><input type="checkbox" id="showTable"> 結果を表で表示</label>
+  <!-- メインコンテンツ (モバイル: 縦スクロール, PC: 横並び固定) -->
+  <div class="flex flex-col lg:flex-row flex-1 overflow-y-auto lg:overflow-hidden">
+    
+    <!-- グラフエリア (モバイル: 上部, PC: 右側) -->
+    <main class="flex flex-col p-2 lg:p-4 bg-slate-50 order-1 lg:order-2 w-full lg:w-auto lg:flex-1 shrink-0 h-[45vh] lg:h-full">
+      <div class="bg-white rounded-xl p-3 lg:p-4 shadow-sm border border-slate-200 flex-1 flex flex-col relative h-full">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 z-10 gap-2">
+          <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Solution Graph \(y(x)\)</span>
+          <div id="errorMetric" class="text-[11px] font-mono text-slate-500 bg-slate-50 px-2 py-1 rounded hidden border border-slate-200">
+            最大誤差: <span id="maxErrorVal" class="text-blue-600 font-bold">-</span>
           </div>
         </div>
-      </section>
-
-      <div class="kv" style="margin-top:12px">
-        <strong>状態</strong>
-        <div id="status" class="small">準備完了</div>
-      </div>
-
-      <div style="margin-top:8px">
-        <div class="progress" aria-hidden="true"><i id="progBar"></i></div>
-      </div>
-
-      <div style="margin-top:12px" class="plot-wrap card">
-        <div id="plot" style="width:100%;height:100%"></div>
-      </div>
-
-      <div class="kv">
-        <strong>解析解（任意）</strong>
-        <div style="flex:1">
-          <input id="analytic" class="input" placeholder="任意：解析解 y(x) を入れると誤差を表示（例: exp(-0.5*x)*sin(x)）">
+        <div class="flex-1 relative w-full h-full min-h-0">
+          <canvas id="chartCanvas"></canvas>
         </div>
-        <div><button id="compareBtn" class="btn">誤差を表示</button></div>
-      </div>
-
-      <div class="kv" style="margin-top:10px">
-        <strong>結果サマリ</strong>
-        <div class="small" id="summary">—</div>
-      </div>
-
-      <div id="tableArea" style="margin-top:12px;display:none">
-        <div class="small">先頭 / 末尾 の点（多いときは抜粋）</div>
-        <div class="table-wrap" id="tableWrap"></div>
-      </div>
-
-      <div style="margin-top:12px" class="help">
-        <strong>初心者向けメモ（短く）</strong>
-        <ul>
-          <li>RK4 は1ステップで4回関数評価して精度よく進める標準的な方法です。</li>
-          <li>式は <code>sin(x)</code>、<code>exp(x)</code>、<code>log(x)</code>、変数は <code>x</code> と <code>y</code> のみを使ってください。</li>
-          <li>分割数 N が大きいほど精度が上がりますが、計算時間も増えます。</li>
-          <li>解析解を入れると数値解との最大絶対誤差を計算します。</li>
-        </ul>
       </div>
     </main>
 
-    <!-- side -->
-    <aside class="card aside">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <strong>履歴</strong>
-        <button id="clearHistory" class="btn">全消去</button>
-      </div>
-      <div class="history-list" id="historyList" aria-live="polite"></div>
-
-      <div style="margin-top:12px">
-        <strong>プリセット</strong>
-        <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
-          <button class="btn" data-expr="sin(x)-0.5*y">減衰： sin(x) - 0.5*y</button>
-          <button class="btn" data-expr="x+y">単純： x + y</button>
-          <button class="btn" data-expr="y - x^2">非線形： y - x^2</button>
-          <button class="btn" data-expr="y*(1-y)">ロジスティック： y(1-y)</button>
+    <!-- コントロールパネル (モバイル: 下部, PC: 左側スクロール) -->
+    <aside class="w-full lg:w-[420px] bg-white border-r border-slate-200 flex flex-col order-2 lg:order-1 shrink-0 lg:overflow-y-auto pb-10 lg:pb-0">
+      <div class="p-4 space-y-6">
+        
+        <!-- プリセット -->
+        <div>
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Math Templates</label>
+          <div class="flex flex-wrap gap-1.5">
+            <button class="preset-btn text-[11px] bg-blue-50 text-blue-600 hover:bg-blue-100 font-semibold px-2 py-1.5 rounded transition" data-expr="a*y" data-ana="y0 * exp(a*(x - x0))">自然増殖 (線形)</button>
+            <button class="preset-btn text-[11px] bg-slate-100 text-slate-600 hover:bg-slate-200 font-semibold px-2 py-1.5 rounded transition" data-expr="a*y*(1 - y/b)" data-ana="b / (1 + (b/y0 - 1)*exp(-a*(x - x0)))">ロジスティック</button>
+            <button class="preset-btn text-[11px] bg-slate-100 text-slate-600 hover:bg-slate-200 font-semibold px-2 py-1.5 rounded transition" data-expr="a*x + b*y" data-ana="">線形非同次</button>
+            <button class="preset-btn text-[11px] bg-slate-100 text-slate-600 hover:bg-slate-200 font-semibold px-2 py-1.5 rounded transition" data-expr="y^2 - x^2 + 1" data-ana="">リッカチ形 (非線形)</button>
+          </div>
         </div>
-      </div>
 
-      <div style="margin-top:12px">
-        <strong>ヘルプ</strong>
-        <div class="small" style="margin-top:6px">
-          - 分割数 N が大きいと精度は良くなりますが計算時間が増えます。<br>
-          - Web Worker をオンにすると計算がバックグラウンドで行われ、UI が固まりません。<br>
-          - 解析解を入れると数値解との絶対誤差（最大値）を表示します。
+        <!-- 数式入力 & プレビュー -->
+        <div class="bg-blue-50/40 p-3 rounded-xl border border-blue-100">
+          <label class="text-[10px] font-bold text-blue-500 uppercase tracking-wider block mb-1">Differential Equation</label>
+          
+          <div class="min-h-[44px] flex items-center justify-center bg-white rounded-lg border border-blue-100 mb-2 p-2 overflow-x-auto shadow-inner">
+            <div id="mathPreview" class="text-blue-900 text-lg"></div>
+          </div>
+
+          <textarea id="exprInput" rows="1" class="w-full bg-white border border-slate-200 rounded-lg p-2 font-mono text-sm focus:outline-none focus:border-blue-400 transition" placeholder="a*y*(1 - y/b)">a*y*(1 - y/b)</textarea>
+          <p class="text-[10px] text-slate-500 mt-1">独立変数: <code>x</code>, 従属変数: <code>y</code> | 定数: <code>a</code>, <code>b</code></p>
         </div>
+
+        <!-- パラメータスライダー群 -->
+        <div class="space-y-3">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Parameters</label>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-slate-50 p-2 rounded-lg border border-slate-100">
+              <div class="flex justify-between text-xs font-medium text-slate-600 mb-1">
+                <span>定数 \(a\)</span><span id="val-a">1.0</span>
+              </div>
+              <input type="range" id="param-a" min="-5" max="5" step="0.1" value="1.0" class="w-full accent-blue-500">
+            </div>
+            <div class="bg-slate-50 p-2 rounded-lg border border-slate-100">
+              <div class="flex justify-between text-xs font-medium text-slate-600 mb-1">
+                <span>定数 \(b\)</span><span id="val-b">5.0</span>
+              </div>
+              <input type="range" id="param-b" min="-10" max="10" step="0.1" value="5.0" class="w-full accent-blue-500">
+            </div>
+          </div>
+        </div>
+
+        <!-- 計算条件 -->
+        <div>
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Boundary & Steps</label>
+          <div class="grid grid-cols-2 gap-3 mb-3">
+            <div>
+              <label class="text-xs text-slate-500 font-semibold block mb-1">初期値 \(x_0\)</label>
+              <input type="number" id="x0" value="0.0" step="0.1" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm font-mono focus:border-blue-400 outline-none transition">
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 font-semibold block mb-1">初期値 \(y_0 = y(x_0)\)</label>
+              <input type="number" id="y0" value="0.1" step="0.1" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm font-mono focus:border-blue-400 outline-none transition">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs text-slate-500 font-semibold block mb-1">終点 \(x_{end}\)</label>
+              <input type="number" id="x1" value="10.0" step="0.5" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm font-mono focus:border-blue-400 outline-none transition">
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 font-semibold block mb-1">分割数 \(N\)</label>
+              <input type="number" id="nSteps" value="1000" step="100" min="10" max="5000" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm font-mono focus:border-blue-400 outline-none transition">
+            </div>
+          </div>
+        </div>
+
+        <!-- 解析解 (オプション) -->
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 border-dashed">
+          <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Analytic Solution (Optional)</label>
+          <textarea id="analyticInput" rows="1" class="w-full bg-white border border-slate-200 rounded-lg p-2 font-mono text-sm focus:outline-none focus:border-blue-400 transition" placeholder="理論解 y(x) がわかる場合は入力..."></textarea>
+          <p class="text-[10px] text-slate-400 mt-1">※入力するとグラフ上に重ねて誤差を計算します</p>
+        </div>
+
+        <!-- エラー表示 -->
+        <div id="errorBox" class="hidden text-xs bg-red-50 text-red-600 p-2 rounded-lg border border-red-200 font-mono"></div>
+        
       </div>
     </aside>
   </div>
-</div>
 
-<script>
-/* ---------------------
-   セキュア評価ルール（main と worker 両方で共通）
-   - math.js の parse/compile を使う
-   - AST をチェックして代入・アクセス・未許可識別子を拒否
-   - 許可変数: x,y, e, pi
-   - 許可関数: 基本的な数学関数のみ
-   --------------------- */
+  <script>
+    let simData = { xs: [], ys: [], anaYs: [] };
+    let chartInstance = null;
 
-const MAX_EXPR_LENGTH = 600;
-const MAX_STEPS = 20000;
-const ALLOWED_SYMBOLS = new Set(['x','y','e','pi']);
-const ALLOWED_FUNCS = new Set([
-  'sin','cos','tan','asin','acos','atan',
-  'sinh','cosh','tanh','asinh','acosh','atanh',
-  'exp','log','log10','log2','sqrt','abs','floor','ceil','round','pow','min','max','sign'
-]);
-
-function validateNode(node){
-  if (!node || typeof node.type !== 'string') throw new Error('不正な式ノード');
-  const t = node.type;
-  const allowedTypes = new Set(['SymbolNode','OperatorNode','ConstantNode','ParenthesisNode','FunctionNode','UnaryNode']);
-  if (!allowedTypes.has(t)) throw new Error('禁止された要素: ' + t);
-  if (t === 'FunctionNode') {
-    let fnname = node.fn && node.fn.name ? node.fn.name : null;
-    if (!fnname || !ALLOWED_FUNCS.has(fnname)) throw new Error('未許可の関数: ' + fnname);
-    (node.args || []).forEach(validateNode);
-    return;
-  }
-  if (t === 'SymbolNode') {
-    const name = node.name;
-    if (!ALLOWED_SYMBOLS.has(name) && !ALLOWED_FUNCS.has(name)) throw new Error('未許可の識別子: ' + name);
-    return;
-  }
-  // traverse children
-  for (const k in node) {
-    if (!node.hasOwnProperty(k)) continue;
-    const v = node[k];
-    if (v && typeof v === 'object' && v.type) validateNode(v);
-    if (Array.isArray(v)) v.forEach(item => { if (item && item.type) validateNode(item); });
-  }
-}
-
-/* compile safe expression using math.js */
-function compileSafeExpression(expr){
-  if (typeof expr !== 'string') throw new Error('式は文字列で指定してください');
-  if (expr.length > MAX_EXPR_LENGTH) throw new Error('式が長すぎます（上限:' + MAX_EXPR_LENGTH + '文字）');
-  let node;
-  try { node = math.parse(expr); } catch (e) { throw new Error('パースエラー: ' + e.message); }
-  try { validateNode(node); } catch (e) { throw new Error('式検査エラー: ' + e.message); }
-  try { const c = node.compile(); return c; } catch (e) { throw new Error('コンパイルできません: ' + e.message); }
-}
-
-/* RK4 solver (synchronous) */
-function rk4SolveCompiled(compiled, x0,y0,x1,n){
-  if (!Number.isFinite(x0) || !Number.isFinite(x1) || !Number.isFinite(y0)) throw new Error('初期値が不正です');
-  if (!Number.isInteger(n) || n<=0 || n>MAX_STEPS) throw new Error('N は 1 〜 ' + MAX_STEPS + ' の整数で指定してください');
-  const xs = new Float64Array(n+1), ys = new Float64Array(n+1);
-  const h = (x1 - x0) / n;
-  let xi = x0, yi = y0;
-  xs[0]=xi; ys[0]=yi;
-  for (let i=1;i<=n;i++){
-    const k1 = h * compiled.evaluate({x:xi,y:yi,pi:Math.PI,e:Math.E});
-    const k2 = h * compiled.evaluate({x:xi + h/2, y: yi + k1/2, pi:Math.PI,e:Math.E});
-    const k3 = h * compiled.evaluate({x:xi + h/2, y: yi + k2/2, pi:Math.PI,e:Math.E});
-    const k4 = h * compiled.evaluate({x:xi + h, y: yi + k3, pi:Math.PI,e:Math.E});
-    const yNext = yi + (k1 + 2*k2 + 2*k3 + k4)/6;
-    xi = x0 + i*h; yi = yNext;
-    xs[i]=xi; ys[i]=yi;
-    if (!isFinite(yi) || Number.isNaN(yi)) throw new Error('計算が発散しました（NaN/Inf）');
-  }
-  return {xs:Array.from(xs), ys:Array.from(ys)};
-}
-
-/* --- UI wiring --- */
-const exprEl = document.getElementById('expr');
-const x0El = document.getElementById('x0');
-const y0El = document.getElementById('y0');
-const x1El = document.getElementById('x1');
-const nStepsEl = document.getElementById('nSteps');
-const runBtn = document.getElementById('runBtn');
-const cancelBtn = document.getElementById('cancelBtn');
-const exportCSV = document.getElementById('exportCSV');
-const saveHistory = document.getElementById('saveHistory');
-const statusEl = document.getElementById('status');
-const progBar = document.getElementById('progBar');
-const plotDiv = document.getElementById('plot');
-const analyticEl = document.getElementById('analytic');
-const compareBtn = document.getElementById('compareBtn');
-const showTableChk = document.getElementById('showTable');
-const tableArea = document.getElementById('tableArea');
-const tableWrap = document.getElementById('tableWrap');
-const useWorkerChk = document.getElementById('useWorker');
-
-let lastResult = null;
-let worker = null;
-
-/* helper: update progress */
-function setProgress(p){
-  progBar.style.width = Math.max(0,Math.min(100,p*100)) + '%';
-}
-
-/* run: either use worker or main thread */
-runBtn.addEventListener('click', async ()=>{
-  // reset
-  setProgress(0);
-  statusEl.textContent = '計算準備中…';
-  statusEl.style.color = '';
-  tableArea.style.display = 'none';
-  // gather
-  const expr = exprEl.value.trim();
-  const x0 = Number(x0El.value), y0=Number(y0El.value), x1=Number(x1El.value);
-  let n = Math.floor(Number(nStepsEl.value) || 0);
-  if (!expr) { alert('方程式を入力してください'); return; }
-  if (!Number.isFinite(x0) || !Number.isFinite(y0) || !Number.isFinite(x1)) { alert('初期値を正しく入力してください'); return; }
-  if (!Number.isInteger(n) || n<=0) { alert('分割数 N を正しい整数で指定してください'); return; }
-  if (n > MAX_STEPS && !confirm('N が大きいです（上限 ' + MAX_STEPS + '）。続行しますか？')) return;
-
-  // If using worker, spawn and pass inputs
-  if (useWorkerChk.checked && window.Worker) {
-    // terminate existing worker
-    if (worker) { worker.terminate(); worker = null; cancelBtn.disabled = true; }
-    statusEl.textContent = 'ワーカーを起動して計算中…';
-    cancelBtn.disabled = false;
-    // worker code as blob
-    const wkCode = `
-      importScripts('https://cdn.jsdelivr.net/npm/mathjs@12.2.1/lib/browser/math.min.js');
-      const MAX_EXPR_LEN = ${MAX_EXPR_LENGTH};
-      const MAX_STEPS = ${MAX_STEPS};
-      const ALLOWED_SYMBOLS = new Set(${JSON.stringify(Array.from(ALLOWED_SYMBOLS))});
-      const ALLOWED_FUNCS = new Set(${JSON.stringify(Array.from(ALLOWED_FUNCS))});
-      function validateNode(node){
-        if (!node || typeof node.type !== 'string') throw new Error('不正なノード');
-        const t=node.type; const allowed = new Set(['SymbolNode','OperatorNode','ConstantNode','ParenthesisNode','FunctionNode','UnaryNode']);
-        if (!allowed.has(t)) throw new Error('禁止要素: '+t);
-        if (t==='FunctionNode'){ let fn = node.fn && node.fn.name ? node.fn.name : null; if (!fn || !ALLOWED_FUNCS.has(fn)) throw new Error('未許可関数: '+fn); (node.args||[]).forEach(validateNode); return;}
-        if (t==='SymbolNode'){ if (!ALLOWED_SYMBOLS.has(node.name) && !ALLOWED_FUNCS.has(node.name)) throw new Error('未許可識別子: '+node.name); return; }
-        for (const k in node){ if (!node.hasOwnProperty(k)) continue; const v=node[k]; if (v&&typeof v==='object'&&v.type) validateNode(v); if (Array.isArray(v)) v.forEach(it=>{ if(it&&it.type) validateNode(it);}); }
-      }
-      onmessage = function(e){
-        const {expr,x0,y0,x1,n} = e.data;
-        try {
-          if (typeof expr !== 'string') throw new Error('式は文字列');
-          if (expr.length > MAX_EXPR_LEN) throw new Error('式が長すぎます');
-          const node = math.parse(expr);
-          validateNode(node);
-          const compiled = node.compile();
-          if (!Number.isFinite(x0)||!Number.isFinite(y0)||!Number.isFinite(x1)) throw new Error('初期値不正');
-          if (!Number.isInteger(n)||n<=0||n>MAX_STEPS) throw new Error('N が不正');
-          const xs = new Array(n+1), ys=new Array(n+1);
-          const h = (x1 - x0) / n;
-          let xi=x0, yi=y0; xs[0]=xi; ys[0]=yi;
-          for (let i=1;i<=n;i++){
-            const k1 = h * compiled.evaluate({x:xi,y:yi,pi:Math.PI,e:Math.E});
-            const k2 = h * compiled.evaluate({x:xi + h/2, y: yi + k1/2, pi:Math.PI,e:Math.E});
-            const k3 = h * compiled.evaluate({x:xi + h/2, y: yi + k2/2, pi:Math.PI,e:Math.E});
-            const k4 = h * compiled.evaluate({x:xi + h, y: yi + k3, pi:Math.PI,e:Math.E});
-            const yNext = yi + (k1 + 2*k2 + 2*k3 + k4)/6;
-            xi = x0 + i*h; yi = yNext;
-            xs[i]=xi; ys[i]=yi;
-            if (!isFinite(yi) || Number.isNaN(yi)) throw new Error('NaN/Inf が発生しました');
-            if (i % Math.max(1,Math.floor(n/100)) === 0) postMessage({type:'progress',p: i / n});
-          }
-          postMessage({type:'done', xs:xs, ys:ys});
-        } catch (err){
-          postMessage({type:'error', message: err.message || String(err)});
-        }
-      };
-    `;
-    const blob = new Blob([wkCode], {type:'application/javascript'});
-    const url = URL.createObjectURL(blob);
-    worker = new Worker(url);
-    worker.onmessage = function(ev){
-      const d = ev.data;
-      if (d.type === 'progress') { setProgress(d.p); statusEl.textContent = '計算中… ' + Math.round(d.p*100) + '%'; }
-      else if (d.type === 'done') {
-        setProgress(1); statusEl.textContent = '完了';
-        cancelBtn.disabled = true;
-        lastResult = { xs: d.xs, ys:d.ys, expr, x0, y0, x1, n };
-        renderPlot(d.xs, d.ys, expr);
-        renderTableIfWanted();
-        URL.revokeObjectURL(url);
-        worker.terminate(); worker = null;
-      } else if (d.type === 'error') {
-        statusEl.textContent = 'エラー: ' + d.message; statusEl.style.color = 'var(--bad)'; cancelBtn.disabled = true;
-        URL.revokeObjectURL(url); worker.terminate(); worker = null;
-      }
-    };
-    worker.onerror = function(ev){ statusEl.textContent = 'ワーカーエラー: ' + ev.message; cancelBtn.disabled = true; worker.terminate(); worker=null; };
-    // post job
-    worker.postMessage({expr,x0,y0,x1,n});
-    return;
-  }
-
-  // Otherwise do synchronous (main thread)
-  try {
-    statusEl.textContent = '計算中（メインスレッド）…';
-    setProgress(0.02);
-    await new Promise(r=>setTimeout(r,8)); // let UI update
-    const compiled = compileSafeExpression(expr);
-    setProgress(0.05);
-    const t0 = performance.now();
-    const res = rk4SolveCompiled(compiled, x0,y0,x1,n);
-    const elapsed = (performance.now() - t0) / 1000;
-    lastResult = { xs: res.xs, ys: res.ys, expr, x0, y0, x1, n, elapsed };
-    renderPlot(res.xs, res.ys, expr);
-    setProgress(1);
-    statusEl.textContent = `完了（${n+1} 点、時間 ${elapsed.toFixed(3)} s）`;
-    renderTableIfWanted();
-  } catch (err) {
-    statusEl.textContent = 'エラー: ' + err.message; statusEl.style.color = 'var(--bad)';
-    setProgress(0);
-  }
-});
-
-/* cancel */
-cancelBtn.addEventListener('click', ()=>{
-  if (worker) {
-    worker.terminate();
-    worker = null;
-    cancelBtn.disabled = true;
-    statusEl.textContent = '計算を中断しました';
-    setProgress(0);
-  }
-});
-
-/* render plot (Plotly) */
-function renderPlot(xs, ys, expr){
-  const trace = { x: xs, y: ys, type:'scatter', mode:'lines', name:'数値解', line:{color:'#2563eb'} };
-  const data = [trace];
-  const layout = { margin:{l:48,r:18,t:40,b:48}, title: `y' = ${expr}`, xaxis:{title:'x'}, yaxis:{title:'y'},
-    paper_bgcolor:'#ffffff', plot_bgcolor:'#ffffff', font:{color:'#0f172a'} };
-  Plotly.newPlot(plotDiv, data, layout, {responsive:true});
-}
-
-/* export CSV */
-exportCSV.addEventListener('click', ()=>{
-  if (!lastResult) { alert('まず計算してください'); return; }
-  const {xs, ys} = lastResult;
-  let csv = 'x,y\n';
-  for (let i=0;i<xs.length;i++) csv += xs[i] + ',' + ys[i] + '\n';
-  const blob = new Blob([csv], {type:'text/csv'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'rk4_result.csv'; a.click();
-});
-
-/* table render */
-function renderTableIfWanted(){
-  if (!lastResult) return;
-  if (!showTableChk.checked) { tableArea.style.display = 'none'; return; }
-  tableArea.style.display = 'block';
-  const {xs, ys} = lastResult;
-  const n = xs.length;
-  const sample = [];
-  const headCount = Math.min(5, n);
-  const tailCount = Math.min(5, n);
-  for (let i=0;i<headCount;i++) sample.push([i, xs[i], ys[i]]);
-  if (n > headCount + tailCount) {
-    sample.push(['...', '...', '...']);
-  }
-  for (let i=Math.max(headCount, n-tailCount); i<n;i++) sample.push([i, xs[i], ys[i]]);
-  // build table
-  let html = '<table><thead><tr><th>i</th><th>x</th><th>y</th></tr></thead><tbody>';
-  sample.forEach(r => { html += '<tr><td style="text-align:right">'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>'; });
-  html += '</tbody></table>';
-  tableWrap.innerHTML = html;
-}
-
-/* save history */
-const HISTORY_KEY = 'rk4_app_history_v1';
-function loadHistory(){
-  try { const raw = localStorage.getItem(HISTORY_KEY); return raw ? JSON.parse(raw) : []; } catch(e){ return []; }
-}
-function saveCurrentToHistory(){
-  if (!lastResult) { alert('結果がありません'); return; }
-  const entry = {expr:lastResult.expr, x0:lastResult.x0, y0:lastResult.y0, x1:lastResult.x1, n:lastResult.n, date:new Date().toISOString()};
-  const arr = loadHistory(); arr.unshift(entry); if (arr.length>200) arr.pop(); localStorage.setItem(HISTORY_KEY, JSON.stringify(arr));
-  renderHistory();
-  alert('履歴に保存しました');
-}
-saveHistory.addEventListener('click', saveCurrentToHistory);
-
-function renderHistory(){
-  const arr = loadHistory();
-  const container = document.getElementById('historyList');
-  container.innerHTML = '';
-  arr.forEach((h,idx)=>{
-    const div = document.createElement('div'); div.className='history-item';
-    const left = document.createElement('div');
-    left.innerHTML = '<div style="font-weight:600">'+h.expr+'</div><div class="small">x0='+h.x0+', x1='+h.x1+', N='+h.n+'</div>';
-    const right = document.createElement('div');
-    const btnLoad = document.createElement('button'); btnLoad.className='btn'; btnLoad.textContent='再表示';
-    btnLoad.addEventListener('click', ()=>{
-      exprEl.value = h.expr; x0El.value = h.x0; y0El.value = h.y0; x1El.value = h.x1; nStepsEl.value = h.n;
-      runBtn.click();
-    });
-    const btnDel = document.createElement('button'); btnDel.className='btn'; btnDel.textContent='削除';
-    btnDel.addEventListener('click', ()=>{
-      if (!confirm('この履歴を削除しますか？')) return;
-      arr.splice(idx,1); localStorage.setItem(HISTORY_KEY, JSON.stringify(arr)); renderHistory();
-    });
-    right.appendChild(btnLoad); right.appendChild(btnDel);
-    div.appendChild(left); div.appendChild(right);
-    container.appendChild(div);
-  });
-}
-document.getElementById('clearHistory').addEventListener('click', ()=>{
-  if (!confirm('履歴を全消去しますか？')) return;
-  localStorage.removeItem(HISTORY_KEY); renderHistory();
-});
-renderHistory();
-
-/* presets */
-document.querySelectorAll('button[data-expr]').forEach(b=>{
-  b.addEventListener('click', ()=> { exprEl.value = b.dataset.expr; });
-});
-
-/* compare analytic */
-compareBtn.addEventListener('click', async ()=>{
-  if (!lastResult) { alert('まず数値解を計算してください'); return; }
-  const ana = analyticEl.value.trim();
-  if (!ana) { alert('解析解を入力してください'); return; }
-  try {
-    const compiledAna = compileSafeExpression(ana);
-    const xs = lastResult.xs, ys = lastResult.ys;
-    let maxErr = 0;
-    for (let i=0;i<xs.length;i++){
-      const ya = compiledAna.evaluate({x: xs[i], y: ys[i], pi:Math.PI, e:Math.E});
-      if (!isFinite(ya)) throw new Error('解析解評価で発散');
-      const err = Math.abs(ya - ys[i]);
-      if (err > maxErr) maxErr = err;
+    // UI Elements
+    const exprInput = document.getElementById('exprInput');
+    const analyticInput = document.getElementById('analyticInput');
+    const mathPreview = document.getElementById('mathPreview');
+    const errorBox = document.getElementById('errorBox');
+    const errorMetric = document.getElementById('errorMetric');
+    const maxErrorVal = document.getElementById('maxErrorVal');
+    
+    // Convert text math to LaTeX for KaTeX
+    function updateMathPreview() {
+      let expr = exprInput.value;
+      let latex = expr
+        .replace(/\*/g, '')
+        .replace(/sin/g, '\\sin')
+        .replace(/cos/g, '\\cos')
+        .replace(/exp/g, '\\exp')
+        .replace(/log/g, '\\ln');
+      
+      const fullLatex = `\\frac{dy}{dx} = ${latex}`;
+      try {
+        katex.render(fullLatex, mathPreview, { throwOnError: false, displayMode: true });
+        errorBox.classList.add('hidden');
+      } catch (e) {}
     }
-    alert('解析解との最大絶対誤差: ' + maxErr);
-  } catch (err) { alert('解析解評価エラー: ' + err.message); }
-});
 
-/* show table toggle */
-showTableChk.addEventListener('change', ()=> renderTableIfWanted());
+    // Parameters linking
+    const paramsList = ['a', 'b'];
+    paramsList.forEach(p => {
+      const slider = document.getElementById(`param-${p}`);
+      const valDisp = document.getElementById(`val-${p}`);
+      slider.addEventListener('input', () => {
+        valDisp.textContent = parseFloat(slider.value).toFixed(1);
+        runSimulation(); 
+      });
+    });
 
-/* safety compile wrapper for analytic too */
-function compileSafeExpression(expr){
-  return (function(){
-    const compiled = (function(){ return (function(){ try { return math.parse(expr).compile(); } catch(e){ throw e; } })(); })();
-    // validate AST
-    try { validateNode(math.parse(expr)); } catch (e) { throw new Error('式検査失敗: ' + e.message); }
-    return { evaluate: function(scope){ return compiled.evaluate(scope); } };
-  })();
-}
+    // Preset Buttons
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        exprInput.value = e.target.dataset.expr;
+        analyticInput.value = e.target.dataset.ana || '';
+        updateMathPreview();
+        runSimulation();
+      });
+    });
 
-/* page unload: terminate worker if any */
-window.addEventListener('beforeunload', ()=> { if (worker) worker.terminate(); });
+    // Event Listeners for auto-recalculation
+    ['exprInput', 'analyticInput', 'x0', 'y0', 'x1', 'nSteps'].forEach(id => {
+      document.getElementById(id).addEventListener('input', () => {
+        if(id === 'exprInput') updateMathPreview();
+        runSimulation();
+      });
+    });
 
-</script>
+    // CSV Export
+    document.getElementById('exportCsv').addEventListener('click', () => {
+      if (simData.xs.length === 0) return;
+      let csv = 'x,y_numerical' + (analyticInput.value ? ',y_analytic\n' : '\n');
+      for (let i = 0; i < simData.xs.length; i++) {
+        csv += `${simData.xs[i]},${simData.ys[i]}`;
+        if (simData.anaYs.length > 0) csv += `,${simData.anaYs[i]}`;
+        csv += '\n';
+      }
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'ode1_result.csv';
+      a.click();
+    });
+
+    // RK4 Solver (Synchronous for real-time slider updates)
+    function runSimulation() {
+      const expr = exprInput.value.trim();
+      const anaExpr = analyticInput.value.trim();
+      
+      const pValues = {
+        a: parseFloat(document.getElementById('param-a').value),
+        b: parseFloat(document.getElementById('param-b').value),
+        e: Math.E,
+        pi: Math.PI
+      };
+
+      const x0 = parseFloat(document.getElementById('x0').value);
+      const y0 = parseFloat(document.getElementById('y0').value);
+      const x1 = parseFloat(document.getElementById('x1').value);
+      const nSteps = parseInt(document.getElementById('nSteps').value) || 1000;
+
+      if (isNaN(x0) || isNaN(y0) || isNaN(x1) || nSteps <= 0) return;
+
+      let compiledNum, compiledAna = null;
+      try {
+        compiledNum = math.parse(expr).compile();
+        if (anaExpr) compiledAna = math.parse(anaExpr).compile();
+        errorBox.classList.add('hidden');
+      } catch (err) {
+        errorBox.textContent = "数式構文エラー";
+        errorBox.classList.remove('hidden');
+        return;
+      }
+
+      const h = (x1 - x0) / nSteps;
+      let xi = x0, yi = y0;
+      
+      simData = { xs: [xi], ys: [yi], anaYs: [] };
+      let maxErr = 0;
+      let hasAna = false;
+
+      // Initial Analytic Eval
+      if (compiledAna) {
+        try {
+          // Pass x0, y0 as context if analytical solution relies on them
+          let scope = Object.assign({ x: xi, x0: x0, y0: y0 }, pValues);
+          let ya = compiledAna.evaluate(scope);
+          simData.anaYs.push(ya);
+          hasAna = true;
+        } catch (e) {}
+      }
+
+      try {
+        for (let i = 1; i <= nSteps; i++) {
+          let scope = Object.assign({ x: xi, y: yi }, pValues);
+          const k1 = h * compiledNum.evaluate(scope);
+          
+          scope.x = xi + h/2; scope.y = yi + k1/2;
+          const k2 = h * compiledNum.evaluate(scope);
+          
+          scope.y = yi + k2/2;
+          const k3 = h * compiledNum.evaluate(scope);
+          
+          scope.x = xi + h; scope.y = yi + k3;
+          const k4 = h * compiledNum.evaluate(scope);
+          
+          yi += (k1 + 2*k2 + 2*k3 + k4) / 6;
+          xi = x0 + i * h;
+          
+          simData.xs.push(xi);
+          simData.ys.push(yi);
+
+          if (hasAna) {
+            let aScope = Object.assign({ x: xi, x0: x0, y0: y0 }, pValues);
+            let ya = compiledAna.evaluate(aScope);
+            simData.anaYs.push(ya);
+            let err = Math.abs(ya - yi);
+            if (err > maxErr) maxErr = err;
+          }
+        }
+      } catch (err) {
+        errorBox.textContent = "計算エラー: 発散したか不正な値です";
+        errorBox.classList.remove('hidden');
+        return;
+      }
+      
+      // Update Error Metric UI
+      if (hasAna) {
+        errorMetric.classList.remove('hidden');
+        maxErrorVal.textContent = maxErr.toExponential(3);
+      } else {
+        errorMetric.classList.add('hidden');
+      }
+
+      updateChart();
+    }
+
+    // Chart.js rendering
+    function updateChart() {
+      const ctx = document.getElementById('chartCanvas').getContext('2d');
+      if (chartInstance) chartInstance.destroy();
+
+      let labels = simData.xs.map(x => x.toFixed(2));
+      let datasets = [
+        { 
+          label: '数値解 y(x) [RK4]', 
+          data: simData.ys, 
+          borderColor: '#2563eb', 
+          backgroundColor: 'rgba(37, 99, 235, 0.1)', 
+          borderWidth: 2, 
+          pointRadius: 0, 
+          tension: 0.1, 
+          fill: true 
+        }
+      ];
+
+      if (simData.anaYs.length > 0) {
+        datasets.push({
+          label: '解析解 y(x) [理論値]', 
+          data: simData.anaYs, 
+          borderColor: '#f59e0b', 
+          borderDash: [5, 5],
+          borderWidth: 2, 
+          pointRadius: 0, 
+          tension: 0.1
+        });
+      }
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: { labels: labels, datasets: datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 0 }, 
+          interaction: { mode: 'index', intersect: false },
+          scales: {
+            x: { type: 'linear', title: { display: true, text: '独立変数 x' } },
+            y: { title: { display: true, text: '従属変数 y' } }
+          },
+          plugins: {
+            legend: { position: 'top', align: 'end', labels: { boxWidth: 12, usePointStyle: true } },
+            tooltip: { enabled: true }
+          }
+        }
+      });
+    }
+
+    // Initialize
+    window.addEventListener('load', () => {
+      updateMathPreview();
+      runSimulation();
+    });
+  </script>
 </body>
 </html>

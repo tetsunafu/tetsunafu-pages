@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>定理公式定義クイズ — Theorem Quiz</title>
+
+<!-- ライブラリ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+<script id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<!-- シンプルなフォント -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+
+<!-- スタイル（ライトモード基調、水色アクセント） -->
+<style>
+:root{
+  --bg:#f0fbff; --card:#ffffff; --muted:#4b6b74;
+  --accent:#60c2f0; --accent-deep:#0ea5c9; --ok:#16a34a; --ng:#ef4444;
+  --glass: rgba(255,255,255,0.9);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto;background:linear-gradient(180deg,var(--bg),#f8feff);color:#022834;display:flex;justify-content:center;padding:18px}
+.app{width:100%;max-width:1100px}
+.header{display:flex;gap:12px;align-items:center;margin-bottom:14px}
+.logo{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-deep));display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:28px}
+.title{line-height:1}
+.h1{margin:0;font-size:1.25rem;font-weight:800}
+.lead{margin-top:6px;color:var(--muted);font-size:0.95rem}
+
+/* card */
+.card{background:var(--card);border-radius:14px;padding:16px;margin-top:8px;box-shadow:0 10px 30px rgba(2,40,52,0.06)}
+.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.btn{padding:10px 14px;border-radius:10px;border:0;font-weight:700;cursor:pointer}
+.btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent-deep));color:#022834}
+.btn-ghost{background:transparent;border:1px solid rgba(11,89,120,0.06);color:var(--muted)}
+.small{font-size:0.9rem;color:var(--muted)}
+
+/* flow: screens */
+.screen{display:none}
+.screen.active{display:block}
+
+/* mode selector */
+.mode-grid{display:flex;gap:8px;margin-top:12px}
+.mode-card{padding:12px;border-radius:10px;background:#f8feff;border:1px solid rgba(7,95,117,0.05);cursor:pointer;flex:1;text-align:center}
+.mode-card.selected{box-shadow:0 10px 30px rgba(6,102,129,0.06);border:1px solid var(--accent-deep);transform:translateY(-4px)}
+
+/* categories */
+.categories{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.cat{padding:6px 10px;border-radius:999px;border:1px solid rgba(6,102,129,0.06);background:linear-gradient(180deg,#fff,#f1fbff);cursor:pointer}
+.cat.selected{background:linear-gradient(90deg,var(--accent),#cfeffd);color:#01303b;font-weight:700;}
+
+/* game area */
+.game-area{display:flex;flex-direction:column;gap:12px;align-items:stretch}
+.statement{min-height:120px;border-radius:10px;padding:16px;background:linear-gradient(180deg,#ffffff,#fbfeff);border:1px solid rgba(0,0,0,0.04);font-family: 'JetBrains Mono', monospace; font-size:1.05rem;overflow:auto}
+.options{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:8px}
+.option{padding:12px;border-radius:10px;background:#fff;border:1px solid rgba(0,0,0,0.04);cursor:pointer;text-align:center;font-weight:700}
+.option.correct{border-color:var(--ok);background:linear-gradient(90deg,#eaffef,#f3fff6)}
+.option.wrong{border-color:var(--ng);background:linear-gradient(90deg,#fff3f4,#fff)} 
+
+/* feedback mark */
+.mark{position:absolute;left:50%;transform:translateX(-50%);top:12px;font-size:48px;opacity:0;pointer-events:none}
+.mark.ok{color:var(--ok)}
+.mark.ng{color:var(--ng)}
+
+/* footer / score */
+.footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.progress{font-size:0.95rem;color:var(--muted)}
+.score{font-weight:800;font-size:1.1rem;color:var(--accent-deep)}
+
+/* responsive */
+@media(max-width:760px){
+  .options{grid-template-columns:1fr}
+  .statement{min-height:140px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">Q</div>
+    <div class="title">
+      <div class="h1">定理・公式・定義クイズ</div>
+      <div class="lead">早押しモード / 穴埋めモード — LaTeX 表示で数学を美しく学べるゲーム</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <!-- Screen 1: Start -->
+    <div id="screen-start" class="screen active">
+      <h2>スタート — タイトル：定理公式定義クイズ</h2>
+      <p class="small">クリックしてゲームを開始します。モード選択・分野選択は次の画面で行えます。</p>
+      <div style="margin-top:14px">
+        <button id="btn-to-mode" class="btn btn-primary">スタート</button>
+      </div>
+    </div>
+
+    <!-- Screen 2: Mode selection -->
+    <div id="screen-mode" class="screen">
+      <h2>モードを選択</h2>
+      <div class="mode-grid">
+        <div id="mode-buzzer-card" class="mode-card selected" data-mode="buzzer">
+          <div style="font-weight:800">早押しモード</div>
+          <div class="small">定理文が1文字ずつ表示される。名前を先に当てると高得点！</div>
+        </div>
+        <div id="mode-fill-card" class="mode-card" data-mode="fill">
+          <div style="font-weight:800">穴埋めモード</div>
+          <div class="small">空欄に当てはまる語を選ぶ。時間の速さで得点が決まる。</div>
+        </div>
+      </div>
+      <div style="margin-top:14px">
+        <button id="btn-to-cats" class="btn btn-primary">分野を選ぶ</button>
+        <button id="btn-back-start" class="btn btn-ghost">戻る</button>
+      </div>
+    </div>
+
+    <!-- Screen 3: Category selection -->
+    <div id="screen-cats" class="screen">
+      <h2>扱う分野を選択（複数選択可）</h2>
+      <div class="categories" id="categoryList">
+        <!-- generated checkable tags -->
+      </div>
+      <div style="margin-top:12px" class="small">例: 実解析、線形代数、整数論 など。選択しないと全分野から出題されます。</div>
+      <div style="margin-top:14px">
+        <button id="btn-start-game" class="btn btn-primary">ゲームスタート（10問）</button>
+        <button id="btn-back-mode" class="btn btn-ghost">戻る</button>
+      </div>
+    </div>
+
+    <!-- Screen 4: Game -->
+    <div id="screen-game" class="screen">
+      <div style="position:relative">
+        <div id="feedbackMark" class="mark"></div>
+      </div>
+
+      <div class="game-area">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <div class="progress" id="progressText">問題 0 / 10</div>
+          <div class="score" id="scoreText">スコア: 0</div>
+        </div>
+
+        <!-- Statement area: LaTeX or plain text -->
+        <div id="statementBox" class="statement" aria-live="polite"></div>
+
+        <!-- Options -->
+        <div class="options" id="optionsBox"></div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="small">モード: <span id="modeLabel"></span></div>
+          <div class="small">残り問題: <span id="remaining"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 5: End -->
+    <div id="screen-end" class="screen">
+      <h2>ゲーム終了</h2>
+      <p id="finalScore" style="font-size:1.4rem;font-weight:800"></p>
+      <div style="margin-top:10px">
+        <button id="btn-play-again" class="btn btn-primary">もう一度遊ぶ</button>
+        <button id="btn-to-start" class="btn btn-ghost">タイトルに戻る</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- -------------------------
+     問題データ（編集しやすい配列）
+     各オブジェクト:
+       - id: 一意
+       - categories: [文字列...]
+       - difficulty: "beginner"/"intermediate"/"advanced"
+       - type: "buzzer" or "fill" or "both"（両方で使える）
+       - statementTex: LaTeX 表記の本文（名前は取り除く）
+       - statementPlain: 表示用プレーンテキスト（早押しの逐次表示に使う）
+       - blank: for fill mode - the placeholder text should include "__BLANK__" where選択肢がはまる
+       - choices: array of 4 choices (strings)
+       - answer: 正答文字列（choices 内のいずれか）
+ -------------------------- -->
+<script>
+/* =========================
+   Problem bank (sample)
+   追加する時はこの配列にオブジェクトを push してください。
+   - statementTex は MathJax で美しく表示されます
+   - fill の場合は blank 欄に "__BLANK__" を入れてください
+   ========================= */
+const QUESTION_BANK = [
+  {
+    id: 'q1',
+    categories: ['実解析','初等'],
+    difficulty: 'beginner',
+    type: 'buzzer',
+    statementTex: '連続関数の極値を持つ条件として\\;\\text{閉区間上で連続}\\;というのは何という定理か（名前のみ）',
+    statementPlain: '閉区間上の連続関数は最大値と最小値を持つ定理',
+    choices: ['中間値の定理','平均値の定理','最大最小値定理','ロルの定理'],
+    answer: '最大最小値定理'
+  },
+  {
+    id: 'q2',
+    categories: ['線形代数'],
+    difficulty: 'intermediate',
+    type: 'both',
+    statementTex: '\\text{行列}A\\in M_n(\\mathbb{R})\\text{が可逆であることと同値な条件の一つは何か（行列の判定）}',
+    statementPlain: '行列Aが可逆⇔行列式 det(A) が 0 でない',
+    choices: ['固有値が全て正','det(A) \\neq 0','転置行列がゼロ','ジャコビ行列が正定'],
+    answer: 'det(A) \\neq 0'
+  },
+  {
+    id: 'q3',
+    categories: ['整数論'],
+    difficulty: 'beginner',
+    type: 'fill',
+    statementTex: 'フェルマーの小定理: 素数 p と p \\nmid a に対して \\; a^{p-1} \\equiv __BLANK__ \\pmod p',
+    statementPlain: 'a^{p-1} ≡ __BLANK__ (mod p)',
+    choices: ['1','0','p-1','a'],
+    answer: '1'
+  },
+  {
+    id: 'q4',
+    categories: ['確率論'],
+    difficulty: 'intermediate',
+    type: 'both',
+    statementTex: '\\text{期待値の線型性}: E[X+Y] = __BLANK__',
+    statementPlain: 'E[X+Y] = E[X] + E[Y]',
+    choices: ['\\(E[X]E[Y]\\)','\\(E[X]+E[Y]\\)','\\(E[X-Y]\\)','\\(var(X)+var(Y)\\)'],
+    answer: '\\(E[X]+E[Y]\\)'
+  },
+  {
+    id: 'q5',
+    categories: ['実解析','位相空間論'],
+    difficulty: 'advanced',
+    type: 'buzzer',
+    statementTex: '\\text{完備性を主題とする: }\\text{Cauchy列が収束する空間は何というか（英語名も可）}',
+    statementPlain: 'コーシー列が収束する空間は 完備 空間 (complete space)',
+    choices: ['コンパクト空間','完備空間','連結空間','測度空間'],
+    answer: '完備空間'
+  },
+  {
+    id: 'q6',
+    categories: ['ユークリッド幾何学'],
+    difficulty: 'beginner',
+    type: 'fill',
+    statementTex: '\\text{三角形の内角の和は}__BLANK__\\text{である}',
+    statementPlain: '三角形の内角の和は __BLANK__ である',
+    choices: ['\\(180^{\\circ}\\)','\\(90^{\\circ}\\)','\\(360^{\\circ}\\)','\\(270^{\\circ}\\)'],
+    answer: '\\(180^{\\circ}\\)'
+  },
+  {
+    id: 'q7',
+    categories: ['線形代数'],
+    difficulty: 'intermediate',
+    type: 'buzzer',
+    statementTex: '\\text{正定行列はどのような特徴を持つか（選択肢から名称）}',
+    statementPlain: 'x^T A x > 0 (x ≠ 0) を満たす行列は正定行列',
+    choices: ['正定行列','直交行列','対称行列','特異行列'],
+    answer: '正定行列'
+  },
+  {
+    id: 'q8',
+    categories: ['群論'],
+    difficulty: 'intermediate',
+    type: 'fill',
+    statementTex: '\\text{群の単位元を e とすると } e g = g e = __BLANK__',
+    statementPlain: 'e g = g e = __BLANK__',
+    choices: ['\\(g\\)','\\(e\\)','\\(1\\)','\\(0\\)'],
+    answer: '\\(g\\)'
+  },
+  {
+    id: 'q9',
+    categories: ['複素関数'],
+    difficulty: 'advanced',
+    type: 'buzzer',
+    statementTex: '\\text{コーシーの積分定理は複素平面上で何を主張するか（名前で）}',
+    statementPlain: 'コーシーの積分定理は正則関数の周回積分が0であることを主張する',
+    choices: ['留数定理','コーシーの積分定理','コーシーの積分表示','最大値原理'],
+    answer: 'コーシーの積分定理'
+  },
+  {
+    id: 'q10',
+    categories: ['組合わせ論'],
+    difficulty: 'beginner',
+    type: 'fill',
+    statementTex: '\\binom{n}{k} = \\dfrac{__BLANK__}{k!(n-k)!}',
+    statementPlain: 'C(n,k) = (__BLANK__) / (k!(n-k)!)',
+    choices: ['\\(n!\\)','\\(k!\\)','\\((n-k)!\\)','\\((n+k)!\\)'],
+    answer: '\\(n!\\)'
+  },
+  // （必要に応じてここにさらに問題を追加してください）
+];
+
+/* =========================
+   ゲームロジック実装
+   - 画面遷移
+   - カテゴリ選択（UI 生成）
+   - 出題ロジック（ランダム10問）
+   - 早押し逐次表示（2 文字/秒 => 1文字0.5s）
+   - 穴埋めタイマー（時間で得点計算）
+   - 正誤フィードバック（アニメ・音）
+   - 終了画面
+   ========================= */
+
+/* ----- UI 要素参照 ----- */
+const screenStart = document.getElementById('screen-start');
+const screenMode = document.getElementById('screen-mode');
+const screenCats = document.getElementById('screen-cats');
+const screenGame = document.getElementById('screen-game');
+const screenEnd = document.getElementById('screen-end');
+
+const btnToMode = document.getElementById('btn-to-mode');
+const btnToCats = document.getElementById('btn-to-cats');
+const btnBackStart = document.getElementById('btn-back-start');
+const btnToStart = document.getElementById('btn-to-start');
+
+const modeBuzzerCard = document.getElementById('mode-buzzer-card');
+const modeFillCard = document.getElementById('mode-fill-card');
+const modeLabel = document.getElementById('modeLabel');
+
+const categoryListEl = document.getElementById('categoryList');
+const btnStartGame = document.getElementById('btn-start-game');
+const btnBackMode = document.getElementById('btn-back-mode');
+
+const statementBox = document.getElementById('statementBox');
+const optionsBox = document.getElementById('optionsBox');
+const feedbackMark = document.getElementById('feedbackMark');
+const progressText = document.getElementById('progressText');
+const scoreText = document.getElementById('scoreText');
+const remainingText = document.getElementById('remaining');
+const finalScore = document.getElementById('finalScore');
+
+const btnPlayAgain = document.getElementById('btn-play-again');
+
+let selectedMode = 'buzzer'; // 'buzzer' or 'fill'
+let selectedCategories = new Set();
+let questionSet = []; // 今回プレイする 10 問
+let currentIndex = 0;
+let score = 0;
+
+/* reveal control for buzzer */
+let revealInterval = null;
+let revealedChars = 0;
+let currentPlain = '';
+let buzzerStartTime = 0;
+
+/* timer for fill-in */
+let fillStartTime = 0;
+
+/* small audio feedback using WebAudio (編集しやすい) */
+const audioCtx = (() => {
+  try { return new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ return null; }
+})();
+
+function beep(type='ok'){
+  if(!audioCtx) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = 'sine';
+  if(type==='ok'){ o.frequency.value = 880; g.gain.value = 0.07; }
+  else if(type==='ng'){ o.frequency.value = 220; g.gain.value = 0.08; }
+  else { o.frequency.value = 440; g.gain.value = 0.05; }
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start(); o.stop(audioCtx.currentTime + 0.12);
+}
+
+/* utility: show a screen */
+function showScreen(el){
+  [screenStart, screenMode, screenCats, screenGame, screenEnd].forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+}
+
+/* ----- スタート -> モード選択 ----- */
+btnToMode.addEventListener('click', ()=>{
+  showScreen(screenMode);
+});
+
+/* モードカード選択 */
+modeBuzzerCard.addEventListener('click', ()=>{
+  selectedMode = 'buzzer';
+  modeBuzzerCard.classList.add('selected');
+  modeFillCard.classList.remove('selected');
+});
+modeFillCard.addEventListener('click', ()=>{
+  selectedMode = 'fill';
+  modeFillCard.classList.add('selected');
+  modeBuzzerCard.classList.remove('selected');
+});
+
+btnToCats.addEventListener('click', ()=> {
+  // 次画面に移る前にカテゴリ一覧を作る
+  renderCategoryList();
+  showScreen(screenCats);
+});
+btnBackStart.addEventListener('click', ()=> showScreen(screenStart));
+btnBackMode.addEventListener('click', ()=> showScreen(screenMode));
+
+/* カテゴリ一覧を QUESTION_BANK から抽出してタグを生成 */
+function renderCategoryList(){
+  categoryListEl.innerHTML = '';
+  const cats = new Set();
+  QUESTION_BANK.forEach(q => q.categories.forEach(c => cats.add(c)));
+  // sort for consistent order
+  Array.from(cats).sort().forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'cat';
+    btn.textContent = cat;
+    btn.addEventListener('click', ()=> {
+      if(selectedCategories.has(cat)){ selectedCategories.delete(cat); btn.classList.remove('selected'); }
+      else { selectedCategories.add(cat); btn.classList.add('selected'); }
+    });
+    categoryListEl.appendChild(btn);
+  });
+}
+
+/* スタートゲーム */
+btnStartGame.addEventListener('click', ()=>{
+  // prepare questionSet: filter by selectedCategories (or all) and by type compatibility
+  const pool = QUESTION_BANK.filter(q => {
+    // must support selected mode (type == mode || type == 'both')
+    if(!(q.type === selectedMode || q.type === 'both')) return false;
+    // if categories selected, require at least one match
+    if(selectedCategories.size>0){
+      return q.categories.some(c => selectedCategories.has(c));
+    }
+    return true;
+  });
+  if(pool.length < 10){
+    // allow duplicates? better: warn and allow smaller pool but still randomize (we will allow repeats if necessary)
+    // but spec says random from array; we'll sample with replacement if pool < 10
+  }
+  // build random 10-question set (no repeats if possible)
+  questionSet = sampleQuestions(pool, 10);
+  currentIndex = 0;
+  score = 0;
+  updateScoreUI();
+  modeLabel.textContent = selectedMode === 'buzzer' ? '早押し' : '穴埋め';
+  showScreen(screenGame);
+  startQuestion();
+});
+
+/* sample unique/random helper (tries to avoid repeats) */
+function sampleQuestions(pool, n){
+  const out = [];
+  const arr = pool.slice();
+  while(out.length < n){
+    if(arr.length === 0){
+      // refill (allow duplicates only after exhausting unique pool)
+      arr.push(...pool);
+    }
+    const idx = Math.floor(Math.random()*arr.length);
+    out.push(arr.splice(idx,1)[0]);
+  }
+  return out;
+}
+
+/* startQuestion: show one question based on currentIndex */
+function startQuestion(){
+  clearReveal();
+  optionsBox.innerHTML = '';
+  feedbackMark.style.opacity = 0;
+  if(currentIndex >= questionSet.length){
+    // end game
+    showEnd();
+    return;
+  }
+  const q = questionSet[currentIndex];
+  progressText.textContent = `問題 ${currentIndex+1} / ${questionSet.length}`;
+  remainingText.textContent = `${questionSet.length - (currentIndex+1)}`;
+  // prepare choices (shuffled)
+  const choices = shuffleArray(q.choices.slice());
+  // UI: options
+  choices.forEach(choice => {
+    const btn = document.createElement('div');
+    btn.className = 'option';
+    btn.innerHTML = choice;
+    btn.addEventListener('click', ()=> handleAnswer(choice));
+    MathJax.typesetPromise([btn]).catch(()=> {});
+    optionsBox.appendChild(btn);
+  });
+
+  // two modes display
+  if(selectedMode === 'buzzer'){
+    // show progressive reveal of the plain text (statementPlain)
+    // We keep a plain string for reveal so LaTeX rendering doesn't choke at partial input
+    currentPlain = q.statementPlain || stripTex(q.statementTex || '');
+    revealedChars = 0;
+    statementBox.textContent = ''; // will show progressive plain text; after full reveal we'll render full TeX
+    // start reveal: 1 char per 0.5s (so 2 chars per second)
+    buzzerStartTime = performance.now();
+    revealInterval = setInterval(()=> {
+      revealedChars++;
+      // show substring of ascii characters
+      statementBox.textContent = currentPlain.slice(0, revealedChars);
+      if(revealedChars >= currentPlain.length){
+        // fully revealed: stop interval and render beautiful TeX if available
+        clearReveal();
+        // if statementTex present, typeset it for readability
+        if(q.statementTex){
+          statementBox.innerHTML = `\\(${q.statementTex}\\)`;
+          MathJax.typesetPromise([statementBox]).catch(()=> {/* ignore render errors */});
+        }
+        // after full reveal, allow user to still answer; if they don't answer within some time, treat as incorrect after e.g. 6s
+        // implement optional auto-advance: set timeout to treat as miss
+        buzzerTimeout = setTimeout(()=> {
+          // treat as no-answer -> zero point (we'll show correct and move on)
+          revealTimeoutNoAnswer();
+        }, 10000);
+      }
+    }, 500); // 500ms per character
+  } else { // fill mode
+    // show the statement with blanks in LaTeX (statementTex contains __BLANK__)
+    // we'll replace "__BLANK__" in statementTex with a visible underline box in LaTeX
+    const tex = q.statementTex ? q.statementTex.replace(/__BLANK__/g,'\\underline{\\quad}') : (q.statementPlain || '');
+    statementBox.innerHTML = `\\(${tex}\\)`;
+    MathJax.typesetPromise([statementBox]).then(()=> {}).catch(()=> {});
+    // start timer
+    fillStartTime = performance.now();
+  }
+}
+
+/* clear reveal data & timers */
+let buzzerTimeout = null;
+function clearReveal(){ 
+  if(revealInterval) { clearInterval(revealInterval); revealInterval = null; }
+  if(buzzerTimeout){ clearTimeout(buzzerTimeout); buzzerTimeout = null; }
+}
+
+/* when buzzer fully revealed and no answer within timeout */
+function revealTimeoutNoAnswer(){
+  // show correct highlight and move on
+  showCorrectAnswerVisual();
+  // no points awarded
+  setTimeout(()=> {
+    currentIndex++;
+    startQuestion();
+  }, 1200);
+}
+
+/* handleAnswer: invoked when user clicks an option */
+function handleAnswer(choice){
+  // prevent double answer
+  if(optionsBox.dataset.locked === 'true') return;
+  optionsBox.dataset.locked = 'true';
+  const q = questionSet[currentIndex];
+  const isCorrect = (choice === q.answer);
+  // find clicked button and add class
+  Array.from(optionsBox.children).forEach(opt => {
+    if(opt.innerText === choice){
+      opt.classList.add(isCorrect ? 'correct' : 'wrong');
+    }
+    // also highlight the correct one for feedback
+    if(opt.innerText === q.answer){
+      opt.classList.add('correct');
+    }
+  });
+
+  if(selectedMode === 'buzzer'){
+    // score: remaining non-space characters at time of answering
+    clearReveal();
+    const totalChars = (currentPlain || '').replace(/\s+/g,'').length;
+    const revealed = (statementBox.textContent || '').replace(/\s+/g,'').length;
+    const remaining = Math.max(0, totalChars - revealed);
+    if(isCorrect){
+      score += remaining; // as spec: 残り文字数分が得点
+      animateMark(true);
+      beep('ok');
+    } else {
+      score -= 10;
+      animateMark(false);
+      beep('ng');
+    }
+    updateScoreUI();
+    // short delay then next
+    setTimeout(()=>{
+      optionsBox.dataset.locked = 'false';
+      currentIndex++;
+      startQuestion();
+    }, 1100);
+
+  } else {
+    // fill mode: score = 10 * (文字数) / (時間秒) ; wrong => -5
+    const now = performance.now();
+    const elapsedSec = Math.max(0.01, (now - fillStartTime)/1000);
+    const charCount = (q.statementPlain || '').replace(/\s+/g,'').length || 1;
+    if(isCorrect){
+      const added = Math.round(10 * (charCount) / elapsedSec);
+      score += added;
+      animateMark(true);
+      beep('ok');
+    } else {
+      score -= 5;
+      animateMark(false);
+      beep('ng');
+    }
+    updateScoreUI();
+    setTimeout(()=>{
+      optionsBox.dataset.locked = 'false';
+      currentIndex++;
+      startQuestion();
+    }, 1200);
+  }
+}
+
+/* show correct answer visually (used when timeouts occur) */
+function showCorrectAnswerVisual(){
+  const q = questionSet[currentIndex];
+  Array.from(optionsBox.children).forEach(opt => {
+    if(opt.innerText === q.answer){ opt.classList.add('correct'); }
+  });
+  animateMark(true);
+}
+
+/* animate feedback mark */
+function animateMark(ok){
+  feedbackMark.textContent = ok ? '◯' : '✕';
+  feedbackMark.className = 'mark ' + (ok ? 'ok' : 'ng');
+  // anime fade/scale
+  anime.remove(feedbackMark);
+  anime({
+    targets: feedbackMark,
+    opacity: [0,1,0],
+    translateY: [-10, 0, -8],
+    scale: [0.6,1.1,1],
+    duration: 900,
+    easing: 'easeOutQuad'
+  });
+}
+
+/* update score UI */
+function updateScoreUI(){
+  scoreText.textContent = `スコア: ${score}`;
+}
+
+/* showEnd */
+function showEnd(){
+  finalScore.textContent = `あなたの合計得点: ${score}`;
+  showScreen(screenEnd);
+}
+
+/* replay / to title */
+btnPlayAgain.addEventListener('click', ()=>{
+  // reset selections but keep category selection and mode
+  questionSet = []; currentIndex = 0; score = 0;
+  updateScoreUI();
+  showScreen(screenMode);
+});
+btnToStart.addEventListener('click', ()=> {
+  // full reset
+  selectedCategories.clear();
+  // clear selected class on categories UI
+  Array.from(document.querySelectorAll('.cat')).forEach(c => c.classList.remove('selected'));
+  showScreen(screenStart);
+});
+
+/* -----------------
+   Small helpers
+   ----------------- */
+function shuffleArray(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function stripTex(s){ return s ? s.replace(/\\[^\s]*/g,'').replace(/\{|\}/g,'') : ''; }
+
+/* create options content for current question (for fill we want the blank selections order randomized) */
+function rebuildOptionsForCurrent(q){
+  optionsBox.innerHTML = '';
+  const choices = shuffleArray(q.choices.slice());
+  choices.forEach(choice => {
+    const btn = document.createElement('div');
+    btn.className = 'option';
+    btn.innerHTML = choice;
+    btn.addEventListener('click', ()=> handleAnswer(choice));
+    optionsBox.appendChild(btn);
+  });
+}
+
+/* initial render: nothing to do until start. But create categoryList initial when entering category screen */
+renderCategoryList();
+
+</script>
+</body>
+</html>

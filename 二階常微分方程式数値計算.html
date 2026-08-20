@@ -1,434 +1,321 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>ODE2 Studio — 二階常微分方程式数値計算</title>
-
-<!-- math.js の新しいバンドルパス（重要） -->
-<script src="https://cdn.jsdelivr.net/npm/mathjs@11/lib/browser/math.js"></script>
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Source+Code+Pro&display=swap" rel="stylesheet">
-
-<style>
-:root{
-  --bg:#f5f8ff; --card:#ffffff; --muted:#6b7280; --accent:#6b46ff; --accent2:#16a34a;
-  --radius:14px; --pad:16px;
-}
-*{box-sizing:border-box}
-html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Noto Sans JP",sans-serif;background:linear-gradient(180deg,#fbfbff,#eef6ff);color:#0b1220}
-.container{max-width:1100px;margin:28px auto;padding:0 18px}
-.header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
-.brand{font-weight:700;color:var(--accent);font-size:20px}
-.subtitle{color:var(--muted);font-size:13px}
-
-/* レイアウト */
-.grid{display:grid;grid-template-columns:380px 1fr;gap:18px}
-@media(max-width:900px){.grid{grid-template-columns:1fr}}
-.panel{background:var(--card);border-radius:var(--radius);padding:var(--pad);box-shadow:0 8px 30px rgba(20,30,80,0.05);border:1px solid rgba(11,18,32,0.04)}
-.sectionTitle{font-size:15px;font-weight:600;margin-bottom:8px}
-
-/* 入力 */
-.field{margin-bottom:12px}
-.label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
-.input, textarea, select{width:100%;padding:10px;border-radius:10px;border:1px solid #e7eefc;font-family:Source Code Pro,monospace}
-.row{display:flex;gap:8px}
-.small{font-size:13px;color:var(--muted)}
-.btn{padding:10px 14px;border-radius:10px;border:none;background:linear-gradient(90deg,var(--accent),#4b2bff);color:#fff;cursor:pointer;font-weight:600}
-.btn.ghost{background:transparent;border:1px solid #eef2ff;color:var(--accent);font-weight:600}
-.btn.secondary{background:linear-gradient(90deg,var(--accent2),#16a34a);color:#fff}
-
-/* chart area */
-.chartWrap{height:440px;border-radius:10px;padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.9),rgba(255,255,255,0.95));border:1px solid #eef4ff}
-
-/* controls */
-.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
-.badge{background:#f0f7ff;padding:6px 10px;border-radius:999px;color:var(--muted);font-size:13px}
-
-/* presets */
-.presetList{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
-.preset{background:#fff8ff;border:1px solid #fde8ff;padding:6px 10px;border-radius:999px;color:var(--accent);cursor:pointer}
-
-/* extras */
-.debug{font-family:Source Code Pro,monospace;background:#fbfcff;padding:8px;border-radius:8px;border:1px solid #eef4ff;margin-top:8px;white-space:pre-wrap;color:#a33}
-@media(max-width:540px){.chartWrap{height:320px}}
-</style>
-<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>二階常微分方程式シミュレーター</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Math.js -->
+  <script src="https://cdn.jsdelivr.net/npm/mathjs@11/lib/browser/math.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <!-- KaTeX -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <!-- MathJax -->
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
-<body>
-<div class="container">
-  <div class="header">
+<!-- モバイルでは画面全体スクロール、PCでは100dvhで固定 -->
+<body class="bg-slate-50 text-slate-800 font-sans min-h-[100dvh] lg:h-[100dvh] flex flex-col">
+
+  <!-- ヘッダー -->
+  <header class="bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center z-10 shadow-sm shrink-0">
     <div>
-      <div class="brand">二階常微分方程式数値計算サイト</div>
-      <div class="subtitle">二階常微分方程式: \(x'' = f(t,v,x)\) — math.js ベースで可視化</div>
+      <h1 class="text-lg md:text-xl font-bold text-indigo-600 tracking-tight">二階常微分方程式シミュレーター</h1>
+      <p class="text-[10px] md:text-xs text-slate-500 font-medium">二階常微分方程式の数値計算</p>
     </div>
-    <div class="small">式は math.js 構文 • Ctrl/Cmd+Enter で実行</div>
-  </div>
+  </header>
 
-  <div class="grid">
-    <!-- LEFT -->
-    <div class="panel">
-      <div class="sectionTitle">式・パラメータ</div>
-
-      <div class="field">
-        <label class="label">プリセット（クリックで式をロード）</label>
-        <div class="presetList">
-          <div class="preset" data-expr="-(k/m)*x">単振動: -(k/m)*x</div>
-          <div class="preset" data-expr="-(c/m)*v - (k/m)*x">減衰振動: -(c/m)*v - (k/m)*x</div>
-          <div class="preset" data-expr="-(c/m)*v - (k/m)*x + F/m * sin(omega*t)">駆動減衰振動</div>
-          <div class="preset" data-expr="-g">等加速度（落下）: -g</div>
+  <!-- メインコンテンツ (モバイル: 縦スクロール, PC: 横並び固定) -->
+  <div class="flex flex-col lg:flex-row flex-1 overflow-y-auto lg:overflow-hidden">
+    
+    <!-- グラフエリア (モバイル: 上部, PC: 右側) -->
+    <main class="flex flex-col p-2 lg:p-4 bg-slate-50 order-1 lg:order-2 w-full lg:w-auto lg:flex-1 shrink-0 h-[50vh] lg:h-full">
+      <div class="bg-white rounded-xl p-3 lg:p-4 shadow-sm border border-slate-200 flex-1 flex flex-col relative h-full">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 z-10 gap-2">
+          <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Solution Graph</span>
+          <select id="graphMode" class="text-xs border border-slate-200 rounded-md p-1.5 bg-slate-50 font-medium text-slate-700 outline-none focus:border-indigo-400 transition">
+            <option value="time">時系列 $x(t), v(t)$</option>
+            <option value="phase">位相空間 ( $x$ vs $v$ )</option>
+            <option value="energy">エネルギー推移 ( $K, U, E$ ) ※復元力係数=b</option>
+          </select>
+        </div>
+        <div class="flex-1 relative w-full h-full min-h-0">
+          <canvas id="chartCanvas"></canvas>
         </div>
       </div>
+    </main>
 
-      <div class="field">
-        <label class="label">関数 \(f(t,v,x)\)（math.js 構文）</label>
-        <textarea id="exprInput" rows="3" class="input" placeholder="例: -(c/m)*v - (k/m)*x + F/m * sin(omega*t)"></textarea>
-        <div class="small" style="margin-top:6px">利用可能: sin, cos, exp, sqrt, ^ など。変数は <code>t</code>, <code>v</code>, <code>x</code> とパラメータ。</div>
-      </div>
-
-      <div class="field">
-        <label class="label">パラメータ \(\left[m, k, c, F, \omega, g\right]\)</label>
-        <div class="row">
-          <input id="m" class="input" placeholder="m (質量)" title="m (質量) の数値を入力してください" value="1">
-          <input id="k" class="input" placeholder="k" title="k の数値を入力してください" value="4">
-        </div>
-        <div class="row" style="margin-top:8px">
-            <input id="c" class="input" placeholder="c (減衰)" title="c (減衰) の数値を入力してください" value="0.5">
-          <input id="F" class="input" placeholder="F (駆動)" title="F (駆動) の数値を入力してください" value="0">
-        </div>
-        <div class="row" style="margin-top:8px">
-          <input id="omega" class="input" placeholder="omega" title="omega の数値を入力してください" value="1">
-          <input id="g" class="input" placeholder="g (重力)" title="g (重力) の数値を入力してください" value="9.8">
-        </div>
-      </div>
-
-      <div class="field">
-        <label class="label">初期値 \(\left[t_0, v(t_0), x(t_0)\right]\)</label>
-        <div class="row">
-          <input id="t0" class="input" placeholder="t₀" title="t₀ の数値を入力してください" value="0">
-          <input id="v0" class="input" placeholder="v(t₀)" title="v(t₀) の数値を入力してください" value="0">
-          <input id="x0" class="input" placeholder="x(t₀)" title="x(t₀) の数値を入力してください" value="1">
-        </div>
-      </div>
-
-      <div class="field">
-        <label class="label">範囲 / ステップ</label>
-        <div class="row">
-          <input id="tmax" class="input" placeholder="t_max" title="t_max の数値を入力してください" value="20">
-          <input id="steps" class="input" placeholder="steps" title="steps の数値を入力してください" value="5000">
-        </div>
-        <div class="small" style="margin-top:6px">steps は大きいほど精度が向上。UI は固まりません（チャンク処理）。</div>
-      </div>
-
-      <div class="field">
-        <div class="controls">
-          <button id="runBtn" class="btn">計算スタート</button>
-          <button id="cancelBtn" class="btn ghost" disabled>キャンセル</button>
-          <button id="resetBtn" class="btn ghost">リセット</button>
-          <div class="badge" id="progressBadge">準備OK</div>
-        </div>
-      </div>
-
-      <div class="field">
-        <div class="sectionTitle" style="font-size:13px">ヘルプ</div>
-        <ul style="margin:0 0 8px 18px;color:var(--muted)">
-          <li>変数: <code>t</code>, <code>v</code>, <code>x</code> のみ使用。</li>
-          <li>パラメータはテキスト欄で数値を指定（例: m=1, k=4, c=0.5）。</li>
-          <li>math.js の関数を使えます（例: <code>sin(omega*t)</code>）。</li>
-        </ul>
-        <div id="lastError" class="debug" style="display:none"></div>
-      </div>
-    </div>
-
-    <!-- RIGHT -->
-    <div class="panel">
-      <div style="display:flex;justify-content:space-between;align-items:center">
+    <!-- コントロールパネル (モバイル: 下部, PC: 左側スクロール) -->
+    <aside class="w-full lg:w-[400px] bg-white border-r border-slate-200 flex flex-col order-2 lg:order-1 shrink-0 lg:overflow-y-auto pb-10 lg:pb-0">
+      <div class="p-4 space-y-6">
+        
+        <!-- プリセット -->
         <div>
-          <div class="sectionTitle">出力</div>
-          <div class="small">青: x(t) • 緑: v(t)</div>
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Equation Templates</label>
+          <div class="flex flex-wrap gap-1.5">
+            <button class="preset-btn text-[11px] bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-semibold px-2 py-1.5 rounded transition" data-expr="-b*x">単振動</button>
+            <button class="preset-btn text-[11px] bg-slate-100 text-slate-600 hover:bg-slate-200 font-semibold px-2 py-1.5 rounded transition" data-expr="-a*v - b*x">減衰振動</button>
+            <button class="preset-btn text-[11px] bg-slate-100 text-slate-600 hover:bg-slate-200 font-semibold px-2 py-1.5 rounded transition" data-expr="-a*v - b*x + c*sin(omega*t)">強制振動</button>
+            <button class="preset-btn text-[11px] bg-slate-100 text-slate-600 hover:bg-slate-200 font-semibold px-2 py-1.5 rounded transition" data-expr="-a*v - b*x + c*sin(omega*t)">RLC直列回路 (q'')</button>
+            <button class="preset-btn text-[11px] bg-slate-100 text-slate-600 hover:bg-slate-200 font-semibold px-2 py-1.5 rounded transition" data-expr="a*(1 - x^2)*v - x">ファンデルポール</button>
+            <button class="preset-btn text-[11px] bg-slate-100 text-slate-600 hover:bg-slate-200 font-semibold px-2 py-1.5 rounded transition" data-expr="-a*v - b*x - c*x^3 + d*cos(omega*t)">ダフィング (非線形/カオス)</button>
+          </div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <button id="exportPng" class="btn ghost">PNG 保存</button>
-          <button id="exportCsv" class="btn ghost">CSV ダウンロード</button>
+
+        <!-- 数式入力 & プレビュー -->
+        <div class="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
+          <label class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider block mb-1">Equation</label>
+          
+          <div class="min-h-[44px] flex items-center justify-center bg-white rounded-lg border border-indigo-100 mb-2 p-2 overflow-x-auto">
+            <div id="mathPreview" class="text-indigo-900 text-lg"></div>
+          </div>
+
+          <textarea id="exprInput" rows="2" class="w-full bg-white border border-slate-200 rounded-lg p-2 font-mono text-sm focus:outline-none focus:border-indigo-400 transition" placeholder="-a*v - b*x">-a*v - b*x</textarea>
+          <p class="text-[10px] text-slate-500 mt-1">変数: <code>t</code>, <code>x</code>, <code>v</code> | パラメータ: <code>a</code>, <code>b</code>, <code>c</code>, <code>d</code>, <code>omega</code></p>
         </div>
-      </div>
 
-      <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
-        <label class="small">表示モード：</label>
-        <select id="viewMode" class="input" style="width:auto">
-          <option value="time">時刻幅 (t -> x, v)</option>
-          <option value="phase">位相図 (x vs v)</option>
-          <option value="energy">エネルギー (if m,k set)</option>
-        </select>
-        <div style="flex:1"></div>
-        <div class="small" id="stats">点数: 0 • 時間: 0 ms</div>
-      </div>
+        <!-- パラメータスライダー群 -->
+        <div class="space-y-3">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Parameters</label>
+          
+          <div class="grid grid-cols-2 gap-3">
+            <!-- a -->
+            <div class="bg-slate-50 p-2 rounded-lg border border-slate-100">
+              <div class="flex justify-between text-xs font-medium text-slate-600 mb-1">
+                <span>係数 \(a\)</span><span id="val-a">0.2</span>
+              </div>
+              <input type="range" id="param-a" min="-5" max="5" step="0.1" value="0.2" class="w-full accent-indigo-500">
+            </div>
+            <!-- b -->
+            <div class="bg-slate-50 p-2 rounded-lg border border-slate-100">
+              <div class="flex justify-between text-xs font-medium text-slate-600 mb-1">
+                <span>係数 \(b\)</span><span id="val-b">1.0</span>
+              </div>
+              <input type="range" id="param-b" min="-5" max="5" step="0.1" value="1.0" class="w-full accent-indigo-500">
+            </div>
+            <!-- c -->
+            <div class="bg-slate-50 p-2 rounded-lg border border-slate-100">
+              <div class="flex justify-between text-xs font-medium text-slate-600 mb-1">
+                <span>係数 \(c\)</span><span id="val-c">0.0</span>
+              </div>
+              <input type="range" id="param-c" min="-5" max="5" step="0.1" value="0.0" class="w-full accent-indigo-500">
+            </div>
+            <!-- d -->
+            <div class="bg-slate-50 p-2 rounded-lg border border-slate-100">
+              <div class="flex justify-between text-xs font-medium text-slate-600 mb-1">
+                <span>係数 \(d\)</span><span id="val-d">0.0</span>
+              </div>
+              <input type="range" id="param-d" min="-5" max="5" step="0.1" value="0.0" class="w-full accent-indigo-500">
+            </div>
+            <!-- omega -->
+            <div class="bg-slate-50 p-2 rounded-lg border border-slate-100 col-span-2">
+              <div class="flex justify-between text-xs font-medium text-slate-600 mb-1">
+                <span>角周波数 \(\omega\)</span><span id="val-omega">1.0</span>
+              </div>
+              <input type="range" id="param-omega" min="0" max="10" step="0.1" value="1.0" class="w-full accent-indigo-500">
+            </div>
+          </div>
+        </div>
 
-      <div class="chartWrap" style="margin-top:12px">
-        <canvas id="odeChart"></canvas>
-      </div>
+        <!-- 初期条件 -->
+        <div>
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Initial Conditions</label>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs text-slate-500 font-semibold block mb-1">初期値 \(x(0)\)</label>
+              <input type="number" id="x0" value="1.0" step="0.1" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm font-mono focus:border-indigo-400 outline-none transition">
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 font-semibold block mb-1">初期値 \(v(0)\)</label>
+              <input type="number" id="v0" value="0.0" step="0.1" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm font-mono focus:border-indigo-400 outline-none transition">
+            </div>
+          </div>
+        </div>
 
-      <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
-        <div class="small" id="infoHint" style="color:var(--muted)"></div>
-        <div style="flex:1"></div>
-        <div class="small" id="energyHint" style="color:var(--muted)"></div>
+        <!-- エラー表示 -->
+        <div id="errorBox" class="hidden text-xs bg-red-50 text-red-600 p-2 rounded-lg border border-red-200 font-mono"></div>
+        
       </div>
-    </div>
+    </aside>
   </div>
-</div>
 
-<script>
-/* ===============================
-   安全な評価 (math.js) + RK4（チャンク化）
-   主要点：
-   - math.js の新しいバンドルを読み込み済み（上部）
-   - new Function は使わない
-   - parse -> traverse -> symbol check -> compile -> evaluate の流れ
-   =============================== */
+  <script>
+    let simData = { times: [], xs: [], vs: [] };
+    let chartInstance = null;
 
-const exprInput = document.getElementById('exprInput');
-const runBtn = document.getElementById('runBtn');
-const cancelBtn = document.getElementById('cancelBtn');
-const resetBtn = document.getElementById('resetBtn');
-const progressBadge = document.getElementById('progressBadge');
-const stats = document.getElementById('stats');
-const lastErrorDiv = document.getElementById('lastError');
-const viewMode = document.getElementById('viewMode');
+    const exprInput = document.getElementById('exprInput');
+    const mathPreview = document.getElementById('mathPreview');
+    const errorBox = document.getElementById('errorBox');
+    const graphMode = document.getElementById('graphMode');
 
-const t0El = document.getElementById('t0'), v0El = document.getElementById('v0'), x0El = document.getElementById('x0');
-const tmaxEl = document.getElementById('tmax'), stepsEl = document.getElementById('steps');
-
-const mEl = document.getElementById('m'), kEl = document.getElementById('k'), cEl = document.getElementById('c'),
-      FEl = document.getElementById('F'), omegaEl = document.getElementById('omega'), gEl = document.getElementById('g');
-
-const presets = document.querySelectorAll('.preset');
-presets.forEach(p => p.addEventListener('click', ()=> { exprInput.value = p.dataset.expr; progressBadge.textContent='プリセット読み込み'; }));
-
-/* Chart.js */
-const ctx = document.getElementById('odeChart').getContext('2d');
-let odeChart = new Chart(ctx, {
-  type:'line',
-  data:{datasets:[
-    {label:'x(t)', data:[], borderColor:'#2b6cff', borderWidth:2, pointRadius:0, tension:0.12},
-    {label:'v(t)', data:[], borderColor:'#2ca77b', borderWidth:2, pointRadius:0, tension:0.12}
-  ]},
-  options:{
-    animation:false, responsive:true, maintainAspectRatio:false,
-    plugins:{legend:{position:'top'}},
-    scales:{x:{type:'linear', title:{display:true, text:'t'}}, y:{title:{display:true, text:'value'}}}
-  }
-});
-
-/* helper: 安全コンパイル */
-function compileExpression(expr) {
-  try {
-    const node = math.parse(expr);
-    const usedSymbols = new Set();
-    node.traverse(function(n){
-      if (n.isSymbolNode) usedSymbols.add(n.name);
-    });
-    // 許可する名前
-    const allowed = new Set(['t','v','x','m','k','c','F','omega','g']);
-    // math の関数は許可（sin, cos, log, etc.）
-    const bad = Array.from(usedSymbols).filter(s => !allowed.has(s) && typeof math[s] !== 'function');
-    if (bad.length) throw new Error('未定義の変数/名前が含まれています: ' + bad.join(', '));
-    const compiled = node.compile();
-    return compiled;
-  } catch (e) {
-    throw e;
-  }
-}
-
-/* RK4 チャンク版 */
-let cancelling = false;
-async function integrateRK4(compiled, params, t0, v0, x0, tMax, steps, onProgress) {
-  const dt = (tMax - t0) / steps;
-  let t = t0, v = v0, x = x0;
-  const times = new Array(steps+1), xs = new Array(steps+1), vs = new Array(steps+1);
-  times[0]=t; xs[0]=x; vs[0]=v;
-  const chunk = Math.max(100, Math.floor(steps/200));
-  const start = performance.now();
-  for (let i=1;i<=steps;i++){
-    if (cancelling) throw new Error('cancelled');
-    // k1
-    const k1x = dt * v;
-    const k1v = dt * Number(compiled.evaluate(Object.assign({t, v, x}, params)));
-    // k2
-    const k2x = dt * (v + 0.5*k1v);
-    const k2v = dt * Number(compiled.evaluate(Object.assign({t: t + dt/2, v: v + 0.5*k1v, x: x + 0.5*k1x}, params)));
-    // k3
-    const k3x = dt * (v + 0.5*k2v);
-    const k3v = dt * Number(compiled.evaluate(Object.assign({t: t + dt/2, v: v + 0.5*k2v, x: x + 0.5*k2x}, params)));
-    // k4
-    const k4x = dt * (v + k3v);
-    const k4v = dt * Number(compiled.evaluate(Object.assign({t: t + dt, v: v + k3v, x: x + k3x}, params)));
-
-    x = x + (k1x + 2*k2x + 2*k3x + k4x)/6;
-    v = v + (k1v + 2*k2v + 2*k3v + k4v)/6;
-    t = t + dt;
-
-    times[i]=t; xs[i]=x; vs[i]=v;
-
-    if (i % chunk === 0) {
-      if (onProgress) onProgress(i, steps, Math.round(performance.now() - start));
-      await new Promise(res => setTimeout(res,0));
+    function updateMathPreview() {
+      let expr = exprInput.value;
+      let latex = expr
+        .replace(/\*/g, '')
+        .replace(/v/g, 'x\'')
+        .replace(/omega/g, '\\omega')
+        .replace(/sin/g, '\\sin')
+        .replace(/cos/g, '\\cos');
+      
+      const fullLatex = `x'' = ${latex}`;
+      try {
+        katex.render(fullLatex, mathPreview, { throwOnError: false, displayMode: true });
+        errorBox.classList.add('hidden');
+      } catch (e) {}
     }
-  }
-  return {times, xs, vs, elapsed: Math.round(performance.now() - start)};
-}
 
-/* 実行処理 */
-runBtn.addEventListener('click', async () => {
-  progressBadge.textContent = '検証中...'; lastErrorDiv.style.display='none'; lastErrorDiv.textContent='';
-  runBtn.disabled = true; cancelBtn.disabled = false; cancelling = false;
-  const expr = exprInput.value.trim();
-  const params = {
-    m: Number(mEl.value) || 1,
-    k: Number(kEl.value) || 0,
-    c: Number(cEl.value) || 0,
-    F: Number(FEl.value) || 0,
-    omega: Number(omegaEl.value) || 0,
-    g: Number(gEl.value) || 9.8
-  };
-  const t0 = Number(t0El.value) || 0, v0 = Number(v0El.value) || 0, x0 = Number(x0El.value) || 0;
-  const tMax = Number(tmaxEl.value) || 10, steps = Math.max(10, Math.min(1000000, Number(stepsEl.value) || 5000));
-  if (!expr) { alert('式を入力してください'); runBtn.disabled=false; cancelBtn.disabled=true; progressBadge.textContent='準備OK'; return; }
-
-  let compiled;
-  try {
-    compiled = compileExpression(expr);
-  } catch (e) {
-    lastErrorDiv.style.display='block'; lastErrorDiv.textContent = '構文/名前エラー: ' + e.message;
-    runBtn.disabled=false; cancelBtn.disabled=true; progressBadge.textContent='エラー';
-    return;
-  }
-
-  try {
-    progressBadge.textContent = '計算中...';
-    const result = await integrateRK4(compiled, params, t0, v0, x0, tMax, steps, (i,N,elapsed)=>{
-      const p = Math.round((i/N)*100);
-      progressBadge.textContent = `進捗 ${p}%`;
-      stats.textContent = `点数: ${i}/${N} • 経過: ${elapsed} ms`;
+    const paramsList = ['a', 'b', 'c', 'd', 'omega'];
+    paramsList.forEach(p => {
+      const slider = document.getElementById(`param-${p}`);
+      const valDisp = document.getElementById(`val-${p}`);
+      slider.addEventListener('input', () => {
+        valDisp.textContent = parseFloat(slider.value).toFixed(1);
+        runSimulation(); 
+      });
     });
 
-    // 表示
-    const mode = viewMode.value;
-    if (mode === 'time') {
-      odeChart.data.datasets[0].data = result.times.map((tt,i)=>({x:tt,y:result.xs[i]}));
-      odeChart.data.datasets[1].data = result.times.map((tt,i)=>({x:tt,y:result.vs[i]}));
-      odeChart.data.datasets[0].label = 'x(t)';
-      odeChart.data.datasets[1].label = 'v(t)';
-      odeChart.options.scales.x.type='linear';
-      odeChart.options.scales.x.title.text = 't';
-      odeChart.update('none');
-      document.getElementById('infoHint').textContent = '';
-    } else if (mode === 'phase') {
-      // x vs v -> use dataset[0] as phase, clear dataset[1]
-      odeChart.data.datasets[0].data = result.xs.map((x,i)=>({x:result.xs[i], y:result.vs[i]}));
-      odeChart.data.datasets[0].label = 'Phase (x vs v)';
-      odeChart.data.datasets[1].data = [];
-      odeChart.options.scales.x.type='linear';
-      odeChart.options.scales.x.title.text = 'x';
-      odeChart.update('none');
-      document.getElementById('infoHint').textContent = '位相図表示: x を横軸に, v を縦軸に取っています';
-    } else {
-      // energy (if m and k exist)
-      const m = params.m, k=params.k;
-      if (!m || !k) {
-        lastErrorDiv.style.display='block'; lastErrorDiv.textContent = 'エネルギーを出すには m, k を設定してください';
-      } else {
-        // energy: E = 1/2 m v^2 + 1/2 k x^2 (駆動/摩擦があると非保存)
-        odeChart.data.datasets[0].data = result.times.map((t,i)=>({x:t,y: 0.5*m*(result.vs[i]**2) + 0.5*k*(result.xs[i]**2)}));
-        odeChart.data.datasets[0].label = 'Energy E(t)';
-        odeChart.data.datasets[1].data = [];
-        odeChart.options.scales.x.title.text = 't';
-        odeChart.update('none');
-        document.getElementById('infoHint').textContent = '注意: 外力/摩擦があるとエネルギーは時間で変化します';
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        exprInput.value = e.target.dataset.expr;
+        updateMathPreview();
+        runSimulation();
+      });
+    });
+
+    exprInput.addEventListener('input', () => {
+      updateMathPreview();
+      runSimulation();
+    });
+
+    document.getElementById('x0').addEventListener('input', runSimulation);
+    document.getElementById('v0').addEventListener('input', runSimulation);
+    graphMode.addEventListener('change', updateChart);
+
+    function runSimulation() {
+      const expr = exprInput.value;
+      
+      const pValues = {
+        a: parseFloat(document.getElementById('param-a').value),
+        b: parseFloat(document.getElementById('param-b').value),
+        c: parseFloat(document.getElementById('param-c').value),
+        d: parseFloat(document.getElementById('param-d').value),
+        omega: parseFloat(document.getElementById('param-omega').value)
+      };
+
+      const x0 = parseFloat(document.getElementById('x0').value) || 0;
+      const v0 = parseFloat(document.getElementById('v0').value) || 0;
+
+      let compiled;
+      try {
+        compiled = math.parse(expr).compile();
+        errorBox.classList.add('hidden');
+      } catch (err) {
+        errorBox.textContent = "数式エラー: 構文を確認してください";
+        errorBox.classList.remove('hidden');
+        return;
       }
-    }
 
-    stats.textContent = `点数: ${result.times.length} • 総経過: ${result.elapsed} ms`;
-    progressBadge.textContent = '完了';
-    // 保存のために結果を保持
-    odeChart._lastResults = {times: result.times, xs: result.xs, vs: result.vs, expr, params};
-    lastErrorDiv.style.display='none';
+      const dt = 0.05;
+      const steps = 800; // 40秒分
+      let t = 0, x = x0, v = v0;
 
-  } catch (e) {
-    if (e.message === 'cancelled') {
-      progressBadge.textContent = 'キャンセルされました';
-      lastErrorDiv.style.display='block'; lastErrorDiv.textContent='計算はキャンセルされました';
-    } else {
-      progressBadge.textContent = 'エラー';
-      lastErrorDiv.style.display='block'; lastErrorDiv.textContent='実行エラー: ' + e.message;
-    }
-  } finally {
-    runBtn.disabled=false; cancelBtn.disabled=true; cancelling=false;
-  }
-});
+      simData = { times: [0], xs: [x0], vs: [v0] };
 
-/* cancel / reset / export */
-cancelBtn.addEventListener('click', ()=>{ cancelling = true; progressBadge.textContent='キャンセル中...' });
+      const f = (tVal, vVal, xVal) => {
+        return compiled.evaluate(Object.assign({ t: tVal, v: vVal, x: xVal }, pValues));
+      };
 
-resetBtn.addEventListener('click', ()=> {
-  exprInput.value=''; t0El.value=0; v0El.value=0; x0El.value=1; tmaxEl.value=20; stepsEl.value=5000;
-  mEl.value=1; kEl.value=4; cEl.value=0.5; FEl.value=0; omegaEl.value=1; gEl.value=9.8;
-  odeChart.data.datasets[0].data=[]; odeChart.data.datasets[1].data=[]; odeChart.update();
-  progressBadge.textContent='リセット完了'; stats.textContent='点数: 0 • 時間: 0 ms'; lastErrorDiv.style.display='none';
-  odeChart._lastResults = null;
-});
+      try {
+        for (let i = 0; i < steps; i++) {
+          const k1v = f(t, v, x);
+          const k1x = v;
+          const k2v = f(t + dt/2, v + dt/2 * k1v, x + dt/2 * k1x);
+          const k2x = v + dt/2 * k1v;
+          const k3v = f(t + dt/2, v + dt/2 * k2v, x + dt/2 * k2x);
+          const k3x = v + dt/2 * k2v;
+          const k4v = f(t + dt, v + dt * k3v, x + dt * k3x);
+          const k4x = v + dt * k3v;
 
-document.getElementById('exportPng').addEventListener('click', ()=> {
-  const link = document.createElement('a'); link.href = document.getElementById('odeChart').toDataURL('image/png'); link.download='ode2-plot.png'; link.click();
-});
+          v += (dt / 6) * (k1v + 2*k2v + 2*k3v + k4v);
+          x += (dt / 6) * (k1x + 2*k2x + 2*k3x + k4x);
+          t += dt;
 
-document.getElementById('exportCsv').addEventListener('click', ()=> {
-  const r = odeChart._lastResults;
-  if (!r) { alert('保存する結果がありません'); return; }
-  let csv = 't,x,v\n';
-  for (let i=0;i<r.times.length;i++) csv += `${r.times[i]},${r.xs[i]},${r.vs[i]}\n`;
-  const blob = new Blob([csv], {type:'text/csv'}); const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download='ode2-data.csv'; a.click(); URL.revokeObjectURL(url);
-});
-
-/* view mode change -> re-render from last results if present */
-viewMode.addEventListener('change', ()=> {
-  const r = odeChart._lastResults;
-  if (r) {
-    // trigger a re-display using the stored results
-    const tmpExpr = exprInput.value; // keep expr as is
-    exprInput.value = r.expr;
-    // emulate pressing run but without re-computation: restore data
-    if (viewMode.value === 'time') {
-      odeChart.data.datasets[0].data = r.times.map((tt,i)=>({x:tt,y:r.xs[i]}));
-      odeChart.data.datasets[1].data = r.times.map((tt,i)=>({x:tt,y:r.vs[i]}));
-      odeChart.update('none');
-    } else if (viewMode.value === 'phase') {
-      odeChart.data.datasets[0].data = r.xs.map((x,i)=>({x:r.xs[i], y:r.vs[i]}));
-      odeChart.data.datasets[1].data = [];
-      odeChart.update('none');
-    } else {
-      const m=Number(mEl.value), k=Number(kEl.value);
-      if (!m || !k) { alert('エネルギー表示には m,k が必要です'); }
-      else {
-        odeChart.data.datasets[0].data = r.times.map((t,i)=>({x:t, y:0.5*m*(r.vs[i]**2) + 0.5*k*(r.xs[i]**2)}));
-        odeChart.data.datasets[1].data=[];
-        odeChart.update('none');
+          simData.times.push(t);
+          simData.xs.push(x);
+          simData.vs.push(v);
+        }
+      } catch (err) {
+        errorBox.textContent = "計算エラー: 実行できません";
+        errorBox.classList.remove('hidden');
+        return;
       }
+      updateChart();
     }
-    exprInput.value = tmpExpr;
-  }
-});
 
-/* keyboard: Ctrl+Enter to run */
-window.addEventListener('keydown', (e)=>{ if ((e.ctrlKey||e.metaKey) && e.key==='Enter') runBtn.click(); });
+    function updateChart() {
+      const mode = graphMode.value;
+      const ctx = document.getElementById('chartCanvas').getContext('2d');
 
-/* エクストラ: 最後に load エラーが出たら user にヒント */
-window.addEventListener('load', ()=> {
-  if (typeof math === 'undefined') {
-    alert('math.js の読み込みに失敗しました。ネットワーク接続を確認してください。');
-  }
-});
-</script>
+      if (chartInstance) chartInstance.destroy();
+
+      let datasets = [];
+      let labels = simData.times.map(t => t.toFixed(2));
+
+      if (mode === 'time') {
+        datasets = [
+          { label: 'x(t) [位置/状態]', data: simData.xs, borderColor: '#4f46e5', backgroundColor: 'rgba(79, 70, 229, 0.1)', borderWidth: 2, pointRadius: 0, tension: 0.1, fill: true },
+          { label: 'v(t) [速度/変化率]', data: simData.vs, borderColor: '#10b981', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, tension: 0.1 }
+        ];
+      } else if (mode === 'phase') {
+        datasets = [{
+          label: '位相空間 (x vs v)',
+          data: simData.xs.map((x, i) => ({ x: x, y: simData.vs[i] })),
+          borderColor: '#8b5cf6',
+          borderWidth: 1.5,
+          pointRadius: 0,
+          showLine: true
+        }];
+      } else if (mode === 'energy') {
+        // エネルギー計算 (m=1と仮定)
+        const b = parseFloat(document.getElementById('param-b').value) || 0;
+        const kinetic = simData.vs.map(v => 0.5 * v * v);
+        const potential = simData.xs.map(x => 0.5 * b * x * x);
+        const total = kinetic.map((k, i) => k + potential[i]);
+
+        datasets = [
+          { label: '運動エネルギー K', data: kinetic, borderColor: '#f43f5e', borderWidth: 2, pointRadius: 0, tension: 0.1 },
+          { label: 'ポテンシャル U', data: potential, borderColor: '#3b82f6', borderWidth: 2, pointRadius: 0, tension: 0.1 },
+          { label: '力学的エネルギー E', data: total, borderColor: '#1e293b', borderDash: [5, 5], borderWidth: 2, pointRadius: 0, tension: 0.1 }
+        ];
+      }
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: { labels: mode !== 'phase' ? labels : undefined, datasets: datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 0 }, 
+          interaction: { mode: 'index', intersect: false },
+          scales: {
+            x: { type: mode !== 'phase' ? 'category' : 'linear', title: { display: true, text: mode !== 'phase' ? '時間 t' : '位置 x' } },
+            y: { title: { display: true, text: mode === 'phase' ? '速度 v' : '値' } }
+          },
+          plugins: {
+            legend: { position: 'top', align: 'end', labels: { boxWidth: 12, usePointStyle: true } },
+            tooltip: { enabled: true }
+          }
+        }
+      });
+    }
+
+    window.addEventListener('load', () => {
+      updateMathPreview();
+      runSimulation();
+    });
+  </script>
 </body>
 </html>

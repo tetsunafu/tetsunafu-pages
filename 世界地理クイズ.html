@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>世界地理クイズ — 共通テスト対策</title>
+
+<!-- 明示的ライブラリ（安定版） -->
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist@2.24.1/plotly.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios@1.4.0/dist/axios.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<style>
+:root{
+  --bg:#f2fcff; --card:#ffffff; --muted:#35535f;
+  --accent:#60c0ff; --accent-2:#0ea5c9; --danger:#ef4444;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto;background:linear-gradient(180deg,var(--bg),#effcff);color:#04292f}
+.container{max-width:1200px;margin:20px auto;padding:18px}
+.header{display:flex;align-items:center;gap:12px}
+.logo{width:72px;height:72px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:32px}
+.title{line-height:1}
+.h1{margin:0;font-size:1.5rem}
+.lead{margin:6px 0 0;color:var(--muted);font-size:0.95rem}
+
+/* layout */
+.grid{display:grid;grid-template-columns:360px 1fr;gap:16px;margin-top:16px}
+@media(max-width:980px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--card);padding:14px;border-radius:12px;box-shadow:0 12px 30px rgba(6,30,35,0.06)}
+.side-controls label{display:block;font-size:0.9rem;color:var(--muted);margin:8px 0 6px}
+.input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #e6f7fb;background:transparent}
+.small{font-size:0.85rem;color:var(--muted)}
+.row{display:flex;gap:8px;align-items:center}
+.btn{padding:9px 12px;border-radius:9px;border:0;font-weight:700;cursor:pointer}
+.btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#00333f}
+.btn-ghost{background:transparent;border:1px solid #dff6ff;color:var(--muted)}
+
+/* results UI */
+.data-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.data-card{background:linear-gradient(180deg,#fff,#fbfeff);padding:10px;border-radius:10px;border:1px solid rgba(0,0,0,0.04);min-height:90px;overflow:hidden}
+.data-title{font-size:0.85rem;color:var(--muted);margin-bottom:6px}
+.stat{font-weight:700;font-family: 'JetBrains Mono', monospace}
+
+/* chart area control */
+.charts{display:grid;grid-template-columns:1fr;gap:12px;margin-top:10px}
+.chart-box{background:#fff;border-radius:10px;padding:10px;border:1px solid rgba(0,0,0,0.04);max-height:360px;overflow:auto}
+
+/* quiz area */
+.quiz-area{display:flex;flex-direction:column;gap:10px}
+.data-panel{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+@media(max-width:780px){.data-panel{grid-template-columns:1fr}}
+.data-panel .chart-box{max-height:220px}
+.choice-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.choice-btn{padding:12px;border-radius:10px;border:1px solid rgba(3,105,161,0.08);background:#f7ffff;cursor:pointer;font-weight:700}
+.choice-btn.correct{outline:3px solid rgba(22,163,74,0.18)}
+.choice-btn.wrong{outline:3px solid rgba(239,68,68,0.12)}
+.info-line{font-size:0.9rem;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+
+/* constrain large charts */
+.plotly-graph-div{max-height:320px !important}
+
+/* footer */
+.footer{margin-top:12px;text-align:center;color:var(--muted);font-size:0.9rem}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="logo">地理</div>
+    <div class="title">
+      <div class="h1">世界地理クイズ（共通テスト対策）</div>
+      <div class="lead">国名を隠してデータだけから国を当てる 10 問クイズ。可視化と表現は共通テストで問われやすい指標中心。</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- 左側: コントロール -->
+    <div class="panel side-controls" aria-label="コントロールパネル">
+      <label>1) 地域を選択（複数可）</label>
+      <div class="small" style="margin-bottom:8px">
+        <label><input type="checkbox" class="region" value="Africa" checked> アフリカ</label><br>
+        <label><input type="checkbox" class="region" value="Americas" checked> アメリカ大陸</label><br>
+        <label><input type="checkbox" class="region" value="Asia" checked> アジア</label><br>
+        <label><input type="checkbox" class="region" value="Europe" checked> ヨーロッパ</label><br>
+        <label><input type="checkbox" class="region" value="Oceania" checked> オセアニア</label>
+      </div>
+
+      <label>2) データ取得オプション</label>
+      <select id="dataDepth" class="input">
+        <option value="basic">基本データ（人口・面積・GDP等）</option>
+        <option value="extended" selected>拡張（農作物・資源・貿易先などを併用）</option>
+      </select>
+
+      <label>3) 問題数（10問推奨）</label>
+      <input id="numQuestions" type="number" class="input" value="10" min="1" max="30">
+
+      <label>4) ランダム化のシード（空欄でランダム）</label>
+      <input id="seed" class="input" placeholder="例: 12345">
+
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button id="btnLoad" class="btn btn-primary">データ取得して準備</button>
+        <button id="btnStart" class="btn btn-ghost">クイズ開始</button>
+      </div>
+
+      <hr style="margin:12px 0">
+
+      <div class="small">※注意: 一部の指標は World Bank 等の API により取得します。ブラウザの CORS 環境やローカルファイルでの制約により取得できない場合は、Google Sites などでホストすると確実です。</div>
+    </div>
+
+    <!-- 右側: メイン（表示・クイズ画面） -->
+    <div class="panel" id="mainPanel" aria-live="polite">
+      <!-- 状態 -->
+      <div id="statusLine" class="info-line">
+        <div id="statusText">準備: 「データ取得して準備」を押してください</div>
+        <div id="scoreDisplay">Score: 0</div>
+      </div>
+
+      <!-- 結果表示領域（クイズ/プレビュー） -->
+      <div id="workArea" style="margin-top:12px">
+        <!-- 初期説明 -->
+        <div id="intro" class="small" style="padding:8px;background:linear-gradient(180deg,#f8ffff,#f0fbff);border-radius:8px">
+          <strong>遊び方（ざっくり）</strong>
+          <ol style="margin:6px 0 0 18px;padding:0">
+            <li>地域を選んで「データ取得して準備」を押す（REST Countries + World Bank を取得）</li>
+            <li>「クイズ開始」で10問ランダムに出題。国名は表示されません。</li>
+            <li>データ（人口構成、GDP、主な輸出品、主要農作物、鉱物資源、識字率等）と可視化から国を予想してください。</li>
+            <li>正解 +10、不正解 -5、最後に時間ボーナスが入ります（開発者が設定）。</li>
+          </ol>
+        </div>
+
+        <!-- クイズパネル（非表示で準備） -->
+        <div id="quizPanel" style="display:none;margin-top:12px" class="quiz-area">
+          <div id="questionMeta" class="small">問題 <span id="qIndex">0</span> / <span id="qTotal">10</span></div>
+
+          <!-- データ表示領域：数値カード + 2×チャート -->
+          <div class="data-panel" id="dataPanel">
+            <!-- numeric stats grid -->
+            <div class="data-grid" id="statsGrid" aria-hidden="false"></div>
+
+            <!-- charts -->
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div class="chart-box" id="chart1"></div>
+              <div class="chart-box" id="chart2"></div>
+            </div>
+          </div>
+
+          <!-- choices -->
+          <div style="margin-top:8px">
+            <div class="choice-grid" id="choicesArea"></div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+            <div class="small">得点: <span id="roundScore">0</span></div>
+            <div><button id="btnNext" class="btn btn-primary" disabled>次へ</button></div>
+          </div>
+        </div>
+
+        <!-- 結果画面 -->
+        <div id="resultPanel" style="display:none;margin-top:12px">
+          <div style="padding:12px;background:linear-gradient(180deg,#fff,#f6fffe);border-radius:8px">
+            <h3>結果</h3>
+            <div id="finalScore" style="font-size:1.4rem;font-weight:800"></div>
+            <div id="timeBonusDesc" class="small" style="margin-top:6px"></div>
+            <div style="margin-top:12px">
+              <button id="btnRestart" class="btn btn-primary">もう一度プレイ</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- デバッグ / 生データ確認（開発用） -->
+        <details id="devData" style="margin-top:12px">
+          <summary>開発者データ（フェッチ内容の確認）</summary>
+          <pre id="rawData" style="max-height:300px;overflow:auto;font-family: monospace;font-size:12px"></pre>
+        </details>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="footer">提供データ: REST Countries, World Bank APIs。主要農作物／鉱物は自動取得を試み、無ければ内蔵の代表データを使います（後で編集可）。</div>
+</div>
+
+<script>
+/* =========================================================================
+   世界地理クイズ — 実装ノート（コメント多数。後で編集しやすいように構造化）
+   - フェッチ: REST Countries v3.1 (fields絞り込み) と World Bank API を使用
+   - 表示: Plotly で円グラフ / 棒グラフ（maxサイズ制限）
+   - 国名はクイズ画面のデータ表示に出さない。選択肢のみ国名。
+   - 主要農作物・鉱物は World Bank に必ずないため、内蔵辞書 fallback を用意
+   - 得点の時間ボーナス関数は devTimeBonus 関数で定義（後で簡単調整）
+   ========================================================================= */
+
+/* ------------------ ユーティリティ ------------------ */
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => Array.from(document.querySelectorAll(s));
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+/* ------------------ API Helpers ------------------ */
+// REST Countries: we request a minimal set of fields to reduce payload
+const RESTCOUNTRIES_URL = 'https://restcountries.com/v3.1/all?fields=name,cca3,region,subregion,capital,population,area,latlng,timezones,languages,currencies,continents';
+
+// World Bank: indicator helper
+function worldBankIndicatorUrl(indicator, countryCode='all', date='2019:2021'){
+  // returns JSON (per page=... use per_page large to avoid paging)
+  return `https://api.worldbank.org/v2/country/${countryCode}/indicator/${indicator}?format=json&date=${date}&per_page=1000`;
+}
+
+/* ------------------ 指標セット（拡張版・必要に応じ追加可能） ------------------
+   (よく使う World Bank 指標コード)
+   SP.POP.TOTL   : Population, total
+   NY.GDP.MKTP.CD: GDP (current US$)
+   NY.GDP.PCAP.CD: GDP per capita (current US$)
+   NY.GDP.MKTP.KD.ZG : GDP growth (annual %)
+   NV.AGR.TOTL.ZS : Agriculture, value added (% of GDP)
+   NV.IND.TOTL.ZS : Industry, value added (% of GDP)
+   NV.SRV.TETC.ZS : Services, value added (% of GDP)  (Note: codes sometimes differ)
+   SP.URB.TOTL.IN.ZS : Urban population (% of total)
+   SE.ADT.LITR.ZS : Literacy, adult total (% of people ages 15 and above) (may be missing)
+   SP.DYN.LE00.IN : Life expectancy at birth, total (years)
+*/
+const WB_INDICATORS = {
+  population: 'SP.POP.TOTL',
+  gdp: 'NY.GDP.MKTP.CD',
+  gdpPerCapita: 'NY.GDP.PCAP.CD',
+  gdpGrowth: 'NY.GDP.MKTP.KD.ZG',
+  agriShare: 'NV.AGR.TOTL.ZS',
+  indShare: 'NV.IND.TOTL.ZS',
+  urbShare: 'SP.URB.TOTL.IN.ZS',
+  lifeExp: 'SP.DYN.LE00.IN',
+  literacy: 'SE.ADT.LITR.ZS'
+};
+
+/* ------------------ 内蔵データ（主要作物・鉱物の代表例）
+   - 外部 API で詳細データが取れない場合は、ここに代表値を置く。
+   - 後で JSON ファイルや DB に差し替え可能。
+*/
+const fallbackProduction = {
+  'Japan': { crops: 'rice:60,wheat:10,soy:10,other:20', minerals: 'coal:20,copper:5,iron:5,other:70', exports:['Automobiles','Machinery','Electronics'] },
+  'United States': { crops: 'corn:40,soy:30,wheat:15,other:15', minerals: 'coal:20,copper:5,iron:5,other:70', exports:['Aircraft','Machinery','Soybeans'] },
+  'China': { crops: 'rice:35,wheat:25,corn:20,other:20', minerals: 'coal:30,iron:20,copper:5,other:45', exports:['Electronics','Machinery','Textiles'] },
+  'India': { crops: 'rice:35,wheat:25,sugar:10,other:30', minerals: 'coal:30,iron:10,other:60', exports:['Textiles','Jewelry','Rice'] },
+  'Brazil': { crops: 'soy:45,corn:25,sugar:15,other:15', minerals: 'iron:20,oil:10,other:70', exports:['Soybeans','Iron ore','Meat'] },
+  // ... 必要なら追加
+};
+
+/* ------------------ アプリ状態 ------------------ */
+let allCountries = [];       // REST Countries の生データ配列
+let wbDataCache = {};        // World Bank 指標キャッシュ countryCode -> indicators
+let preparedPool = [];       // 問題候補（国のオブジェクト配列）
+let quizItems = [];          // 出題配列
+let currentIndex = -1;
+let score = 0;
+let startTimeForQuestion = null;
+const developerTimeBonus = (totalTimeSeconds) => {
+  // 開発者が定義する「最終加点」関数。
+  // 例: 120秒以内なら +Math.max(0, (120 - time) / 10) ポイントを加算（整数）
+  const base = Math.max(0, Math.round((120 - totalTimeSeconds) / 10));
+  return base;
+};
+
+/* ------------------ DOM参照 ------------------ */
+const btnLoad = $('#btnLoad'), btnStart = $('#btnStart');
+const statusText = $('#statusText'), scoreDisplay = $('#scoreDisplay');
+const numQuestionsEl = $('#numQuestions'), seedEl = $('#seed'), dataDepthEl = $('#dataDepth');
+const quizPanel = $('#quizPanel'), intro = $('#intro'), resultPanel = $('#resultPanel');
+const qIndexSpan = $('#qIndex'), qTotalSpan = $('#qTotal'), choicesArea = $('#choicesArea');
+const statsGrid = $('#statsGrid'), chart1 = $('#chart1'), chart2 = $('#chart2');
+const btnNext = $('#btnNext'), roundScore = $('#roundScore');
+const finalScore = $('#finalScore'), timeBonusDesc = $('#timeBonusDesc');
+const rawData = $('#rawData'), devData = $('#devData');
+
+/* ------------------ フェッチ処理 ------------------ */
+
+/** fetchRESTCountries: 基本情報を取得して allCountries に代入する
+ *  - fields を絞り込み、CORS などで取得失敗した場合は例外を投げる
+ */
+async function fetchRESTCountries(){
+  statusText.textContent = 'REST Countries から基本データ取得中...';
+  try{
+    const resp = await axios.get(RESTCOUNTRIES_URL, {timeout:20000});
+    if(!resp || !resp.data || !Array.isArray(resp.data)) throw new Error('REST Countries の応答が不正');
+    // normalize: map to easier shape with a country.id (cca3)
+    allCountries = resp.data.map(c => ({
+      id: c.cca3 || (Math.random().toString(36).slice(2,7)).toUpperCase(),
+      name: c.name && (c.name.common || c.name.official) || 'Unknown',
+      region: (c.region || c.continents && c.continents[0]) || 'Other',
+      subregion: c.subregion || '',
+      capital: (c.capital && c.capital[0]) || '',
+      population: c.population || null,
+      area: c.area || null,
+      latlng: c.latlng || [],
+      languages: c.languages || {},
+      currencies: c.currencies || {},
+      timezones: c.timezones || []
+    }));
+    statusText.textContent = `REST Countries 取得完了（${allCountries.length} カ国）`;
+    return allCountries;
+  }catch(err){
+    throw new Error('REST Countries 取得に失敗: ' + (err.message||err));
+  }
+}
+
+/** fetchWorldBankForCountry: 基本的な World Bank 指標群を取得してキャッシュする
+ *  - 指標は上で定義した WB_INDICATORS を使用
+ *  - 取得優先順位: most recent value (response[1][0]) を使う
+ */
+async function fetchWorldBankForCountry(countryIso2or3, countryIso2='') {
+  // world bank uses ISO2/ISO3 country codes; we'll query by 'country code' parameter (ISO2/ISO3 both supported as 'country' path)
+  // to reduce requests, request per-indicator per-country sequentially (could be optimized via batch requests)
+  if(!countryIso2or3) return {};
+  if(wbDataCache[countryIso2or3]) return wbDataCache[countryIso2or3];
+
+  const out = {};
+  // fetch each indicator, but keep it simple and tolerant to failures
+  for(const [k,code] of Object.entries(WB_INDICATORS)){
+    try{
+      const url = worldBankIndicatorUrl(code, countryIso2or3, '2018:2022');
+      const resp = await axios.get(url, {timeout:15000});
+      if(!resp || !resp.data) { out[k] = null; continue; }
+      // response is array: [meta, dataArray]
+      const dataArray = resp.data[1];
+      if(Array.isArray(dataArray) && dataArray.length>0){
+        // find first non-null value
+        const valObj = dataArray.find(d => d.value !== null);
+        out[k] = valObj ? valObj.value : null;
+      } else out[k] = null;
+    }catch(e){
+      out[k] = null;
+    }
+  }
+  wbDataCache[countryIso2or3] = out;
+  return out;
+}
+
+/* ------------------ 補助: 主要作物 / 鉱物の自動取得（粗） ------------------
+   - 外部 API で正確に取れない場合が多いので、まず externalSources を試して、
+     取れなければ fallbackProduction を利用。
+   - 現状は外部クロール実装は最小化（CORS 等の問題）、将来的に拡張可。
+*/
+async function getProductionDataForCountry(countryName){
+  // Try to get from internal fallback map by english name keys.
+  if(fallbackProduction[countryName]) return fallbackProduction[countryName];
+  // Some REST countries name discrepancies: try uppercase match, shorter name.
+  const keyCandidates = [countryName, countryName.replace(/ Republic| Federation| Kingdom| of /g,'').trim()];
+  for(const k of keyCandidates){
+    if(fallbackProduction[k]) return fallbackProduction[k];
+  }
+  // Default: return 'no data' structure (will display as "No data")
+  return { crops: '', minerals: '', exports: [] };
+}
+
+/* ------------------ プリプロセス: 問題候補作成 ------------------ */
+async function preparePool(){
+  // Build pool based on selected regions
+  const checked = Array.from($$('.region')).filter(ch => ch.checked).map(ch => ch.value);
+  if(checked.length===0) throw new Error('少なくとも1つの地域を選んでください。');
+
+  // filter countries
+  let pool = allCountries.filter(c => checked.includes(c.region) || checked.includes(c.continent) || checked.includes((c.continent||'').toString()));
+  if(pool.length===0) pool = allCountries.slice(); // fallback: all
+
+  // For each candidate, fetch WB data & production fallback (concurrently but throttled)
+  statusText.textContent = `候補 ${pool.length} 件の詳細データ取得中...`;
+  const prepared = [];
+  for(let i=0;i<pool.length;i++){
+    const c = pool[i];
+    try{
+      // prefer cca3 as wb key? World Bank uses ISO2 (alpha2) or ISO3; REST Countries includes cca2? We used cca3 only earlier.
+      // We'll attempt using cca3 and fallback to common name queries (some mismatch possible).
+      const wb = await fetchWorldBankForCountry(c.id);
+      const prod = await getProductionDataForCountry(c.name);
+      prepared.push(Object.assign({}, c, { wb, production: prod }));
+    }catch(e){
+      prepared.push(Object.assign({}, c, { wb: {}, production: { crops:'', minerals:'', exports:[] } }));
+    }
+    // brief throttle to avoid flooding
+    if(i%20===0) await sleep(50);
+  }
+  preparedPool = prepared;
+  statusText.textContent = `準備完了: ${preparedPool.length} 件の国がプールされました`;
+  rawData.textContent = JSON.stringify(preparedPool.slice(0,30), null, 2);
+  return preparedPool;
+}
+
+/* ------------------ クイズロジック ------------------ */
+function seededShuffle(array, seed){
+  // simple LCG-based seeded shuffle (Fisher-Yates)
+  const out = array.slice();
+  if(!seed) return out.sort(()=>Math.random()-0.5);
+  let s = Number(seed) || 1;
+  const lcg = () => { s = (s * 1664525 + 1013904223) % 4294967296; return s / 4294967296; };
+  for(let i=out.length-1;i>0;i--){
+    const j = Math.floor(lcg() * (i+1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+function buildQuizItems(num, seed){
+  // pick random countries from preparedPool
+  const pool = seededShuffle(preparedPool, seed);
+  const items = [];
+  for(let i=0;i<Math.min(num,pool.length);i++){
+    const correct = pool[i];
+    // build 3 distractors: choose from pool excluding correct
+    const others = pool.slice(num).concat(pool.slice(i+1)).slice(); // ensure variety
+    const distractors = seededShuffle(others, (Number(seed)||0)+i+7).slice(0,3);
+    const choices = seededShuffle([correct, ...distractors], (Number(seed)||0)+i+11);
+    items.push({ correct, choices });
+  }
+  quizItems = items;
+  return items;
+}
+
+/* ------------------ 表示: データカード / グラフ ------------------ */
+/* Helper: parse "item:percent,item:percent" into labels/values; robust to malformed input */
+function parseItemPercentList(s){
+  if(!s || s.trim()==='') return null;
+  try{
+    const parts = s.split(',').map(p => p.trim()).filter(Boolean);
+    const labels = [], values = [];
+    for(const p of parts){
+      const m = p.split(':').map(x=>x.trim());
+      if(m.length===2){
+        labels.push(m[0]);
+        values.push(Number(m[1]) || 0);
+      } else {
+        // fallback: treat whole as label, assign 1 (will be normalized)
+        labels.push(p);
+        values.push(1);
+      }
+    }
+    const sum = values.reduce((a,b)=>a+b,0) || 1;
+    return { labels, values: values.map(v => (v/sum)*100) };
+  }catch(e){ return null; }
+}
+
+/* render numeric cards + 2 charts for a country (countryData is object from preparedPool) */
+function renderCountryDataForQuestion(countryData){
+  // Clear UI
+  statsGrid.innerHTML = '';
+  chart1.innerHTML = ''; chart2.innerHTML = '';
+
+  // Numeric cards list: population, area, GDP, GDP perCapita, agri%, ind%, urb%, lifeExp, literacy
+  const wb = countryData.wb || {};
+  const cards = [
+    {title:'人口 (人)', key:'population', val: countryData.population || wb.population || 'No data'},
+    {title:'面積 (km²)', key:'area', val: countryData.area || 'No data'},
+    {title:'GDP (US$)', key:'gdp', val: wb.gdp || 'No data'},
+    {title:'1人当たりGDP (US$)', key:'gdpPerCapita', val: wb.gdpPerCapita || 'No data'},
+    {title:'農業付加価値比 (%)', key:'agriShare', val: wb.agriShare || 'No data'},
+    {title:'工業比 (%)', key:'indShare', val: wb.indShare || 'No data'},
+    {title:'都市化率 (%)', key:'urbShare', val: wb.urbShare || 'No data'},
+    {title:'平均寿命 (年)', key:'lifeExp', val: wb.lifeExp || 'No data'},
+    {title:'識字率 (%)', key:'literacy', val: wb.literacy || 'No data'}
+  ];
+  // create cards
+  for(const c of cards){
+    const el = document.createElement('div'); el.className = 'data-card';
+    el.innerHTML = `<div class="data-title">${c.title}</div><div class="stat">${(c.val===null||c.val===undefined)?'No data':(typeof c.val==='number' ? formatNumberNice(c.val) : c.val)}</div>`;
+    statsGrid.appendChild(el);
+  }
+
+  // Chart A: 作物比率 (pie) — from production.crops parsed
+  (async ()=>{
+    const prod = await getProductionDataForCountry(countryData.name);
+    const cropsParsed = parseItemPercentList(prod.crops);
+    if(cropsParsed && cropsParsed.labels.length>0){
+      const data = [{labels:cropsParsed.labels, values:cropsParsed.values, type:'pie', textinfo:'label+percent'}];
+      const layout = {title:'主要農作物（推定割合）', margin:{t:30,l:10,r:10,b:10}, height:260};
+      Plotly.newPlot(chart1, data, layout, {displayModeBar:false,responsive:true});
+    } else {
+      chart1.innerHTML = '<div class="small">主要農作物データ無し</div>';
+    }
+  })();
+
+  // Chart B: 鉱物/資源（bar）
+  (async ()=>{
+    const prod = await getProductionDataForCountry(countryData.name);
+    const mineralsParsed = parseItemPercentList(prod.minerals);
+    if(mineralsParsed && mineralsParsed.labels.length>0){
+      const data = [{x: mineralsParsed.labels, y: mineralsParsed.values, type:'bar', marker:{color:'#60c0ff'}}];
+      const layout = {title:'主要鉱物・資源（推定割合）', margin:{t:30,l:40,r:10,b:80}, height:260};
+      Plotly.newPlot(chart2, data, layout, {displayModeBar:false,responsive:true});
+    } else {
+      chart2.innerHTML = '<div class="small">主要鉱物データ無し</div>';
+    }
+  })();
+}
+
+/* nice number formatting */
+function formatNumberNice(v){
+  if(v===null || v===undefined) return 'No data';
+  if(typeof v === 'number'){
+    if(Math.abs(v) >= 1e12) return (v/1e12).toFixed(2)+' T';
+    if(Math.abs(v) >= 1e9) return (v/1e9).toFixed(2)+' B';
+    if(Math.abs(v) >= 1e6) return (v/1e6).toFixed(2)+' M';
+    return v.toLocaleString();
+  }
+  return v;
+}
+
+/* ------------------ UI: 選択肢表示とクリック処理 ------------------ */
+function showQuestion(idx){
+  const item = quizItems[idx];
+  currentIndex = idx;
+  qIndexSpan.textContent = idx+1;
+  qTotalSpan.textContent = quizItems.length;
+  roundScore.textContent = '0';
+  btnNext.disabled = true;
+  // Render data for the correct country (without name)
+  renderCountryDataForQuestion(item.correct);
+  // Render choices (country names visible only in buttons)
+  choicesArea.innerHTML = '';
+  for(const c of item.choices){
+    const btn = document.createElement('button'); btn.className='choice-btn';
+    btn.textContent = c.name; // country name is shown here as a choice
+    btn.addEventListener('click', async ()=>{
+      // disable all choices
+      choicesArea.querySelectorAll('button').forEach(b=>b.disabled=true);
+      const isCorrect = (c.id === item.correct.id);
+      if(isCorrect){
+        btn.classList.add('correct');
+        const timeTaken = (Date.now() - startTimeForQuestion)/1000;
+        const gained = 10; // fixed correct score
+        score += gained; scoreDisplay.textContent = `Score: ${score}`;
+        roundScore.textContent = String(gained);
+      } else {
+        btn.classList.add('wrong');
+        // highlight correct
+        const correctBtn = Array.from(choicesArea.children).find(b=>b.textContent === item.correct.name);
+        if(correctBtn) correctBtn.classList.add('correct');
+        score -= 5; scoreDisplay.textContent = `Score: ${score}`;
+        roundScore.textContent = '-5';
+      }
+      btnNext.disabled = false;
+      // record time, etc. (for final bonus)
+      item.answered = { timeTaken: (Date.now() - startTimeForQuestion)/1000, correct: isCorrect };
+    });
+    choicesArea.appendChild(btn);
+  }
+  // start timer for this question
+  startTimeForQuestion = Date.now();
+}
+
+/* next question handler */
+btnNext.addEventListener('click', ()=>{
+  if(currentIndex+1 >= quizItems.length){
+    finishQuiz();
+  } else {
+    showQuestion(currentIndex+1);
+  }
+});
+
+/* ------------------ 終了処理 ------------------ */
+function finishQuiz(){
+  // compute final time bonus (sum of times)
+  let totalTime = 0;
+  let correctCount = 0;
+  quizItems.forEach(it => {
+    if(it.answered) { totalTime += it.answered.timeTaken; if(it.answered.correct) correctCount++; }
+    else totalTime += 30; // penalty if skipped
+  });
+  const bonus = developerTimeBonus(totalTime);
+  score += bonus;
+  finalScore.textContent = `最終スコア: ${score} （正答 ${correctCount} / ${quizItems.length}）`;
+  timeBonusDesc.textContent = `時間合計: ${Math.round(totalTime)} 秒、開発者ボーナス: ${bonus} 点`;
+  $('#resultPanel').style.display = 'block';
+  $('#quizPanel').style.display = 'none';
+}
+
+/* ------------------ ボタン: データ取得 & クイズ開始 ------------------ */
+btnLoad.addEventListener('click', async ()=>{
+  try{
+    btnLoad.disabled = true;
+    statusText.textContent = 'データ取得を開始します...';
+    // 1) REST Countries
+    await fetchRESTCountries();
+    // 2) preparePool (fetch WB data per-country; may take time)
+    const depth = dataDepthEl.value;
+    await preparePool();
+    showMessage(`データ取得完了（${preparedPool.length} 件）`);
+  }catch(e){
+    showMessage(String(e),'error');
+  }finally{
+    btnLoad.disabled = false;
+  }
+});
+
+btnStart.addEventListener('click', async ()=>{
+  // validate
+  if(!preparedPool || preparedPool.length===0){
+    alert('まず「データ取得して準備」を実行してください');
+    return;
+  }
+  // build quiz
+  const num = Math.max(1, Number(numQuestionsEl.value) || 10);
+  const seed = seedEl.value || null;
+  buildQuizItems(num, seed);
+  // reset state
+  score = 0; scoreDisplay.textContent = `Score: ${score}`;
+  $('#intro').style.display = 'none';
+  $('#resultPanel').style.display = 'none';
+  $('#quizPanel').style.display = 'block';
+  currentIndex = -1;
+  // start first question
+  showQuestion(0);
+});
+
+/* もう一度プレイ */
+$('#btnRestart').addEventListener('click', ()=>{
+  // shuffle/build anew
+  const seed = seedEl.value || null;
+  buildQuizItems(Number(numQuestionsEl.value), seed);
+  score = 0; scoreDisplay.textContent = `Score: ${score}`;
+  $('#resultPanel').style.display = 'none';
+  $('#quizPanel').style.display = 'block';
+  showQuestion(0);
+});
+
+/* helper: show message */
+function showMessage(txt, kind='info'){
+  statusText.textContent = txt;
+  if(kind === 'error') statusText.style.color = 'var(--danger)';
+  else statusText.style.color = '';
+}
+
+/* initialize small */
+(function init(){
+  // initial UI text
+  scoreDisplay.textContent = 'Score: 0';
+  qTotalSpan.textContent = numQuestionsEl.value;
+  // hide dev panel by default
+  devData.style.display = 'none';
+  // small accessibility: enable Enter to start load
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter' && document.activeElement && document.activeElement.tagName !== 'INPUT' ){
+      // Enter outside inputs => start
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>波動方程式シミュレーション</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@3.9.0/dist/full.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.1/math.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body class="flex flex-col md:flex-row bg-base-200 min-h-screen">
+
+    <!-- サイドバー：モバイル時は上部、PC時は左側固定 -->
+    <aside class="w-full md:w-96 md:h-screen bg-base-100 shadow-2xl p-5 flex flex-col gap-4 md:overflow-y-auto z-10 shrink-0 border-b md:border-b-0 md:border-r border-base-300">
+        <div class="flex justify-between items-center">
+            <h1 class="text-2xl font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Wave Sim.</h1>
+            <button id="btn-theme" class="btn btn-sm btn-ghost">☀️ Light</button>
+        </div>
+        
+        <div class="tabs tabs-boxed w-full">
+            <a class="tab tab-active flex-1 font-bold" id="tab-1d">1D Mode</a>
+            <a class="tab flex-1 font-bold" id="tab-2d">2D Mode</a>
+        </div>
+
+        <div class="flex gap-2">
+            <button id="btn-toggle" class="btn btn-primary flex-1 shadow-lg">Start</button>
+            <button id="btn-reset" class="btn btn-outline flex-1">Reset</button>
+        </div>
+
+        <!-- プリセット選択 -->
+        <div class="form-control w-full mt-2">
+            <label class="label"><span class="label-text font-bold text-primary">プリセット (Presets)</span></label>
+            <select id="select-preset" class="select select-bordered select-sm w-full font-medium">
+                <option value="custom">カスタム (Custom)</option>
+                <option value="pulse">ガウスパルス (Gaussian Pulse)</option>
+                <option value="sine">正弦波 (Sine Wave)</option>
+                <option value="ripple">波紋 (Ripple - 2D推奨)</option>
+                <option value="interference">2点干渉 (Interference - 2D推奨)</option>
+            </select>
+        </div>
+
+        <div class="divider my-1">Settings</div>
+
+        <div class="form-control w-full">
+            <label class="label"><span class="label-text font-semibold">初期波形 <span id="label-formula">\(u(x, 0)\)</span></span></label>
+            <input type="text" id="input-formula" value="exp(-x^2)" class="input input-bordered input-sm w-full font-mono text-sm shadow-inner" />
+            <div id="latex-preview" class="p-2 bg-base-200 rounded-lg mt-2 min-h-[40px] flex items-center justify-center text-sm shadow-inner overflow-x-auto"></div>
+        </div>
+
+        <div class="form-control w-full">
+            <label class="label"><span class="label-text font-semibold">境界条件 (Boundary)</span></label>
+            <select id="select-boundary" class="select select-bordered select-sm w-full">
+                <option value="fixed">固定端 (Fixed - 反転反射)</option>
+                <option value="free">自由端 (Free - そのまま反射)</option>
+            </select>
+        </div>
+
+        <div class="form-control w-full">
+            <label class="label"><span class="label-text font-semibold">波の伝播速度 \(c\): <span id="val-c" class="text-primary font-bold">0.5</span></span></label>
+            <input type="range" min="0.1" max="1.0" value="0.5" step="0.05" class="range range-primary range-xs" id="slider-c" />
+        </div>
+
+        <!-- 2D専用設定エリア -->
+        <div id="controls-2d" class="hidden flex-col gap-3 p-4 bg-base-200/50 rounded-xl border border-base-300 mt-2">
+            <div class="badge badge-primary badge-outline text-xs mb-1">2D Settings</div>
+            
+            <div class="form-control w-full">
+                <label class="label py-0 mb-1"><span class="label-text text-xs font-semibold">境界の形 (Shape)</span></label>
+                <select id="select-shape" class="select select-bordered select-sm w-full text-xs">
+                    <option value="square">正方形 (Square)</option>
+                    <option value="circle">円形 (Circle)</option>
+                    <option value="ellipse">楕円 (Ellipse)</option>
+                </select>
+            </div>
+
+            <div class="flex gap-2">
+                <div class="form-control w-1/2">
+                    <label class="label py-0 mb-1"><span class="label-text text-xs font-semibold">視点 (View)</span></label>
+                    <select id="select-view" class="select select-bordered select-sm w-full text-xs">
+                        <option value="3d">3D</option>
+                        <option value="top">真上 (Top)</option>
+                    </select>
+                </div>
+                <div class="form-control w-1/2">
+                    <label class="label py-0 mb-1"><span class="label-text text-xs font-semibold">カラー (Color)</span></label>
+                    <select id="select-color" class="select select-bordered select-sm w-full text-xs">
+                        <option value="Viridis">Viridis</option>
+                        <option value="Plasma">Plasma</option>
+                        <option value="Ice">Ice</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- メイン描画エリア -->
+    <main class="flex-1 p-3 md:p-6 flex flex-col h-[50vh] md:h-screen relative">
+        <div class="bg-base-100 rounded-2xl shadow-xl flex-1 w-full h-full p-2 md:p-4 relative overflow-hidden border border-base-300">
+            <div id="wrapper-1d" class="w-full h-full"><canvas id="waveCanvas"></canvas></div>
+            <div id="wrapper-2d" class="w-full h-full hidden"><div id="wavePlotly" class="w-full h-full"></div></div>
+        </div>
+    </main>
+
+    <script>
+        let currentMode = '1D';
+        let isRunning = false;
+        let c = 0.5;
+        let boundaryCondition = 'fixed';
+
+        const N1 = 200;
+        let u1 = new Array(N1).fill(0), u1_prev = new Array(N1).fill(0), u1_next = new Array(N1).fill(0);
+
+        const N2 = 45; 
+        let u2 = Array.from({length: N2}, () => new Array(N2).fill(0));
+        let u2_prev = Array.from({length: N2}, () => new Array(N2).fill(0));
+        let u2_next = Array.from({length: N2}, () => new Array(N2).fill(0));
+        let mask2d = Array.from({length: N2}, () => new Array(N2).fill(1));
+
+        let plotlyLayout = {
+            margin: { l: 0, r: 0, b: 0, t: 0 },
+            autosize: true,
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            scene: {
+                zaxis: { range: [-1.5, 1.5], visible: false },
+                xaxis: { visible: false },
+                yaxis: { visible: false },
+                camera: { eye: { x: 1.5, y: 1.5, z: 1.2 } },
+                aspectratio: { x: 1, y: 1, z: 0.6 }
+            }
+        };
+
+        function getPlotlyZData() {
+            // マスク外は null にして透明化する
+            return u2.map((row, i) => row.map((val, j) => mask2d[i][j] ? val : null));
+        }
+
+        function initPlotly() {
+            Plotly.newPlot('wavePlotly', [{ z: getPlotlyZData(), type: 'surface', colorscale: 'Viridis', showscale: false }], plotlyLayout, { responsive: true, displayModeBar: false });
+        }
+
+        function updateLatexPreview() {
+            const formulaStr = document.getElementById('input-formula').value;
+            const previewEl = document.getElementById('latex-preview');
+            try {
+                const latex = math.parse(formulaStr).toTex({ parenthesis: 'keep' });
+                const prefix = currentMode === '1D' ? 'u(x, 0) = ' : 'u(x, y, 0) = ';
+                katex.render(prefix + latex, previewEl, { throwOnError: false, displayMode: true });
+            } catch (e) {
+                previewEl.innerHTML = '<span class="text-error text-xs font-bold">Invalid Formula</span>';
+            }
+        }
+
+        function applyPreset() {
+            const preset = document.getElementById('select-preset').value;
+            const input = document.getElementById('input-formula');
+            
+            if (preset === 'pulse') {
+                input.value = currentMode === '1D' ? 'exp(-x^2)' : 'exp(-(x^2+y^2))';
+            } else if (preset === 'sine') {
+                input.value = currentMode === '1D' ? 'sin(2*x)' : 'sin(x)*cos(y)';
+            } else if (preset === 'ripple') {
+                input.value = 'sin(5*sqrt(x^2+y^2))*exp(-0.1*sqrt(x^2+y^2))';
+            } else if (preset === 'interference') {
+                input.value = 'sin(5*sqrt((x-1.5)^2+y^2)) + sin(5*sqrt((x+1.5)^2+y^2))';
+            }
+            
+            if (preset !== 'custom') {
+                updateLatexPreview();
+                initWave();
+            }
+        }
+
+        function updateMask2D() {
+            const shape = document.getElementById('select-shape').value;
+            for (let i = 0; i < N2; i++) {
+                for (let j = 0; j < N2; j++) {
+                    let x = -4 + i * (8 / (N2 - 1)), y = -4 + j * (8 / (N2 - 1));
+                    if (shape === 'square') mask2d[i][j] = 1;
+                    else if (shape === 'circle') mask2d[i][j] = (x*x + y*y <= 15) ? 1 : 0;
+                    else if (shape === 'ellipse') mask2d[i][j] = ((x*x)/15 + (y*y)/4 <= 1) ? 1 : 0;
+                }
+            }
+        }
+
+        function initWave() {
+            const formulaStr = document.getElementById('input-formula').value;
+            let compiled;
+            try { compiled = math.compile(formulaStr); } catch(e) { return; }
+
+            if (currentMode === '1D') {
+                for (let i = 0; i < N1; i++) {
+                    let val = compiled.evaluate({ x: -5 + i * (10 / (N1 - 1)), y: 0 });
+                    u1[i] = u1_prev[i] = typeof val === 'number' && !isNaN(val) ? val : 0;
+                }
+                waveChart.update();
+            } else {
+                updateMask2D();
+                for (let i = 0; i < N2; i++) {
+                    for (let j = 0; j < N2; j++) {
+                        let x = -4 + i * (8 / (N2 - 1)), y = -4 + j * (8 / (N2 - 1));
+                        let val = compiled.evaluate({ x: x, y: y });
+                        u2[i][j] = u2_prev[i][j] = mask2d[i][j] ? (typeof val === 'number' && !isNaN(val) ? val : 0) : 0;
+                    }
+                }
+                Plotly.react('wavePlotly', [{ z: getPlotlyZData(), type: 'surface', colorscale: document.getElementById('select-color').value, showscale: false }], plotlyLayout);
+            }
+        }
+
+        function stepSimulation() {
+            if (currentMode === '1D') {
+                const r = (c * 0.1 / (10 / (N1 - 1))) ** 2;
+                for (let i = 1; i < N1 - 1; i++) u1_next[i] = 2 * u1[i] - u1_prev[i] + r * (u1[i+1] - 2 * u1[i] + u1[i-1]);
+                if (boundaryCondition === 'fixed') { u1_next[0] = 0; u1_next[N1-1] = 0; }
+                else { u1_next[0] = u1_next[1]; u1_next[N1-1] = u1_next[N1-2]; }
+                for (let i = 0; i < N1; i++) { u1_prev[i] = u1[i]; u1[i] = u1_next[i]; }
+            } else {
+                const r2 = (c * 0.08 / (8 / (N2 - 1))) ** 2, isFree = (boundaryCondition === 'free');
+                for (let i = 0; i < N2; i++) {
+                    for (let j = 0; j < N2; j++) {
+                        if (!mask2d[i][j]) continue;
+                        let u_up = (j < N2-1 && mask2d[i][j+1]) ? u2[i][j+1] : (isFree ? u2[i][j] : 0);
+                        let u_dn = (j > 0 && mask2d[i][j-1]) ? u2[i][j-1] : (isFree ? u2[i][j] : 0);
+                        let u_lt = (i > 0 && mask2d[i-1][j]) ? u2[i-1][j] : (isFree ? u2[i][j] : 0);
+                        let u_rt = (i < N2-1 && mask2d[i+1][j]) ? u2[i+1][j] : (isFree ? u2[i][j] : 0);
+                        u2_next[i][j] = 2 * u2[i][j] - u2_prev[i][j] + r2 * (u_rt + u_lt + u_up + u_dn - 4 * u2[i][j]);
+                    }
+                }
+                for (let i = 0; i < N2; i++) {
+                    for (let j = 0; j < N2; j++) {
+                        u2_prev[i][j] = u2[i][j]; u2[i][j] = u2_next[i][j];
+                    }
+                }
+            }
+        }
+
+        let frame = 0;
+        function loop() {
+            if (isRunning) {
+                stepSimulation();
+                if (currentMode === '1D') waveChart.update();
+                else if (++frame % 2 === 0) Plotly.react('wavePlotly', [{ z: getPlotlyZData(), type: 'surface', colorscale: document.getElementById('select-color').value, showscale: false }], plotlyLayout);
+            }
+            requestAnimationFrame(loop);
+        }
+
+        // Chart.js Setup
+        const ctx = document.getElementById('waveCanvas').getContext('2d');
+        const waveChart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: Array.from({length: N1}, (_, i) => i), datasets: [{ data: u1, borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.1)', borderWidth: 3, pointRadius: 0, fill: true, tension: 0.3 }] },
+            options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { display: false } }, scales: { y: { min: -2, max: 2, grid: { color: 'rgba(150,150,150,0.2)' } }, x: { display: false } } }
+        });
+
+        // Event Listeners
+        document.getElementById('input-formula').addEventListener('input', () => { 
+            document.getElementById('select-preset').value = 'custom';
+            updateLatexPreview(); initWave(); 
+        });
+        document.getElementById('select-preset').addEventListener('change', applyPreset);
+        document.getElementById('select-boundary').addEventListener('change', (e) => { boundaryCondition = e.target.value; initWave(); });
+        document.getElementById('slider-c').addEventListener('input', (e) => { c = parseFloat(e.target.value); document.getElementById('val-c').innerText = c; });
+        document.getElementById('btn-toggle').addEventListener('click', (e) => {
+            isRunning = !isRunning; e.target.innerText = isRunning ? 'Pause' : 'Start'; e.target.classList.toggle('btn-secondary');
+        });
+        document.getElementById('btn-reset').addEventListener('click', initWave);
+
+        document.getElementById('select-shape').addEventListener('change', initWave);
+        document.getElementById('select-color').addEventListener('change', (e) => { if(currentMode==='2D') Plotly.restyle('wavePlotly', { colorscale: e.target.value }); });
+        document.getElementById('select-view').addEventListener('change', (e) => {
+            plotlyLayout.scene.camera = e.target.value === 'top' ? { eye: { x: 0, y: 0, z: 2.2 }, up: {x: 0, y: 1, z: 0} } : { eye: { x: 1.5, y: 1.5, z: 1.2 } };
+            if(currentMode==='2D') Plotly.relayout('wavePlotly', { 'scene.camera': plotlyLayout.scene.camera });
+        });
+
+        document.getElementById('tab-1d').addEventListener('click', () => switchMode('1D'));
+        document.getElementById('tab-2d').addEventListener('click', () => switchMode('2D'));
+
+        function switchMode(mode) {
+            currentMode = mode;
+            isRunning = false;
+            document.getElementById('btn-toggle').innerText = 'Start';
+            document.getElementById('btn-toggle').classList.remove('btn-secondary');
+            
+            if (mode === '1D') {
+                document.getElementById('tab-1d').classList.add('tab-active'); document.getElementById('tab-2d').classList.remove('tab-active');
+                document.getElementById('wrapper-1d').classList.remove('hidden'); document.getElementById('wrapper-2d').classList.add('hidden');
+                document.getElementById('controls-2d').style.display = 'none';
+                document.getElementById('label-formula').innerText = 'u(x, 0)';
+            } else {
+                document.getElementById('tab-2d').classList.add('tab-active'); document.getElementById('tab-1d').classList.remove('tab-active');
+                document.getElementById('wrapper-2d').classList.remove('hidden'); document.getElementById('wrapper-1d').classList.add('hidden');
+                document.getElementById('controls-2d').style.display = 'flex';
+                document.getElementById('label-formula').innerText = 'u(x, y, 0)';
+                setTimeout(() => Plotly.Plots.resize('wavePlotly'), 100);
+            }
+            applyPreset();
+        }
+
+        document.getElementById('btn-theme').addEventListener('click', () => {
+            const html = document.documentElement, currentTheme = html.getAttribute('data-theme');
+            const nextTheme = currentTheme === 'light' ? 'dark' : 'light';
+            html.setAttribute('data-theme', nextTheme);
+            document.getElementById('btn-theme').innerText = nextTheme === 'light' ? '🌙 Dark' : '☀️ Light';
+        });
+
+        initPlotly(); switchMode('1D'); loop();
+    </script>
+</body>
+</html>
