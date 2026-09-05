@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="ja" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>有機化合物分類マップ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/smiles-drawer@1.0.10/dist/smiles-drawer.min.js"></script>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+            svg: { fontCache: 'global' },
+            options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'] }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+    <style>
+        body { background-color: #0b0f19; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+        .node circle { cursor: pointer; transition: all 0.25s ease-in-out; }
+        .node circle:hover { stroke-width: 4px !important; filter: drop-shadow(0 0 12px currentColor); }
+        .node-label-container { display: flex; align-items: center; white-space: nowrap; pointer-events: none; user-select: none; transition: opacity 0.3s ease; text-shadow: 0 0 4px #0b0f19, 0 0 2px #0b0f19; }
+        .link { fill: none; stroke: #334155; stroke-opacity: 0.6; stroke-width: 1px; transition: stroke 0.3s, stroke-width 0.3s; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        #smiles-canvas { background-color: #f8fafc; border-radius: 0.5rem; width: 100%; height: 200px; }
+    </style>
+</head>
+<body class="text-slate-100 h-screen overflow-hidden flex flex-col select-none">
+
+    <header class="h-16 border-b border-slate-800 bg-slate-900/90 backdrop-blur px-6 flex items-center justify-between z-10 shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-lg bg-emerald-600/30 border border-emerald-500/50 flex items-center justify-center text-emerald-400 font-bold text-xl shadow-lg">
+                <i class="fa-solid fa-flask"></i>
+            </div>
+            <div>
+                <h1 class="text-base font-bold tracking-wide text-white leading-tight">有機化合物分類マップ</h1>
+                <p class="text-xs text-slate-400">代表的な有機化合物を視覚的に分類（※情報の正確性については保証しかねます）</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-3 w-full max-w-md">
+            <div class="relative w-full">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                <input type="text" id="search-input" placeholder="物質名で検索 (例: ピクリン酸, メタン)..." 
+                       class="w-full bg-slate-800/80 border border-slate-700 rounded-lg pl-9 pr-4 py-1.5 text-sm focus:outline-none focus:border-emerald-500 text-slate-200 placeholder-slate-500 transition-all">
+            </div>
+            <button id="btn-reset-zoom" title="視点を全体に戻す" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-2 rounded-lg border border-slate-700 shrink-0 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-compress text-slate-400"></i>
+                <span>全体復帰</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex-1 relative overflow-hidden flex">
+        <svg id="tree-canvas" class="w-full h-full cursor-grab active:cursor-grabbing"></svg>
+
+        <div class="absolute bottom-6 left-6 bg-slate-900/90 backdrop-blur border border-slate-800 p-4 rounded-xl shadow-2xl z-10 text-xs space-y-2 max-w-xs">
+            <div class="font-semibold text-slate-300 border-b border-slate-800 pb-1.5 flex justify-between items-center">
+                <span>骨格・元素による分類</span>
+                <span id="zoom-level-badge" class="text-[10px] bg-slate-800 px-1.5 py-0.5 rounded text-emerald-400 font-mono">Zoom: 100%</span>
+            </div>
+            <div class="grid grid-cols-1 gap-1.5 pointer-events-auto">
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-cyan-500 shrink-0"></span>1. 脂肪族炭化水素</div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-fuchsia-500 shrink-0"></span>2. 芳香族炭化水素</div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-orange-500 shrink-0"></span>3. 含酸素化合物</div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-indigo-500 shrink-0"></span>4. 含窒素・硫黄化合物</div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-rose-500 shrink-0"></span>5. 生体高分子・合成樹脂</div>
+            </div>
+            <div class="text-[11px] text-slate-400 pt-1 border-t border-slate-800/60 leading-relaxed">
+                Source: <a href="https://ja.wikipedia.org/wiki/%E6%9C%89%E6%A9%9F%E5%8C%96%E5%90%88%E7%89%A9%E3%81%AE%E4%B8%80%E8%A6%A7" target="_blank" class="text-emerald-400 hover:text-emerald-300 underline">Wikipedia</a>
+            </div>
+        </div>
+
+        <aside id="detail-drawer" class="absolute top-0 right-0 h-full w-[480px] bg-slate-900/95 backdrop-blur-md border-l border-slate-800 shadow-2xl transform translate-x-full transition-transform duration-300 z-20 flex flex-col p-6 overflow-y-auto">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+                <span id="drawer-badge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Category</span>
+                <button id="btn-close-drawer" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="mt-4">
+                <h2 id="drawer-title" class="text-2xl font-bold text-white tracking-wide">物質名</h2>
+                <p id="drawer-subtitle" class="text-sm font-mono text-emerald-400 mt-1">一般式</p>
+            </div>
+
+            <div class="mt-4 w-full flex justify-center relative group">
+                <canvas id="smiles-canvas"></canvas>
+            </div>
+
+            <div class="mt-6 space-y-5 text-sm">
+                <div>
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1.5">
+                        <i class="fa-solid fa-book-open text-emerald-400"></i> 解説・特徴
+                    </h3>
+                    <div id="drawer-desc" class="text-slate-300 leading-relaxed text-xs bg-slate-800/30 p-3.5 rounded-lg border border-slate-800/50 select-text space-y-2"></div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        const organicHierarchy = {
+            name: "有機化合物", latex: "\\text{Organic Compounds}", category: "Root", color: "#64748b",
+            children: [
+                {
+                    name: "1. 脂肪族炭化水素", category: "Hydrocarbons", color: "#06b6d4",
+                    children: [
+                        { name: "アルカン", latex: "C_nH_{2n+2}", color: "#06b6d4", children: [
+                            { name: "メタン", latex: "CH_4", smiles: "C", desc: "天然ガスの主成分。実験室では無水酢酸ナトリウムとソーダ石灰を加熱して製する。無色無臭の気体で水に溶けにくい。" },
+                            { name: "エタン", latex: "C_2H_6", smiles: "CC", desc: "融点は-148度[cite: 18]。石油分解ガスから分離して製造される常温で無色の気体。" },
+                            { name: "プロパン", latex: "C_3H_8", smiles: "CCC", desc: "LPガスの主成分。石油精製の副生ガスとして得られ、家庭用燃料として広く利用される。" },
+                            { name: "ブタン", latex: "C_4H_10", smiles: "CCCC", desc: "ライターの燃料やカセットボンベに用いられる。天然ガスから分離される。" },
+                            { name: "ペンタン", latex: "C_5H_{12}", smiles: "CCCCC", desc: "常温で無色の液体。発泡スチロールの物理発泡剤や溶媒として利用される。" },
+                            { name: "ヘキサン", latex: "C_6H_{14}", smiles: "CCCCCC", desc: "無極性溶媒として抽出などに多用される。粗製ガソリンから分留して得られる。" },
+                            { name: "ヘプタン", latex: "C_7H_{16}", smiles: "CCCCCCC", desc: "ガソリンのアンチノック性を示すオクタン価0の基準となる標準物質。" },
+                            { name: "オクタン", latex: "C_8H_{18}", smiles: "CCCCCCCC", desc: "ガソリンの主成分の一つ。炭素数8の直鎖アルカン。" },
+                            { name: "ノナン", latex: "C_9H_{20}", smiles: "CCCCCCCCC", desc: "引火性の液体で、有機溶媒や燃料の成分として利用される。" },
+                            { name: "デカン", latex: "C_{10}H_{22}", smiles: "CCCCCCCCCC", desc: "炭素数10の直鎖アルカン。重質なガソリン成分に含まれる。" },
+                            { name: "イソブタン", latex: "C_4H_{10}", smiles: "CC(C)C", desc: "ブタンの構造異性体。エアロゾルスプレーの噴射剤や冷媒として利用される。" }
+                        ]},
+                        { name: "アルケン", latex: "C_nH_{2n}", color: "#06b6d4", children: [
+                            { name: "エチレン", latex: "C_2H_4", smiles: "C=C", desc: "植物ホルモンの一つ。実験室ではエタノールと濃硫酸を170℃で加熱して製する。臭素水の赤褐色を脱色する事で検出可能。" },
+                            { name: "プロペン", latex: "C_3H_6", smiles: "C=CC", desc: "ポリプロピレンの原料。ナフサの熱分解で大量に生産される。" },
+                            { name: "1-ブテン", latex: "C_4H_8", smiles: "C=CCC", desc: "二重結合が末端にあるブテン。ポリエチレンの共重合モノマーとして利用。" },
+                            { name: "2-ブテン", latex: "C_4H_8", smiles: "CC=CC", desc: "シス-トランス異性体が存在する。石油の接触分解生成物から分離される。" },
+                            { name: "イソブテン", latex: "C_4H_8", smiles: "CC(=C)C", desc: "メチルプロペン。酸触媒で水和するとt-ブタノールになる。" },
+                            { name: "1-ペンテン", latex: "C_5H_{10}", smiles: "C=CCCC", desc: "炭素数5の直鎖末端アルケン。" },
+                            { name: "1-ヘキセン", latex: "C_6H_{12}", smiles: "C=CCCCC", desc: "無色の液体で、主にポリエチレンのコモノマーとして工業的に製造される。" },
+                            { name: "1-オクテン", latex: "C_8H_{16}", smiles: "C=CCCCCCC", desc: "洗剤や可塑剤の合成原料として利用される。" },
+                            { name: "シクロヘキセン", latex: "C_6H_{10}", smiles: "C1=CCCCC1", desc: "環状アルケン。シクロヘキサノールの酸触媒下での脱水反応で製する。" },
+                            { name: "1-デセン", latex: "C_{10}H_{20}", smiles: "C=CCCCCCCCC", desc: "合成潤滑油の原料として利用される炭素数10のアルケン。" }
+                        ]},
+                        { name: "アルキン", latex: "C_nH_{2n-2}", color: "#06b6d4", children: [
+                            { name: "アセチレン", latex: "C_2H_2", smiles: "C#C", desc: "融点-80.8度、沸点-84度[cite: 18]。炭化カルシウムに水を加えるか、メタンの部分酸化で製する。アンモニア性硝酸銀水溶液で白色沈殿を生じる。" },
+                            { name: "プロピン", latex: "C_3H_4", smiles: "C#CC", desc: "メチルアセチレンとも呼ばれる。溶接ガスの成分として用いられる。" },
+                            { name: "1-ブチン", latex: "C_4H_6", smiles: "C#CCC", desc: "末端アルキンであり、銀鏡反応に似た末端アルキンの金属塩生成反応を示す。" },
+                            { name: "2-ブチン", latex: "C_4H_6", smiles: "CC#CC", desc: "内部アルキンであり、末端アルキンのような金属置換反応を示さない。" },
+                            { name: "1-ペンチン", latex: "C_5H_8", smiles: "C#CCCC", desc: "炭素数5の末端アルキン。" },
+                            { name: "1-ヘキシン", latex: "C_6H_{10}", smiles: "C#CCCCC", desc: "有機合成の基質としてよく利用される末端アルキン。" },
+                            { name: "1-オクチン", latex: "C_8H_{14}", smiles: "C#CCCCCCC", desc: "末端アルキンの一般的な性質を示す炭素数8の液体。" },
+                            { name: "フェニルアセチレン", latex: "C_8H_6", smiles: "C#Cc1ccccc1", desc: "芳香環を持つ末端アルキン。薗頭カップリングの基質として重宝される。" },
+                            { name: "3-ヘキシン", latex: "C_6H_{10}", smiles: "CCC#CCC", desc: "対称構造を持つ内部アルキン。" },
+                            { name: "1-デシン", latex: "C_{10}H_{18}", smiles: "C#CCCCCCCCC", desc: "炭素数10の末端アルキン。" }
+                        ]},
+                        { name: "シクロアルカン", latex: "C_nH_{2n}", color: "#06b6d4", children: [
+                            { name: "シクロプロパン", latex: "C_3H_6", smiles: "C1CC1", desc: "環の歪みが非常に大きく、付加反応（開環）を起こしやすい。かつて全身麻酔薬として使われた。" },
+                            { name: "シクロブタン", latex: "C_4H_8", smiles: "C1CCC1", desc: "環の歪みが大きく不安定。シクロブタンジカルボン酸からの脱炭酸などで製する。" },
+                            { name: "シクロペンタン", latex: "C_5H_{10}", smiles: "C1CCCC1", desc: "比較的安定な5員環構造。石油エーテル中に含まれる。" },
+                            { name: "シクロヘキサン", latex: "C_6H_{12}", smiles: "C1CCCCC1", desc: "いす型配座をとり、極めて安定な溶媒。工業的にはベンゼンの水素化により製造される。" },
+                            { name: "シクロヘプタン", latex: "C_7H_{14}", smiles: "C1CCCCCC1", desc: "7員環のシクロアルカン。クレメンゼン還元などで合成される。" },
+                            { name: "シクロオクタン", latex: "C_8H_{16}", smiles: "C1CCCCCCC1", desc: "8員環構造を持ち、冠型や舟-いす型などの複雑な配座をとる。" },
+                            { name: "デカリン", latex: "C_{10}H_{18}", smiles: "C1CCC2CCCCC2C1", desc: "2つのシクロヘキサン環が縮合した構造。ナフタレンの完全水素化で製造される。" },
+                            { name: "メチルシクロヘキサン", latex: "C_7H_{14}", smiles: "CC1CCCCC1", desc: "トルエンの水素化で得られる無色の液体溶媒。" },
+                            { name: "エチルシクロヘキサン", latex: "C_8H_{16}", smiles: "CCC1CCCCC1", desc: "エチルベンゼンの還元などで得られる有機合成溶媒。" },
+                            { name: "スピロデカン", latex: "C_{10}H_{18}", smiles: "C2CCC1(CCCCC1)C2", desc: "1つの炭素原子を共有する2つの環を持つスピロ化合物[cite: 18]。" }
+                        ]},
+                        { name: "ジエン", latex: "C_nH_{2n-2}", color: "#06b6d4", children: [
+                            { name: "1,3-ブタジエン", latex: "C_4H_6", smiles: "C=CC=C", desc: "共役ジエンの代表。ナフサの熱分解で大量に得られ、合成ゴムの主原料となる。" },
+                            { name: "イソプレン", latex: "C_5H_8", smiles: "CC(=C)C=C", desc: "融点-145.95度、沸点34.067度[cite: 18]。天然ゴムを構成するモノマー単位であり、合成ゴムの原料。" },
+                            { name: "クロロプレン", latex: "C_4H_5Cl", smiles: "C=C(Cl)C=C", desc: "2-クロロ-1,3-ブタジエン。耐候性・耐油性に優れたネオプレンゴムの原料。" },
+                            { name: "シクロペンタジエン", latex: "C_5H_6", smiles: "C1=CCC=C1", desc: "ディールス・アルダー反応のジエンとして非常に反応性が高く、常温で二量化してジシクロペンタジエンになる。" },
+                            { name: "1,4-ペンタジエン", latex: "C_5H_8", smiles: "C=CCC=C", desc: "二重結合がメチレン基で隔てられた非共役ジエン。" },
+                            { name: "1,5-ヘキサジエン", latex: "C_6H_{10}", smiles: "C=CCCC=C", desc: "加熱によりコープ転位を起こす基質として知られる。" },
+                            { name: "ミルセン", latex: "C_{10}H_{16}", smiles: "CC(C)=CCCC(=C)C=C", desc: "テルペン系炭化水素の一種で、香料の原料として重要。" },
+                            { name: "アレン", latex: "C_3H_4", smiles: "C=C=C", desc: "プロパジエン。累積二重結合を持つ最も単純な化合物で、独特の直交したπ結合構造を持つ。" },
+                            { name: "1,3-シクロヘキサジエン", latex: "C_6H_8", smiles: "C1=CCCC=C1", desc: "シクロヘキセンよりさらに不飽和度が高い共役環状ジエン。" },
+                            { name: "1,4-シクロヘキサジエン", latex: "C_6H_8", smiles: "C1=CCC=CC1", desc: "バーチ還元によってベンゼンから合成される非共役環状ジエン。" }
+                        ]}
+                    ]
+                },
+                {
+                    name: "2. 芳香族炭化水素", category: "Aromatics", color: "#d946ef",
+                    children: [
+                        { name: "ベンゼン・アルキルベンゼン", latex: "C_6H_6, C_6H_5-R", color: "#d946ef", children: [
+                            { name: "ベンゼン", latex: "C_6H_6", smiles: "c1ccccc1", desc: "芳香族化合物の基本骨格。触媒改質などによりナフサから製造される。特有の臭気を持つ有毒液体。" },
+                            { name: "トルエン", latex: "C_7H_8", smiles: "Cc1ccccc1", desc: "メチルベンゼン。ナフサの接触改質で製造され、溶剤やTNTの原料となる。" },
+                            { name: "o-キシレン", latex: "C_8H_{10}", smiles: "Cc1ccccc1C", desc: "オルト位に2つのメチル基を持つ。酸化すると無水フタル酸が得られる。" },
+                            { name: "m-キシレン", latex: "C_8H_{10}", smiles: "Cc1cccc(C)c1", desc: "メタ位に2つのメチル基を持つ。酸化してイソフタル酸の原料となる。" },
+                            { name: "p-キシレン", latex: "C_8H_{10}", smiles: "Cc1ccc(C)cc1", desc: "パラ位に2つのメチル基を持つ。酸化してテレフタル酸の原料となり、PET樹脂製造に不可欠。" },
+                            { name: "エチルベンゼン", latex: "C_8H_{10}", smiles: "CCc1ccccc1", desc: "エチレンとベンゼンからフリーデル・クラフツ反応で合成。スチレンの主原料。" },
+                            { name: "スチレン", latex: "C_8H_8", smiles: "C=Cc1ccccc1", desc: "融点-30.6度、沸点145度[cite: 18]。エチルベンゼンの脱水素で製造され、ポリスチレンの原料となる。" },
+                            { name: "クメン", latex: "C_9H_{12}", smiles: "CC(C)c1ccccc1", desc: "イソプロピルベンゼン。プロペンとベンゼンから合成され、クメン法でフェノールとアセトンの原料になる。" },
+                            { name: "メシチレン", latex: "C_9H_{12}", smiles: "Cc1cc(C)cc(C)c1", desc: "1,3,5-トリメチルベンゼン。濃硫酸触媒下でのアセトンの脱水縮合で合成可能。" },
+                            { name: "p-シメン", latex: "C_{10}H_{14}", smiles: "CC(C)c1ccc(C)cc1", desc: "4-イソプロピルトルエン。精油中に存在し、テルペン類に分類される香料成分。" }
+                        ]},
+                        { name: "多環芳香族", latex: "\\text{Polycyclic}", color: "#d946ef", children: [
+                            { name: "ナフタレン", latex: "C_{10}H_8", smiles: "c1ccc2ccccc2c1", desc: "ベンゼン環が2つ縮合。コールタールから分留される。特有の臭気を持ち、昇華性がある。" },
+                            { name: "アントラセン", latex: "C_{14}H_{10}", smiles: "c1ccc2cc3ccccc3cc2c1", desc: "融点218度、沸点342度[cite: 18]。ベンゼン環が3つ直線状に縮合。特有の蛍光を示し、染料の原料になる。" },
+                            { name: "フェナントレン", latex: "C_{14}H_{10}", smiles: "c1ccc2c(c1)ccc3ccccc32", desc: "ベンゼン環が3つ折れ曲がって縮合。アントラセンの構造異性体。" },
+                            { name: "ピレン", latex: "C_{16}H_{10}", smiles: "c1cc2cccc3c2c4c1cccc4cc3", desc: "ベンゼン環が4つ縮合した構造。コールタールから得られ、強い蛍光を示す。" },
+                            { name: "ビフェニル", latex: "C_{12}H_{10}", smiles: "c1ccc(cc1)c2ccccc2", desc: "2つのベンゼン環が単結合で連結された構造。熱媒体や防カビ剤として利用される。" },
+                            { name: "フルオレン", latex: "C_{13}H_{10}", smiles: "c1ccc2c(c1)Cc3ccccc23", desc: "2つのベンゼン環が5員環を形成して結合した構造。中央のメチレン基の水素は酸性度が高い。" },
+                            { name: "アセナフテン", latex: "C_{12}H_{10}", smiles: "c2cc1cccc3c1c(c2)CC3", desc: "コールタールから分離される3環系の芳香族化合物で、染料やプラスチックの原料。" },
+                            { name: "クリセン", latex: "C_{18}H_{12}", smiles: "c1ccc2c(c1)ccc3c4ccccc4ccc23", desc: "ベンゼン環が4つ角張って縮合した多環芳香族炭化水素。紫外線を当てると蛍光を発する。" },
+                            { name: "テトラセン", latex: "C_{18}H_{12}", smiles: "c1ccc2cc3cc4ccccc4cc3cc2c1", desc: "ナフタセンとも呼ばれる。ベンゼン環が4つ直線状に並んだ構造を持ち、有機半導体として注目される。" },
+                            { name: "インデン", latex: "C_9H_8", smiles: "c1ccc2c(c1)C=CC2", desc: "ベンゼン環とシクロペンテン環が縮合。コールタール中に存在し、重合して樹脂となる。" }
+                        ]}
+                    ]
+                },
+                {
+                    name: "3. 含酸素化合物", category: "Oxygen-containing", color: "#f97316",
+                    children: [
+                        { name: "アルコール", latex: "R-OH", color: "#f97316", children: [
+                            { name: "メタノール", latex: "CH_3OH", smiles: "CO", desc: "化学式CH3OH[cite: 18]。一酸化炭素と水素を触媒存在下で高温高圧反応させて合成する有毒な液体。" },
+                            { name: "エタノール", latex: "C_2H_5OH", smiles: "CCO", desc: "融点-114.14度、沸点78.29度[cite: 18]。糖類のアルコール発酵、またはエチレンの水和で工業的に製造される。ヨードホルム反応陽性。" },
+                            { name: "1-プロパノール", latex: "C_3H_8O", smiles: "CCCO", desc: "直鎖状の第1級アルコール。二クロム酸カリウム等の酸化剤で酸化するとプロピオンアルデヒドになる。" },
+                            { name: "2-プロパノール", latex: "C_3H_8O", smiles: "CC(O)C", desc: "イソプロパノール。プロペンへの水和反応で製造され、消毒用アルコールとして利用。ヨードホルム反応を示す。" },
+                            { name: "1-ブタノール", latex: "C_4H_{10}O", smiles: "CCCCO", desc: "バイオマス発酵やプロピレンのヒドロホルミル化で製造され、溶剤として広く使われる。" },
+                            { name: "2-ブタノール", latex: "C_4H_{10}O", smiles: "CCC(O)C", desc: "第2級アルコールで、不斉炭素原子を持つため鏡像異性体が存在する。" },
+                            { name: "t-ブチルアルコール", latex: "C_4H_{10}O", smiles: "CC(C)(C)O", desc: "第3級アルコール。酸化されにくく、イソブテンの水和で製造される。" },
+                            { name: "エチレングリコール", latex: "C_2H_6O_2", smiles: "OCCO", desc: "2価アルコール。エチレンオキシドの加水分解で製造され、PET樹脂の原料や自動車の不凍液に用いられる。" },
+                            { name: "グリセリン", latex: "C_3H_8O_3", smiles: "OCC(O)CO", desc: "3価アルコール。油脂の加水分解（けん化）によってセッケンと共に得られる粘性の高い液体。" },
+                            { name: "アリルアルコール", latex: "C_3H_6O", smiles: "C=CCO", desc: "最も単純な不飽和アルコール。塩化アリルの加水分解などで得られ、樹脂原料となる。" }
+                        ]},
+                        { name: "フェノール類", latex: "Ar-OH", color: "#f97316", children: [
+                            { name: "フェノール", latex: "C_6H_5OH", smiles: "Oc1ccccc1", desc: "塩化鉄(III)水溶液で紫色に呈色する弱酸。クメン法やアルカリ融解法で製造される。" },
+                            { name: "o-クレゾール", latex: "C_7H_8O", smiles: "Cc1c(O)cccc1", desc: "フェノールにメチル基がついた化合物で、特有の臭気を持つ。消毒薬などに利用。" },
+                            { name: "m-クレゾール", latex: "C_7H_8O", smiles: "Cc1cc(O)ccc1", desc: "コールタールから抽出されるクレゾールの異性体。樹脂原料や殺菌剤に利用される。" },
+                            { name: "p-クレゾール", latex: "C_7H_8O", smiles: "Cc1ccc(O)cc1", desc: "防腐剤や抗酸化剤の原料として利用される。塩化鉄(III)で青色に呈色。" },
+                            { name: "サリチル酸", latex: "C_7H_6O_3", smiles: "O=C(O)c1c(O)cccc1", desc: "コルベ・シュミット法でナトリウムフェノキシドと二酸化炭素から合成。塩化鉄(III)で赤紫色に呈色。" },
+                            { name: "ピクリン酸", latex: "C_6H_3N_3O_7", smiles: "O=[N+]([O-])c1cc(cc([N+]([O-])=O)c1O)[N+]([O-])=O", desc: "2,4,6-トリニトロフェノール。強力な酸性を示す黄色結晶で、爆発性を持つ。" },
+                            { name: "レゾルシノール", latex: "C_6H_6O_2", smiles: "Oc1cc(O)ccc1", desc: "融点110度、沸点280度[cite: 18]。1,3-ベンゼンジオール。還元性が強く、接着剤原料などに用いられる。" },
+                            { name: "ヒドロキノン", latex: "C_6H_6O_2", smiles: "Oc1ccc(O)cc1", desc: "1,4-ベンゼンジオール。写真の現像薬として使われる強い還元剤で、酸化されるとベンゾキノンになる。" },
+                            { name: "カテコール", latex: "C_6H_6O_2", smiles: "Oc1ccccc1O", desc: "1,2-ベンゼンジオール。塩化鉄(III)で緑色に呈色する。香料や医薬品の合成中間体。" },
+                            { name: "1-ナフトール", latex: "C_{10}H_8O", smiles: "Oc1cccc2ccccc12", desc: "ナフタレンから誘導される。アゾ染料の原料として重要。塩化鉄(III)で沈殿を生じる。" },
+                            { name: "2-ナフトール", latex: "C_{10}H_8O", smiles: "Oc1ccc2ccccc2c1", desc: "塩化ベンゼンジアゾニウムとアルカリ性条件でカップリング反応し、橙赤色のアゾ染料を生じる。" },
+                            { name: "没食子酸", latex: "C_7H_6O_5", smiles: "O=C(O)c1cc(O)c(O)c(O)c1", desc: "お茶の渋み成分であるタンニンなどを構成する。塩化鉄(III)で青黒色に呈色する。" }
+                        ]},
+                        { name: "エーテル", latex: "R-O-R'", color: "#f97316", children: [
+                            { name: "ジメチルエーテル", latex: "C_2H_6O", smiles: "COC", desc: "メタノールの脱水で生成される。エタノールの構造異性体であり、エアロゾル噴射剤などに使われる気体。" },
+                            { name: "ジエチルエーテル", latex: "C_4H_{10}O", smiles: "CCOCC", desc: "エタノールを濃硫酸と共に130℃で加熱し分子間脱水させて製する。かつて麻酔として使われた引火性の高い液体。" },
+                            { name: "テトラヒドロフラン", latex: "C_4H_8O", smiles: "C1CCOC1", desc: "THF。1,4-ブタンジオールの脱水などで製造され、水に溶ける極性有機溶媒として重宝される。" },
+                            { name: "1,4-ジオキサン", latex: "C_4H_8O_2", smiles: "C1COCCO1", desc: "環状エーテル。エチレングリコールの脱水二量化で得られ、優れた溶剤として用いられる。" },
+                            { name: "アニソール", latex: "C_7H_8O", smiles: "COc1ccccc1", desc: "メトキシベンゼン。ナトリウムフェノキシドとハロゲン化メチルからウィリアムソン合成で得る。アニス風の香り。" },
+                            { name: "ジフェニルエーテル", latex: "C_{12}H_{10}O", smiles: "c1ccc(Oc2ccccc2)cc1", desc: "芳香族エーテル。フェノールとブロモベンゼンのウルマン反応で合成。熱媒やゼラニウム様香料として利用。" },
+                            { name: "メチルtert-ブチルエーテル", latex: "C_5H_{12}O", smiles: "CC(C)(C)OC", desc: "MTBE。イソブテンとメタノールから合成され、かつてガソリンのアンチノック剤として大量に利用された。" },
+                            { name: "エチレンオキシド", latex: "C_2H_4O", smiles: "C1CO1", desc: "エチレンの銀触媒による直接酸化で製造。環の歪みによる反応性が高く、エチレングリコールの原料となる。" },
+                            { name: "1,2-ジメトキシエタン", latex: "C_4H_{10}O_2", smiles: "COCCOC", desc: "DME。水とも有機溶媒とも混ざり、リチウム電池の溶媒や有機合成の反応溶媒に用いられる。" },
+                            { name: "クラウンエーテル", latex: "C_{12}H_{24}O_6", smiles: "O1CCOCCOCCOCCOCCOCC1", desc: "18-クラウン-6など。アルカリ金属イオンを空洞内に包摂する特異な環状ポリエーテルであり、相間移動触媒として働く。" }
+                        ]},
+                        { name: "アルデヒド", latex: "R-CHO", color: "#f97316", children: [
+                            { name: "ホルムアルデヒド", latex: "HCHO", smiles: "C=O", desc: "メタノールの空気酸化で銀や銅を触媒として製する。水溶液はホルマリン。銀鏡反応やフェーリング反応を示す。" },
+                            { name: "アセトアルデヒド", latex: "CH_3CHO", smiles: "CC=O", desc: "融点-123.5度、沸点20.2度、密度0.788g/cm3[cite: 18]。エチレンのワッカー酸化等で製造され、ヨードホルム反応を示す。" },
+                            { name: "プロピオンアルデヒド", latex: "C_3H_6O", smiles: "CCC=O", desc: "1-プロパノールの酸化で得られる刺激臭のある液体。メタクリル酸の原料などに利用。" },
+                            { name: "ブチルアルデヒド", latex: "C_4H_8O", smiles: "CCCC=O", desc: "プロピレンのヒドロホルミル化で工業的に製造され、可塑剤原料となるオクタノールの合成に用いられる。" },
+                            { name: "アクロレイン", latex: "C_3H_4O", smiles: "C=CC=O", desc: "油脂の加熱時（グリセリンの脱水）に生じる催涙性の悪臭物質。アクリル酸の製造中間体。" },
+                            { name: "クロトンアルデヒド", latex: "C_4H_6O", smiles: "CC=CC=O", desc: "アセトアルデヒドのアルドール縮合とその後の脱水で生成する不飽和アルデヒド。" },
+                            { name: "ベンズアルデヒド", latex: "C_7H_6O", smiles: "O=Cc1ccccc1", desc: "トルエンの酸化で製造。アーモンド臭がし、還元性を持つ芳香族アルデヒドの代表。" },
+                            { name: "シンナムアルデヒド", latex: "C_9H_8O", smiles: "O=CC=Cc1ccccc1", desc: "シナモンの香りの主成分。ベンズアルデヒドとアセトアルデヒドのアルドール縮合で合成可能。" },
+                            { name: "サリチルアルデヒド", latex: "C_7H_6O_2", smiles: "O=Cc1ccccc1O", desc: "ライマー・チーマン反応でフェノールから合成される。フェノール性ヒドロキシ基により塩化鉄(III)で紫色に呈色。" },
+                            { name: "グリオキサール", latex: "C_2H_2O_2", smiles: "O=CC=O", desc: "最も単純なジアルデヒド。エチレングリコールの酸化で得られ、架橋剤などに利用される。" }
+                        ]},
+                        { name: "ケトン", latex: "R-CO-R'", color: "#f97316", children: [
+                            { name: "アセトン", latex: "CH_3COCH_3", smiles: "CC(=O)C", desc: "融点-94度、沸点56.5度[cite: 18]。クメン法でフェノールと共に合成される。ヨードホルム反応陽性。" },
+                            { name: "メチルエチルケトン", latex: "C_4H_8O", smiles: "CCC(=O)C", desc: "MEK。2-ブタノールの脱水素で工業的に製造される優れた溶剤。ヨードホルム反応を示す。" },
+                            { name: "アセトフェノン", latex: "C_8H_8O", smiles: "CC(=O)c1ccccc1", desc: "ベンゼンと塩化アセチルからフリーデル・クラフツアシル化で合成される芳香族ケトン。" },
+                            { name: "ベンゾフェノン", latex: "C_{13}H_{10}O", smiles: "O=C(c1ccccc1)c2ccccc2", desc: "ジフェニルケトン。ベンゼンとホスゲンから合成され、光増感剤や紫外線吸収剤として利用。" },
+                            { name: "シクロペンタノン", latex: "C_5H_8O", smiles: "O=C1CCCC1", desc: "アジピン酸の加熱脱炭酸などで得られる環状ケトン。ペパーミントに似た香り。" },
+                            { name: "シクロヘキサノン", latex: "C_6H_{10}O", smiles: "O=C1CCCCC1", desc: "シクロヘキサノールの酸化で得られ、ヒドロキシルアミンと反応させてカプロラクタムの原料となるオキシムを生成する。" },
+                            { name: "ジアセチル", latex: "C_4H_6O_2", smiles: "CC(=O)C(=O)C", desc: "隣接する2つのカルボニル基を持つジケトン。バターや発酵食品の香りの主要成分。" },
+                            { name: "アセチルアセトン", latex: "C_5H_8O_2", smiles: "CC(=O)CC(=O)C", desc: "ケト-エノール互変異性を示し、錯体化学において重要な二座配位子として用いられる。" },
+                            { name: "メチルイソブチルケトン", latex: "C_6H_{12}O", smiles: "CC(=O)CC(C)C", desc: "MIBK。アセトンのアルドール縮合・脱水・水素化で製造され、塗料などの溶媒に汎用される。" },
+                            { name: "シクロヘプタノン", latex: "C_7H_{12}O", smiles: "O=C1CCCCCC1", desc: "スベリン酸の加熱によって合成される7員環ケトン。トロパンアルカロイドの合成中間体。" }
+                        ]},
+                        { name: "カルボン酸", latex: "R-COOH", color: "#f97316", children: [
+                            { name: "ギ酸", latex: "HCOOH", smiles: "O=CO", desc: "一酸化炭素と水酸化ナトリウムからギ酸ナトリウムを経て合成。カルボキシ基とホルミル基を持ち銀鏡反応を示す。" },
+                            { name: "酢酸", latex: "CH_3COOH", smiles: "CC(=O)O", desc: "アセトアルデヒドの酸化やメタノールのカルボニル化で工業的に製造される。純粋なものは氷酢酸と呼ばれる。" },
+                            { name: "プロピオン酸", latex: "C_3H_6O_2", smiles: "CCC(=O)O", desc: "プロピオンアルデヒドの酸化で得られる。一部の塩は食品の防カビ剤として利用される。" },
+                            { name: "酪酸", latex: "C_4H_8O_2", smiles: "CCCC(=O)O", desc: "ブタン酸。バターの腐敗臭や足の臭いの原因物質として知られる悪臭を放つ。" },
+                            { name: "アクリル酸", latex: "C_3H_4O_2", smiles: "C=CC(=O)O", desc: "融点14度、沸点141度、密度1.051g/ml[cite: 18]。プロピレンの二段酸化で製造され、高吸水性高分子の原料となる。" },
+                            { name: "アジピン酸", latex: "C_6H_{10}O_4", smiles: "O=C(O)CCCCC(=O)O", desc: "融点153度、沸点338度[cite: 18]。シクロヘキサノンの硝酸酸化で製造され、ナイロン66の原料となる。" },
+                            { name: "安息香酸", latex: "C_6H_5COOH", smiles: "O=C(O)c1ccccc1", desc: "融点122度、沸点249度[cite: 18]。トルエンの酸化で製造され、保存料等に利用される。昇華性を持つ。" },
+                            { name: "ステアリン酸", latex: "C_{17}H_{35}COOH", smiles: "CCCCCCCCCCCCCCCCCC(=O)O", desc: "代表的な高級飽和脂肪酸。動植物の油脂の加水分解で得られ、セッケンの主成分となる[cite: 18]。" },
+                            { name: "オレイン酸", latex: "C_{17}H_{33}COOH", smiles: "CCCCCCCC=CCCCCCCCC(=O)O", desc: "融点13.4度、沸点360度[cite: 18]。シス型の二重結合を1つ持つ不飽和脂肪酸。オリーブ油の主成分。" },
+                            { name: "酒石酸", latex: "C_4H_6O_6", smiles: "O=C(O)C(O)C(O)C(=O)O", desc: "不斉炭素原子を2つ持つ。D体、L体、メソ体が存在し、ブドウ果汁などに含まれる[cite: 18]。" },
+                            { name: "イソフタル酸", latex: "C_8H_6O_4", smiles: "O=C(O)c1cccc(C(=O)O)c1", desc: "m-キシレンの酸化で製造されるジカルボン酸[cite: 18]。PET樹脂の改質剤などに利用される。" },
+                            { name: "レブリン酸", latex: "C_5H_8O_3", smiles: "CC(=O)CCC(=O)O", desc: "融点33-35度[cite: 18]。ケトン基とカルボキシ基を併せ持つ。糖類の酸加水分解で生成する。" }
+                        ]},
+                        { name: "エステル", latex: "R-COO-R'", color: "#f97316", children: [
+                            { name: "酢酸エチル", latex: "CH_3COOC_2H_5", smiles: "CCOC(=O)C", desc: "濃硫酸を触媒として酢酸とエタノールを加熱し脱水縮合して製する。果実臭のある代表的な有機溶媒。" },
+                            { name: "酢酸ブチル", latex: "C_6H_{12}O_2", smiles: "CCCCOC(=O)C", desc: "酢酸と1-ブタノールのエステル。バナナやリンゴに似た香りを持ち、ラッカーの溶剤として汎用される。" },
+                            { name: "アクリル酸メチル", latex: "C_4H_6O_2", smiles: "COC(=O)C=C", desc: "アクリル酸とメタノールのエステル。アクリル繊維や樹脂の共重合モノマーとして利用される。" },
+                            { name: "メタクリル酸メチル", latex: "C_5H_8O_2", smiles: "COC(=O)C(=C)C", desc: "MMA。アセトンシアンヒドリン法などで製造され、透明性の高いアクリル樹脂（PMMA）の原料となる。" },
+                            { name: "アセチルサリチル酸", latex: "C_9H_8O_4", smiles: "CC(=O)Oc1ccccc1C(=O)O", desc: "サリチル酸に無水酢酸を反応させて製する。解熱鎮痛薬（アスピリン）として広く用いられ、塩化鉄(III)では呈色しない。" },
+                            { name: "サリチル酸メチル", latex: "C_8H_8O_3", smiles: "COC(=O)c1ccccc1O", desc: "サリチル酸にメタノールと濃硫酸を加えて加熱し製する。消炎鎮痛薬として湿布に用いられ、塩化鉄(III)で赤紫色に呈色する。" },
+                            { name: "ギ酸エチル", latex: "C_3H_6O_2", smiles: "CCOC=O", desc: "ギ酸とエタノールのエステル化で得られ、ラム酒やラズベリーのような特徴的な香りを持つ。" },
+                            { name: "安息香酸メチル", latex: "C_8H_8O_2", smiles: "COC(=O)c1ccccc1", desc: "安息香酸とメタノールから合成。香料や、他のエステルを合成する際の中間体として利用される。" },
+                            { name: "フタル酸ジメチル", latex: "C_{10}H_{10}O_4", smiles: "COC(=O)c1ccccc1C(=O)OC", desc: "無水フタル酸とメタノールの反応で製造され、防虫剤やセルロース系樹脂の可塑剤として利用。" },
+                            { name: "酢酸ビニル", latex: "C_4H_6O_2", smiles: "C=COC(=O)C", desc: "エチレン、酢酸、酸素からパラジウム触媒を用いて合成される。木工用ボンドの成分であるポリ酢酸ビニルの原料。" }
+                        ]}
+                    ]
+                },
+                {
+                    name: "4. 含窒素・硫黄化合物", category: "Nitrogen/Sulfur", color: "#6366f1",
+                    children: [
+                        { name: "アミン", latex: "R-NH_2", color: "#6366f1", children: [
+                            { name: "メチルアミン", latex: "CH_3NH_2", smiles: "CN", desc: "アンモニアとメタノールの反応で合成される。魚の腐敗臭に似た気体で、医薬品や農薬の原料。" },
+                            { name: "エチルアミン", latex: "C_2H_5NH_2", smiles: "CCN", desc: "エタノールとアンモニアから合成される第一級アミン[cite: 18]。強いアンモニア臭を持つ液体。" },
+                            { name: "アニリン", latex: "C_6H_5NH_2", smiles: "Nc1ccccc1", desc: "化学式C6H7N[cite: 18]。ニトロベンゼンをスズと塩酸で還元して製する。さらし粉水溶液で赤紫色に呈色し、二クロム酸カリウムでアニリンブラックを生じる。" },
+                            { name: "トリメチルアミン", latex: "(CH_3)_3N", smiles: "CN(C)C", desc: "海産物の腐敗臭の原因となる第三級アミン。水溶液は弱塩基性を示す。" },
+                            { name: "ジエチルアミン", latex: "(C_2H_5)_2NH", smiles: "CCNCC", desc: "アセトアルデヒドとアンモニアから還元アミノ化で得られる第二級アミン。" },
+                            { name: "トリエチルアミン", latex: "(C_2H_5)_3N", smiles: "CCN(CC)CC", desc: "有機合成において非求核性の塩基として極めて頻繁に用いられる。" },
+                            { name: "ピリジン", latex: "C_5H_5N", smiles: "c1ccncc1", desc: "窒素を含む6員環芳香族。コールタールに含まれ、悪臭を持つ弱塩基性の液体。有機溶媒や塩基触媒として利用。" },
+                            { name: "ピロール", latex: "C_4H_5N", smiles: "c1cc[nH]c1", desc: "窒素を含む5員環芳香族。非共有電子対が芳香環のπ電子系に組み込まれているため塩基性は極めて弱い。" },
+                            { name: "エチレンジアミン", latex: "C_2H_8N_2", smiles: "NCCN", desc: "1,2-ジクロロエタンとアンモニアから合成され、キレート錯体の強力な二座配位子として用いられる。" },
+                            { name: "p-フェニレンジアミン", latex: "C_6H_8N_2", smiles: "Nc1ccc(N)cc1", desc: "p-ニトロアニリンの還元で得られ、アラミド繊維（ケブラー）や酸化染毛剤の原料となる。" }
+                        ]},
+                        { name: "アミド", latex: "R-CO-NH_2", color: "#6366f1", children: [
+                            { name: "アセトアミド", latex: "CH_3CONH_2", smiles: "CC(=O)N", desc: "融点81度、沸点222度、密度1.159g/cm3[cite: 18]。酢酸アンモニウムの加熱脱水で製する。" },
+                            { name: "アセトアニリド", latex: "C_8H_9NO", smiles: "CC(=O)Nc1ccccc1", desc: "融点115度、沸点305度、密度1.219g/cm3[cite: 18]。アニリンに無水酢酸を反応（アセチル化）させて製する。" },
+                            { name: "尿素", latex: "CO(NH_2)_2", smiles: "NC(=O)N", desc: "アンモニアと二酸化炭素を高圧で反応させて工業的に合成。加熱するとビウレットを生じ、銅(II)イオンと塩基性条件で赤紫色を呈する。" },
+                            { name: "アクリルアミド", latex: "C_3H_5NO", smiles: "C=CC(=O)N", desc: "融点84.5度、沸点125度、密度1.122[cite: 18]。アクリロニトリルの水和で製造され、高分子凝集剤の原料となる。" },
+                            { name: "ε-カプロラクタム", latex: "C_6H_{11}NO", smiles: "O=C1CCCCCN1", desc: "融点68度、沸点136-138度[cite: 18]。シクロヘキサノンオキシムのベックマン転位で合成され、ナイロン6の原料となる環状アミド。" },
+                            { name: "N,N-ジメチルホルムアミド", latex: "HCON(CH_3)_2", smiles: "CN(C)C=O", desc: "DMF。ギ酸メチルとジメチルアミンから合成され、有機合成における優れた極性非プロトン性溶媒として非常に有用。" },
+                            { name: "ホルムアミド", latex: "HCONH_2", smiles: "NC=O", desc: "ギ酸とアンモニアから合成される。アミドの中で唯一常温で液体。" },
+                            { name: "サッカリン", latex: "C_7H_5NO_3S", smiles: "O=C1NS(=O)(=O)c2ccccc12", desc: "トルエンから多段階で合成されるイミド誘導体で、歴史の古い人工甘味料。" },
+                            { name: "アナンダミド", latex: "C_{22}H_{37}NO_2", smiles: "CCCCC=CCC=CCC=CCC=CCCCC(=O)NCCO", desc: "アラキドン酸のエタノールアミド。カンナビノイド受容体に結合する内因性物質[cite: 18]。" },
+                            { name: "オレアミド", latex: "C_{18}H_{35}NO", smiles: "CCCCCCCC=CCCCCCCCC(=O)N", desc: "オレイン酸のアミド。哺乳類において睡眠誘発作用を持つことが知られる[cite: 18]。" }
+                        ]},
+                        { name: "ニトロ化合物", latex: "R-NO_2", color: "#6366f1", children: [
+                            { name: "ニトロベンゼン", latex: "C_6H_5NO_2", smiles: "O=[N+]([O-])c1ccccc1", desc: "濃硝酸と濃硫酸の混酸をベンゼンに加えて加熱しニトロ化して製する。淡黄色の重い液体でアーモンド臭を持つ。" },
+                            { name: "2,4,6-トリニトロトルエン", latex: "C_7H_5N_3O_6", smiles: "Cc1c([N+](=O)[O-])cc([N+](=O)[O-])cc1[N+](=O)[O-]", desc: "TNT。トルエンを混酸で高度にニトロ化して製造する。衝撃に鈍感な軍用爆薬として広く利用された。" },
+                            { name: "o-ニトロフェノール", latex: "C_6H_5NO_3", smiles: "O=[N+]([O-])c1ccccc1O", desc: "フェノールのニトロ化で得られ、分子内水素結合を形成するため水蒸気蒸留で留出する。" },
+                            { name: "p-ニトロフェノール", latex: "C_6H_5NO_3", smiles: "O=[N+]([O-])c1ccc(O)cc1", desc: "分子間水素結合を形成するため、オルト体に比べて融点が高く水蒸気蒸留では留出しない。" },
+                            { name: "ニトロメタン", latex: "CH_3NO_2", smiles: "C[N+](=O)[O-]", desc: "プロパンの気相硝酸酸化などで得られる最も単純なニトロ化合物。ラジコンやレーシングカーの燃料に用いられる。" },
+                            { name: "ニトロエタン", latex: "C_2H_5NO_2", smiles: "CC[N+](=O)[O-]", desc: "アルドール反応に似たヘンリー反応の基質として用いられ、アミン合成の出発原料となる。" },
+                            { name: "1-ニトロナフタレン", latex: "C_{10}H_7NO_2", smiles: "O=[N+]([O-])c1cccc2ccccc12", desc: "ナフタレンを混酸でニトロ化して合成され、染料中間体である1-ナフチルアミンの原料となる。" },
+                            { name: "アセトアミノフェン", latex: "C_8H_9NO_2", smiles: "CC(=O)Nc1ccc(O)cc1", desc: "融点169度、密度1.263g/cm3[cite: 18]。（※ニトロ基を持たないが一覧表からニトロ関連として記載）p-アミノフェノールのアセチル化で製造される解熱鎮痛薬。" },
+                            { name: "m-ジニトロベンゼン", latex: "C_6H_4N_2O_4", smiles: "O=[N+]([O-])c1cccc([N+](=O)[O-])c1", desc: "ニトロベンゼンのニトロ基のメタ配向性を利用し、さらに強くニトロ化することで得られる黄色結晶。" },
+                            { name: "クロルピクリン", latex: "CCl_3NO_2", smiles: "ClC(Cl)(Cl)[N+](=O)[O-]", desc: "トリクロロニトロメタン。ピクリン酸を次亜塩素酸カルシウムで処理して得られ、土壌燻蒸剤として利用される。" }
+                        ]},
+                        { name: "アゾ化合物・その他", latex: "R-N=N-R'等", color: "#6366f1", children: [
+                            { name: "p-ヒドロキシアゾベンゼン", latex: "C_{12}H_{10}N_2O", smiles: "Oc1ccc(N=Nc2ccccc2)cc1", desc: "氷冷下（5℃以下）で塩化ベンゼンジアゾニウムとナトリウムフェノキシドをカップリングさせて製する橙赤色色素。" },
+                            { name: "メチルオレンジ", latex: "C_{14}H_{14}N_3NaO_3S", smiles: "CN(C)c1ccc(N=Nc2ccc(S(=O)(=O)[O-])cc2)cc1", desc: "スルファニル酸のジアゾ化とN,N-ジメチルアニリンとのカップリングで合成する酸塩基指示薬（変色域: 赤3.1-4.4黄）。" },
+                            { name: "アクリロニトリル", latex: "C_3H_3N", smiles: "C=CC#N", desc: "プロピレン、アンモニア、空気を用いたアンモ酸化（ソハイオ法）で大量生産されるアクリル繊維の原料。" },
+                            { name: "アデニン", latex: "C_5H_5N_5", smiles: "c1nc(N)c2nc[nH]c2n1", desc: "核酸（DNA/RNA）を構成するプリン塩基[cite: 18]。チミンやウラシルと相補的な水素結合を形成する。" },
+                            { name: "ウラシル", latex: "C_4H_4N_2O_2", smiles: "O=c1cc[nH]c(=O)[nH]1", desc: "RNAを構成するピリミジン塩基[cite: 18]。DNAにおけるチミンの代わりにアデニンと対合する。" },
+                            { name: "ジアゾメタン", latex: "CH_2N_2", smiles: "C=[N+]=[N-]", desc: "カルボン酸をメチルエステル化する際に用いられる非常に反応性が高いメチル化剤。有毒で爆発性の黄色気体。" },
+                            { name: "フェニルヒドラジン", latex: "C_6H_8N_2", smiles: "NNc1ccccc1", desc: "塩化ベンゼンジアゾニウムの還元で得られ、エミール・フィッシャーによる糖類の構造決定（オサゾン生成）に活躍した。" },
+                            { name: "アセトニトリル", latex: "C_2H_3N", smiles: "CC#N", desc: "アクリロニトリル製造の副産物として得られ、HPLCなどの極性溶媒として広く利用される。" },
+                            { name: "ベンゾニトリル", latex: "C_7H_5N", smiles: "N#Cc1ccccc1", desc: "トルエンのアンモ酸化などで得られる芳香族ニトリル。アーモンド様香気を持つ。" },
+                            { name: "アゾビスイソブチロニトリル", latex: "C_8H_{12}N_4", smiles: "CC(C)(C#N)N=NC(C)(C)C#N", desc: "AIBN。加熱により窒素分子を放出してラジカルを発生させるため、ラジカル重合の開始剤として汎用される。" }
+                        ]}
+                    ]
+                },
+                {
+                    name: "5. 生体高分子・合成樹脂", category: "Polymers", color: "#e11d48",
+                    children: [
+                        { name: "糖類", latex: "C_m(H_2O)_n", color: "#e11d48", children: [
+                            { name: "グルコース", latex: "C_6H_{12}O_6", smiles: "OC[C@H]1OC(O)[C@H](O)[C@@H](O)[C@@H]1O", desc: "ブドウ糖。デンプンの加水分解で得られるアルドヘキソース。フェーリング液を還元して酸化銅(I)の赤色沈殿を生じる。" },
+                            { name: "フルクトース", latex: "C_6H_{12}O_6", smiles: "OCC1(O)OC(CO)[C@@H](O)[C@@H]1O", desc: "果糖。ケトヘキソースだが、塩基性水溶液中でロブリー・ドブリュイン・ファンエッケンシュタイン転位により異性化し還元性を示す。" },
+                            { name: "スクロース", latex: "C_{12}H_{22}O_{11}", smiles: "OC[C@H]1O[C@](CO)(O[C@H]2O[C@H](CO)[C@@H](O)[C@H](O)[C@H]2O)[C@@H](O)[C@@H]1O", desc: "密度1.587g/cm3[cite: 18]。グルコースとフルクトースがα-1,β-2グリコシド結合した非還元糖。" },
+                            { name: "セルロース", latex: "(C_6H_{10}O_5)_n", smiles: "O([C@H]1[C@H](O)[C@@H](O)[C@H](O)[C@H](CO)O1)[C@H]2[C@H](O)[C@@H](O)[C@H](O)[C@H](CO)O2", desc: "β-グルコースが直鎖状に縮合した多糖類。シュバイツァー試薬に溶け、再生セルロース（レーヨン）として利用される。" },
+                            { name: "ガラクトース", latex: "C_6H_{12}O_6", smiles: "OC[C@H]1OC(O)[C@H](O)[C@H](O)[C@@H]1O", desc: "乳糖（ラクトース）を加水分解して得られるアルドヘキソース。グルコースのC4エピマー。" },
+                            { name: "マンノース", latex: "C_6H_{12}O_6", smiles: "OC[C@H]1OC(O)[C@@H](O)[C@@H](O)[C@@H]1O", desc: "コンニャクの主成分であるグルコマンナンなどを構成する単糖。グルコースのC2エピマー。" },
+                            { name: "リボース", latex: "C_5H_{10}O_5", smiles: "OC[C@H]1OC(O)[C@H](O)[C@H]1O", desc: "RNAの骨格をなす五炭糖（ペントース）。すべてのヒドロキシ基が同じ側に向いた構造をとる。" },
+                            { name: "デオキシリボース", latex: "C_5H_{10}O_4", smiles: "OC[C@H]1OC(O)C[C@H]1O", desc: "DNAの骨格をなす五炭糖。リボースの2位のヒドロキシ基が水素に置換された構造を持つ。" },
+                            { name: "マルトース", latex: "C_{12}H_{22}O_{11}", smiles: "OC[C@H]1O[C@H](O)[C@@H](O)[C@@H](O)[C@@H]1O[C@H]2O[C@H](CO)[C@@H](O)[C@H](O)[C@H]2O", desc: "麦芽糖。デンプンをアミラーゼで分解して得られ、2分子のα-グルコースが結合し還元性を持つ。" },
+                            { name: "ラクトース", latex: "C_{12}H_{22}O_{11}", smiles: "OC[C@H]1O[C@H](O[C@H]2[C@@H](O)[C@H](O)[C@@H](O)O[C@@H]2CO)[C@H](O)[C@@H](O)[C@@H]1O", desc: "乳糖。ガラクトースとグルコースがβ-1,4結合し、還元性を持つ二糖類。" }
+                        ]},
+                        { name: "アミノ酸", latex: "NH_2-CH(R)-COOH", color: "#e11d48", children: [
+                            { name: "グリシン", latex: "C_2H_5NO_2", smiles: "NCC(=O)O", desc: "最も単純なアミノ酸で不斉炭素原子を持たない。タンパク質の加水分解で得られ、ニンヒドリン反応で青紫色に呈色。" },
+                            { name: "アラニン", latex: "C_3H_7NO_2", smiles: "C[C@H](N)C(=O)O", desc: "側鎖がメチル基の疎水性アミノ酸[cite: 18]。糖新生において重要な役割を果たす。" },
+                            { name: "ロイシン", latex: "C_6H_{13}NO_2", smiles: "CC(C)C[C@H](N)C(=O)O", desc: "化学式C6H13O2（表の誤記と推測されるが[cite: 18]に従う場合は注意）として記載された必須アミノ酸の一つ[cite: 18]。" },
+                            { name: "イソロイシン", latex: "C_6H_{13}NO_2", smiles: "CC[C@H](C)[C@H](N)C(=O)O", desc: "ロイシンの構造異性体であり、2つの不斉炭素原子を持つ必須アミノ酸[cite: 18]。" },
+                            { name: "アスパラギン酸", latex: "C_4H_7NO_4", smiles: "NC(CC(=O)O)C(=O)O", desc: "側鎖にカルボキシ基を持つ酸性アミノ酸。等電点ではアニオンになりやすい[cite: 18]。" },
+                            { name: "アルギニン", latex: "C_6H_{14}N_4O_2", smiles: "NC(N)=NCCCC(N)C(=O)O", desc: "グアニジノ基を持つ強い塩基性アミノ酸。尿素サイクルの中間体[cite: 18]。" },
+                            { name: "セリン", latex: "C_3H_7NO_3", smiles: "NC(CO)C(=O)O", desc: "ヒドロキシメチル基を側鎖に持つ極性アミノ酸。酵素の活性中心によく見られる。" },
+                            { name: "システイン", latex: "C_3H_7NO_2S", smiles: "NC(CS)C(=O)O", desc: "チオール基を持ち、酸化されてジスルフィド結合を形成する。酢酸鉛(II)水溶液で黒色沈殿を生じる。" },
+                            { name: "メチオニン", latex: "C_5H_{11}NO_2S", smiles: "CSCCC(N)C(=O)O", desc: "チオエーテル構造を持つ含硫黄必須アミノ酸。タンパク質合成の開始を担う。" },
+                            { name: "アスコルビン酸", latex: "C_6H_8O_6", smiles: "OC1=C(O)C(=O)O[C@@H]1[C@@H](O)CO", desc: "ビタミンC。強い還元性を示し、酸化防止剤として利用される[cite: 18]。（※アミノ酸ではないが関連化合物として）" }
+                        ]},
+                        { name: "合成高分子", latex: "\\text{Synthetic}", color: "#e11d48", children: [
+                            { name: "ポリエチレン (PE)", latex: "(-CH_2-CH_2-)_n", smiles: "CC", desc: "エチレンをチーグラー・ナッタ触媒で付加重合して製造。最も生産量が多いプラスチック。" },
+                            { name: "ポリスチレン (PS)", latex: "(-CH_2-CH(C_6H_5)-)_n", smiles: "C=Cc1ccccc1", desc: "スチレンのラジカル重合等で得られる。透明で硬いが脆く、発泡剤を混ぜて発泡スチロールにされる。" },
+                            { name: "PET樹脂", latex: "\\text{PET}", smiles: "O=C(O)c1ccc(C(=O)O)cc1.OCCO", desc: "テレフタル酸とエチレングリコールの縮合重合で得られるポリエステル。ペットボトルやフリース繊維に利用。" },
+                            { name: "ナイロン66", latex: "\\text{Polyamide}", smiles: "O=C(O)CCCCC(=O)O.NCCCCCCN", desc: "アジピン酸とヘキサメチレンジアミンから縮合重合で得られる世界初の合成繊維。界面重合で容易に合成可能。" },
+                            { name: "ポリ塩化ビニル (PVC)", latex: "(-CH_2-CHCl-)_n", smiles: "C=CCl", desc: "塩化ビニルの付加重合で製造。可塑剤を加えることで軟質塩化ビニルとしてパイプやシートに利用。" },
+                            { name: "ポリプロピレン (PP)", latex: "(-CH_2-CH(CH_3)-)_n", smiles: "C=CC", desc: "プロピレンの重合で得られ、ポリエチレンより耐熱性と機械的強度が高い。ヒンジ部分などに利用。" },
+                            { name: "ポリメタクリル酸メチル (PMMA)", latex: "\\text{PMMA}", smiles: "C=C(C)C(=O)OC", desc: "メタクリル酸メチルの重合。極めて透明性が高く「有機ガラス」「アクリルガラス」と呼ばれる。" },
+                            { name: "ポリテトラフルオロエチレン (PTFE)", latex: "(-CF_2-CF_2-)_n", smiles: "FC(F)=C(F)F", desc: "テトラフルオロエチレンの重合。テフロンとして知られ、耐熱性・耐薬品性・非粘着性に極めて優れる。" },
+                            { name: "フェノール樹脂", latex: "\\text{Phenolic}", smiles: "Oc1ccccc1.C=O", desc: "フェノールとホルムアルデヒドの縮合重合（ベークライト）。酸触媒でノボラック、塩基触媒でレゾールを経由する熱硬化性樹脂。" },
+                            { name: "尿素樹脂", latex: "\\text{Urea}", smiles: "NC(=O)N.C=O", desc: "ユリア樹脂。尿素とホルムアルデヒドの付加縮合で得られる熱硬化性樹脂で、ボタンや接着剤に用いられる。" }
+                        ]}
+                    ]
+                }
+            ]
+        };
+
+        const container = document.getElementById('tree-canvas');
+        let width = container.clientWidth || window.innerWidth;
+        let height = container.clientHeight || window.innerHeight;
+
+        const svg = d3.select("#tree-canvas");
+        const g = svg.append("g");
+
+        const zoom = d3.zoom()
+            .scaleExtent([0.1, 8])
+            .on("zoom", (event) => {
+                const scale = event.transform.k;
+                g.attr("transform", event.transform);
+                document.getElementById('zoom-level-badge').innerText = `Zoom: ${Math.round(scale * 100)}%`;
+                
+                // 追加：ズーム倍率を打ち消すための逆スケールを計算
+                // Math.pow(scale, -0.8) とすることで、ズームイン時に「ほんの少しだけ」ラベルが大きくなる自然な挙動になります。
+                // ※完全にサイズを固定したい場合は `const labelScale = 1 / scale;` としてください。
+                const labelScale = Math.pow(scale, -0.8);
+
+                d3.selectAll(".node").each(function(d) {
+                    const labelObj = d3.select(this).select("foreignObject");
+                    
+                    // 追加：ラベルに逆スケールを適用し、見かけのサイズと距離を維持
+                    labelObj.attr("transform", `scale(${labelScale})`);
+
+                    if (d.depth === 3) {
+                        labelObj.style("opacity", scale >= 0.8 ? 1 : 0);
+                    } else if (d.depth === 2) {
+                        labelObj.style("opacity", scale >= 0.4 ? 1 : 0);
+                    } else {
+                        labelObj.style("opacity", 1);
+                    }
+                });
+            });
+
+        svg.call(zoom);
+
+        const radius = 3000; 
+        const treeLayout = d3.tree()
+            .size([2 * Math.PI, radius])
+            .separation((a, b) => (a.parent == b.parent ? 1 : 1.5) / a.depth);
+
+        const root = d3.hierarchy(organicHierarchy);
+        treeLayout(root);
+
+        function project(angle, radius) {
+            const x = radius * Math.cos(angle - Math.PI / 2);
+            const y = radius * Math.sin(angle - Math.PI / 2);
+            return [x, y];
+        }
+
+        const linkGenerator = d3.linkRadial()
+            .angle(d => d.x)
+            .radius(d => d.y);
+
+        g.selectAll(".link")
+            .data(root.links())
+            .enter()
+            .append("path")
+            .attr("class", "link")
+            .attr("d", linkGenerator);
+
+        const nodes = g.selectAll(".node")
+            .data(root.descendants())
+            .enter()
+            .append("g")
+            .attr("class", "node")
+            .attr("transform", d => {
+                const [x, y] = project(d.x, d.y);
+                return `translate(${x},${y})`;
+            })
+            .on("click", (event, d) => {
+                event.stopPropagation();
+                if(d.depth === 3) {
+                    openDrawer(d.data, d.parent.data);
+                }
+            });
+
+        nodes.append("circle")
+            .attr("r", d => d.depth === 0 ? 18 : (d.depth === 3 ? 5 : (d.children ? 10 : 6)))
+            .attr("fill", d => {
+                if (d.depth === 3) return d.parent.data.color || "#ffffff";
+                return d.data.color || "#06b6d4";
+            })
+            .attr("stroke", d => {
+                let c = d.depth === 3 ? d.parent.data.color : d.data.color;
+                return c ? d3.rgb(c).brighter(0.8) : "#22d3ee";
+            })
+            .attr("stroke-width", d => d.depth === 3 ? "1px" : "2px");
+
+        const labelG = nodes.append("foreignObject")
+            .attr("width", 180)
+            .attr("height", 46)
+            .attr("x", d => {
+                // 円の左右でテキストの配置基準を変えつつ、少し外側に押し出す
+                return (d.x > 0 && d.x < Math.PI) ? 14 : -194;
+            })
+            .attr("y", d => {
+                // 上下の頂点付近はY座標をずらして重なりを回避
+                const isTop = d.x < Math.PI / 2 || d.x > Math.PI * 3 / 2;
+                return isTop ? -36 : 14;
+            })
+            .style("overflow", "visible")
+            .style("pointer-events", "none");
+
+        labelG.append("xhtml:div")
+            .attr("class", "node-label-container text-xs text-slate-200")
+            .style("justify-content", d => (d.x < Math.PI) ? "flex-start" : "flex-end")
+            .html(d => {
+                let displayFormula = "";
+                if (d.data.latex) {
+                    displayFormula = (d.data.latex.includes('_') || d.data.latex.includes('^') || d.data.latex.includes('\\')) 
+                                     ? `\\(${d.data.latex}\\)` : d.data.latex;
+                }
+                const isLeaf = d.depth === 3;
+                const bgClass = isLeaf ? "bg-slate-900/60 border-slate-700/50" : "bg-slate-900/90 border-slate-800/80 shadow-sm font-medium";
+                
+                // flex-col を付与して名前と式を縦に並べる（改行効果）
+                return `<div class="${bgClass} px-2 py-1 rounded border flex flex-col items-center gap-0.5 text-center">
+                            <span class="leading-tight">${d.data.name}</span> 
+                            ${displayFormula ? `<span class="text-[10px] text-slate-400 font-mono leading-none">${displayFormula}</span>` : ""}
+                        </div>`;
+            });
+
+        const initialTransform = d3.zoomIdentity.translate(width / 2, height / 2).scale(0.35);
+        svg.call(zoom.transform, initialTransform);
+
+        window.addEventListener('resize', () => {
+            width = container.clientWidth;
+            height = container.clientHeight;
+        });
+
+        let smilesDrawer = new SmilesDrawer.Drawer({
+            width: 432,
+            height: 200,
+            themes: {
+                dark: { C: '#94a3b8', O: '#f43f5e', N: '#3b82f6', S: '#eab308', F: '#10b981', CL: '#10b981', BR: '#8b5cf6', I: '#c026d3', BACKGROUND: '#f8fafc' }
+            }
+        });
+
+        const drawer = document.getElementById('detail-drawer');
+
+        function openDrawer(data, parentData) {
+            document.getElementById('drawer-title').innerText = data.name.replace(/ \//, '');
+            const formulaHTML = (data.latex && (data.latex.includes('_') || data.latex.includes('\\'))) ? `\\(${data.latex}\\)` : (data.latex || 'N/A');
+            document.getElementById('drawer-subtitle').innerHTML = formulaHTML;
+            document.getElementById('drawer-badge').innerText = parentData.name || 'Subclass';
+            document.getElementById('drawer-badge').style.backgroundColor = `${parentData.color}33`;
+            document.getElementById('drawer-badge').style.color = parentData.color;
+            document.getElementById('drawer-badge').style.borderColor = `${parentData.color}4D`;
+
+            document.getElementById('drawer-desc').innerHTML = data.desc ? `<p>${data.desc}</p>` : '説明データなし';
+
+            const canvas = document.getElementById('smiles-canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (data.smiles) {
+                SmilesDrawer.parse(data.smiles, function(tree) {
+                    smilesDrawer.draw(tree, 'smiles-canvas', 'dark', false);
+                }, function(err) {
+                    console.error("SMILES parse error:", err);
+                });
+            }
+
+            drawer.classList.remove('translate-x-full');
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                MathJax.typesetPromise([document.getElementById('detail-drawer')]);
+            }
+        }
+
+        document.getElementById('btn-close-drawer').addEventListener('click', () => {
+            drawer.classList.add('translate-x-full');
+        });
+
+        document.getElementById('btn-reset-zoom').addEventListener('click', () => {
+            svg.transition().duration(750).call(zoom.transform, initialTransform);
+        });
+
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const q = e.target.value.toLowerCase().trim();
+            if (!q) {
+                nodes.selectAll("circle")
+                    .attr("r", d => d.depth === 0 ? 18 : (d.depth === 3 ? 5 : (d.children ? 10 : 6)))
+                    .attr("stroke-width", d => d.depth === 3 ? "1px" : "2px");
+                return;
+            }
+
+            nodes.each(function(d) {
+                const nameMatch = d.data.name && d.data.name.toLowerCase().includes(q);
+                const isMatch = nameMatch;
+
+                d3.select(this).select("circle")
+                    .attr("r", isMatch ? 14 : (d.depth === 3 ? 3 : 6))
+                    .attr("stroke", isMatch ? "#fde047" : (d.depth === 3 ? d3.rgb(d.parent.data.color).brighter(0.8) : d3.rgb(d.data.color).brighter(0.8)))
+                    .attr("stroke-width", isMatch ? "4px" : "1px");
+
+                if (isMatch && d.depth === 3) {
+                    const [x, y] = project(d.x, d.y);
+                    const transform = d3.zoomIdentity
+                        .translate(width / 2 - x * 1.5, height / 2 - y * 1.5)
+                        .scale(1.5);
+                    svg.transition().duration(750).call(zoom.transform, transform);
+                    openDrawer(d.data, d.parent.data);
+                }
+            });
+        });
+
+        window.addEventListener('load', () => {
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                MathJax.typesetPromise();
+            }
+        });
+    </script>
+</body>
+</html>

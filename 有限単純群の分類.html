@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ja" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>有限単純群の分類マップ</title>
+    <!-- Tailwind CSS, D3.js, FontAwesome, MathJax 3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- MathJax 3 設定 -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: { fontCache: 'global' },
+            options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'] }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+    <style>
+        body { background-color: #0b0f19; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+        
+        .node circle {
+            cursor: pointer;
+            transition: all 0.25s ease-in-out;
+        }
+        .node circle:hover {
+            stroke-width: 4px !important;
+            filter: drop-shadow(0 0 12px currentColor);
+        }
+        
+        /* foreignObject 内の MathJax ラベル装飾 */
+        .node-label-container {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            pointer-events: none;
+            user-select: none;
+            transition: opacity 0.3s ease, font-size 0.2s;
+            text-shadow: 0 0 4px #0b0f19, 0 0 2px #0b0f19;
+        }
+        .node-label-container .mjx-container {
+            margin: 0 !important;
+            color: #e2e8f0 !important;
+        }
+
+        .link {
+            fill: none;
+            stroke: #334155;
+            stroke-opacity: 0.6;
+            stroke-width: 1.2px;
+            transition: stroke 0.3s, stroke-width 0.3s;
+        }
+
+        /* スクロールバー装飾 */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="text-slate-100 h-screen overflow-hidden flex flex-col select-none">
+
+    <!-- ヘッダー & 検索エリア -->
+    <header class="h-16 border-b border-slate-800 bg-slate-900/90 backdrop-blur px-6 flex items-center justify-between z-10 shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-lg bg-indigo-600/30 border border-indigo-500/50 flex items-center justify-center text-indigo-400 font-bold text-xl shadow-lg">
+                $\mathbb{G}$
+            </div>
+            <div>
+                <h1 class="text-base font-bold tracking-wide text-white leading-tight">有限単純群の分類</h1>
+                <p class="text-xs text-slate-400">代表的な有限単純群の分類を視覚的に表示（※情報の正確性については保証しかねます）</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-3 w-full max-w-md">
+            <div class="relative w-full">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                <input type="text" id="search-input" placeholder="群の名称・記号・属性で検索 (例: Monster, PSL_2(7), M24, A_5)..." 
+                       class="w-full bg-slate-800/80 border border-slate-700 rounded-lg pl-9 pr-4 py-1.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200 placeholder-slate-500 transition-all">
+            </div>
+            <button id="btn-reset-zoom" title="視点を全体に戻す" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-2 rounded-lg border border-slate-700 shrink-0 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-compress text-slate-400"></i>
+                <span>全体復帰</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- 視覚化キャンバス & ドロワーエリア -->
+    <div class="flex-1 relative overflow-hidden flex">
+        <!-- SVG ツリー/マップ描画用 -->
+        <svg id="tree-canvas" class="w-full h-full cursor-grab active:cursor-grabbing"></svg>
+
+        <!-- マップ凡例 & ズーム度指標 (左下固定) -->
+        <div class="absolute bottom-6 left-6 bg-slate-900/90 backdrop-blur border border-slate-800 p-4 rounded-xl shadow-2xl z-10 text-xs space-y-2 max-w-xs">
+            <div class="font-semibold text-slate-300 border-b border-slate-800 pb-1.5 flex justify-between items-center">
+                <span>分類（5大ファミリー）</span>
+                <span id="zoom-level-badge" class="text-[10px] bg-slate-800 px-1.5 py-0.5 rounded text-indigo-400 font-mono">Zoom: 100%</span>
+            </div>
+            <div class="grid grid-cols-1 gap-1.5 pointer-events-auto">
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-emerald-500 shrink-0"></span>1. 素数位数巡回群 ($C_p$)</div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-amber-500 shrink-0"></span>2. 交代群 ($A_n, n \ge 5$)</div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-blue-500 shrink-0"></span>3. リー型単純群 (シュヴァレー・スズキ等)</div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-purple-500 shrink-0"></span>4. 散在型単純群 (全26個完全網羅)</div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-rose-500 shrink-0"></span>5. 特殊・例外ノード（ティッツ群）</div>
+            </div>
+        </div>
+
+        <!-- 右側詳細情報スライドイン・ドロワー -->
+        <aside id="detail-drawer" class="absolute top-0 right-0 h-full w-[480px] bg-slate-900/95 backdrop-blur-md border-l border-slate-800 shadow-2xl transform translate-x-full transition-transform duration-300 z-20 flex flex-col p-6 overflow-y-auto">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+                <span id="drawer-badge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Category</span>
+                <button id="btn-close-drawer" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="mt-4">
+                <h2 id="drawer-title" class="text-2xl font-bold text-white tracking-wide">Group Name</h2>
+                <p id="drawer-subtitle" class="text-sm font-mono text-indigo-400 mt-1">Notation</p>
+            </div>
+
+            <div class="mt-6 space-y-5 text-sm">
+                <!-- 位数 -->
+                <div>
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1.5">
+                        <i class="fa-solid fa-calculator text-indigo-400"></i> 群の位数 ($|G|$)
+                    </h3>
+                    <div id="drawer-order" class="font-mono bg-slate-950/80 p-3 rounded-lg border border-slate-800 text-indigo-200 text-xs leading-relaxed break-all select-text"></div>
+                </div>
+
+                <!-- 数学的属性 (シューア乗数・外部自己同型群) -->
+                <div id="drawer-properties-container" class="grid grid-cols-2 gap-3">
+                    <div class="bg-slate-800/40 p-2.5 rounded-lg border border-slate-800">
+                        <div class="text-[11px] text-slate-400 font-semibold mb-0.5">シューア乗数 $M(G)$</div>
+                        <div id="drawer-schur" class="font-mono text-xs text-slate-200">-</div>
+                    </div>
+                    <div class="bg-slate-800/40 p-2.5 rounded-lg border border-slate-800">
+                        <div class="text-[11px] text-slate-400 font-semibold mb-0.5">外部自己同型群 $\text{Out}(G)$</div>
+                        <div id="drawer-out" class="font-mono text-xs text-slate-200">-</div>
+                    </div>
+                </div>
+
+                <!-- 概要・構造解説 -->
+                <div>
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1.5">
+                        <i class="fa-solid fa-book-open text-indigo-400"></i> 数学的構造・詳細解説
+                    </h3>
+                    <div id="drawer-desc" class="text-slate-300 leading-relaxed text-xs bg-slate-800/30 p-3.5 rounded-lg border border-slate-800/50 select-text space-y-2"></div>
+                </div>
+
+                <!-- 同型群のリレーション -->
+                <div id="drawer-isomorphisms-container" class="hidden">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-amber-400 mb-1.5 flex items-center gap-1.5">
+                        <i class="fa-solid fa-link"></i> 同型関係 (Isomorphisms)
+                    </h3>
+                    <div id="drawer-isomorphisms" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <!-- 応用分野（暗号・符号理論・物理等） -->
+                <div>
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1.5">
+                        <i class="fa-solid fa-atom text-indigo-400"></i> 主な応用・幾何構造・物理的背景
+                    </h3>
+                    <p id="drawer-applications" class="text-slate-300 leading-relaxed text-xs bg-slate-800/30 p-3 rounded-lg border border-slate-800/50 select-text"></p>
+                </div>
+            </div>
+
+            <div class="mt-auto pt-6">
+                <a id="drawer-wiki" href="#" target="_blank" rel="noopener noreferrer" 
+                   class="flex items-center justify-center gap-2 w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition text-xs shadow-lg">
+                   <span>Wikipedia / Group Atlas で詳細を見る</span>
+                   <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                </a>
+            </div>
+        </aside>
+    </div>
+
+    <!-- アプリケーション・データ & 放射状レンダリングロジック -->
+    <script>
+        // ----------------------------------------------------
+        // 有限単純群の高度・詳細データベース (バリエーション網羅拡大版)
+        // ----------------------------------------------------
+        const groupHierarchy = {
+            name: "有限単純群の分類",
+            latex: "\\mathbb{G}_{CFSG}",
+            category: "Root",
+            color: "#64748b",
+            desc: "有限単純群の完全分類定理（Classification of Finite Simple Groups, CFSG）は、「すべての有限単純群は、4つの無限系列（巡回群、交代群、リー型群）と、例外的な26個の散在群のいずれかに同型である」という、数学史上最も巨大な証明（数十万ページに及ぶ）によって確立された大定理です。",
+            applications: "現代抽象代数学、ガロア理論、代数幾何学、結晶格子理論、誤り訂正符号、量子場理論、超弦理論（ムーンシャイン現象）。",
+            children: [
+                {
+                    name: "1. 素数位数巡回群",
+                    latex: "C_p \\cong \\mathbb{Z}/p\\mathbb{Z}",
+                    category: "Cyclic",
+                    color: "#10b981",
+                    order: "p \\text{ (任意素数)}",
+                    desc: "素数 $p$ 位数の巡回群。すべての有限単純群の中で**唯一の可換（アーベル群）**な系列です。すべての素数 $p$ に対して一意に存在し、真の正規部分群を持ちません。",
+                    applications: "RSA暗号、Diffie-Hellman鍵交換、楕円曲線暗号(ECC)、離散フーリエ変換、有限体の加法群構造。",
+                    children: [
+                        { name: "C_2", latex: "C_2", category: "Cyclic", color: "#10b981", order: "2", schur: "1", out: "1", desc: "最小の有限単純群。2次対称群 $S_2$ の交代部分群であり、2次体のガロア群として機能します。", applications: "パリティチェック、2進論理演算、スピン1/2反転対称性" },
+                        { name: "C_3", latex: "C_3", category: "Cyclic", color: "#10b981", order: "3", schur: "1", out: "C_2", desc: "位数3の巡回群。平面上の正三角形の回転対称群群 $SO(2)$ の有限巡回部分群。", applications: "3相交流解析、クォークのカラー荷電 $SU(3)$ 中心" },
+                        { name: "C_5", latex: "C_5", category: "Cyclic", color: "#10b981", order: "5", schur: "1", out: "C_4", desc: "位数5の巡回群。正五角形の回転対称群。", applications: "巡回符号、5次方程式の代数非解性要素" },
+                        { name: "C_7", latex: "C_7", category: "Cyclic", color: "#10b981", order: "7", schur: "1", out: "C_6", desc: "位数7の巡回群。ファノ平面（Fano plane）の自己同型と密接に関連。", applications: "ファノ平面幾何、誤り訂正符号" },
+                        { name: "C_11", latex: "C_{11}", category: "Cyclic", color: "#10b981", order: "11", schur: "1", out: "C_{10}", desc: "位数11の巡回群。Mathieu群 $M_{11}$ の部分構造。", applications: "離散対数暗号(DSA)" },
+                        { name: "C_13", latex: "C_{13}", category: "Cyclic", color: "#10b981", order: "13", schur: "1", out: "C_{12}", desc: "位数13の巡回群。", applications: "代数的数論" },
+                        { name: "C_17", latex: "C_{17}", category: "Cyclic", color: "#10b981", order: "17", schur: "1", out: "C_{16}", desc: "ガウスによって正十七角形が定規とコンパスで作図可能であることが証明されたフェルマー素数巡回群。", applications: "作図可能多角形論、ガロア理論" },
+                        { name: "C_19", latex: "C_{19}", category: "Cyclic", color: "#10b981", order: "19", schur: "1", out: "C_{18}", desc: "位数19の巡回群。", applications: "暗号学的素数体" },
+                        { name: "C_23", latex: "C_{23}", category: "Cyclic", color: "#10b981", order: "23", schur: "1", out: "C_{22}", desc: "Golay符号 $\\mathcal{G}_{23}$ や Mathieu群 $M_{23}$ の定義体に関わる素数巡回群。", applications: "23次元ゴレイ符号" },
+                        { name: "C_29", latex: "C_{29}", category: "Cyclic", color: "#10b981", order: "29", schur: "1", out: "C_{28}", desc: "位数29の巡回群。", applications: "代数的整数論" },
+                        { name: "C_31", latex: "C_{31}", category: "Cyclic", color: "#10b981", order: "31", schur: "1", out: "C_{30}", desc: "メルセンヌ素数 $2^5-1=31$ に対応する巡回群。5次元射影幾何 $PG(4,2)$ の点数。", applications: "M系列乱数発生器" },
+                        { name: "C_p (一般)", latex: "C_p", category: "Cyclic", color: "#10b981", order: "p", schur: "1", out: "C_{p-1}", desc: "すべての素数 $p$ に対する巡回単純群の一般抽象表現。", applications: "群論・ガロア理論の基盤" }
+                    ]
+                },
+                {
+                    name: "2. 交代群",
+                    latex: "A_n \\text{ (}n \\ge 5\\text{)}",
+                    category: "Alternating",
+                    color: "#f59e0b",
+                    order: "\\frac{n!}{2}",
+                    desc: "$n$ 個の文字の偶置換全体がなす群。$n \\ge 5$ のとき常に非可換単純群となります。アーベル（Abel）とガロア（Galois）により、**「5次以上の一般代数方程式が根号によって解けない」**ことの直接的な代数的根拠となった歴史的群系列です。",
+                    applications: "ガロア理論、置換パズル（ルービックキューブ等）の可解性判定、組合せ最適化、表現論。",
+                    children: [
+                        { name: "A_5", latex: "A_5", category: "Alternating", color: "#f59e0b", order: "60 = 2^2 \\cdot 3 \\cdot 5", schur: "2", out: "C_2", desc: "最小の非可換有限単純群。正二十面体および正十二面体の回転対称群と同型。5次方程式のガロア群として、代数的一般解が存在しないことを証明します。", isomorphisms: ["PSL_2(4)", "PSL_2(5)"], applications: "C60フラーレン分子構造、結晶点群" },
+                        { name: "A_6", latex: "A_6", category: "Alternating", color: "#f59e0b", order: "360 = 2^3 \\cdot 3^2 \\cdot 5", schur: "6", out: "C_2 \\times C_2", desc: "次数6の交代群。すべての交代群の中で唯一、アウター自己同型群が $C_2$ より大きく（Vierergruppe $V_4$）、特異な幾何的拡大を持ちます。", isomorphisms: ["PSL_2(9)"], applications: "デザイン理論、高度置換幾何" },
+                        { name: "A_7", latex: "A_7", category: "Alternating", color: "#f59e0b", order: "2,520 = 2^3 \\cdot 3^2 \\cdot 5 \\cdot 7", schur: "6", out: "C_2", desc: "次数7の交代群。シューア乗数が 6 となる特異な構造を持ち、3重被覆群 $3A_7$ や 6重被覆群が存在します。", applications: "有限幾何学、極小表現論" },
+                        { name: "A_8", latex: "A_8", category: "Alternating", color: "#f59e0b", order: "20,160", schur: "2", out: "C_2", desc: "次数8の交代群。シュヴァレー群 $A_3(2) \\cong PSL_4(2)$ と同型であり、8次元ベクトル空間に自然に作用します。", isomorphisms: ["PSL_4(2)"], applications: "8次元ベクトル空間格子" },
+                        { name: "A_9", latex: "A_9", category: "Alternating", color: "#f59e0b", order: "181,440", schur: "2", out: "C_2", desc: "次数9の交代群。", applications: "置換群論" },
+                        { name: "A_10", latex: "A_{10}", category: "Alternating", color: "#f59e0b", order: "1,814,400", schur: "2", out: "C_2", desc: "次数10の交代群。", applications: "組合せ論" },
+                        { name: "A_11", latex: "A_{11}", category: "Alternating", color: "#f59e0b", order: "19,958,400", schur: "2", out: "C_2", desc: "次数11の交代群。", applications: "多重可移置換群" },
+                        { name: "A_12", latex: "A_{12}", category: "Alternating", color: "#f59e0b", order: "239,500,800", schur: "2", out: "C_2", desc: "次数12の交代群。", applications: "パズル空間の群論的構造" },
+                        { name: "A_13", latex: "A_{13}", category: "Alternating", color: "#f59e0b", order: "3,113,510,400", schur: "2", out: "C_2", desc: "次数13の交代群。", applications: "置換幾何学" },
+                        { name: "A_n (一般)", latex: "A_n \\text{ (}n \\ge 14\\text{)}", category: "Alternating", color: "#f59e0b", order: "\\frac{n!}{2}", schur: "2", out: "C_2", desc: "十分大きい任意の $n$ に対する交代単純群。シューア乗数は常に 2、外部自己同型群は常に $C_2$ に収束します。", applications: "大幾何学・表現論" }
+                    ]
+                },
+                {
+                    name: "3. リー型単純群",
+                    latex: "\\text{Lie Type Groups}",
+                    category: "LieType",
+                    color: "#3b82f6",
+                    order: "\\text{有限体 } \\mathbb{F}_q \\text{ 上の構造多項式}",
+                    desc: "連続的なリー群（Lie groups）の概念を有限体 $\\mathbb{F}_q$ （$q=p^k$）上に代数化した群。古型シュヴァレー群、例外型シュヴァレー群、スタインバーグ群、スズキ・Ree群など16個の無限族から形成されます。",
+                    applications: "代数幾何学、線形誤り訂正符号（リード・ソロモン符号、代数曲線符号）、量子計算、ゲージ理論。",
+                    children: [
+                        {
+                            name: "古典的シュヴァレー群 (A, B, C, D)",
+                            latex: "PSL_n(q), P\\Omega_n(q), PSp_n(q)",
+                            category: "LieType",
+                            color: "#3b82f6",
+                            desc: "行列群（射影特殊線形群 $PSL$、直交群 $P\\Omega$、斜交群 $PSp$）に対応する古典的無限系列。",
+                            children: [
+                                { name: "PSL_2(2)", latex: "PSL_2(2)", category: "LieType", color: "#3b82f6", order: "6", schur: "1", out: "1", desc: "※単純群ではありません（$S_3$ に同型）。比較用の非単純基準ノード。", applications: "可解群の反例" },
+                                { name: "PSL_2(3)", latex: "PSL_2(3)", category: "LieType", color: "#3b82f6", order: "12", schur: "2", out: "C_2", desc: "※単純群ではありません（$A_4$ に同型）。比較用の基準ノード。", applications: "正四面体群" },
+                                { name: "PSL_2(4)", latex: "PSL_2(4)", category: "LieType", color: "#3b82f6", order: "60", schur: "2", out: "C_2", desc: "2次元射影特殊線形群。交代群 $A_5$ と同型。", isomorphisms: ["A_5"], applications: "最小の非可換リー型群" },
+                                { name: "PSL_2(7)", latex: "PSL_2(7)", category: "LieType", color: "#3b82f6", order: "168 = 2^3 \\cdot 3 \\cdot 7", schur: "2", out: "C_2", desc: "2番目に小さな非可換単純群。クラインの四次曲線（Klein quartic）の自己同型群。$PSL_3(2)$ と同型。", isomorphisms: ["PSL_3(2)"], applications: "リーマン面、ファノ平面 $PG(2,2)$" },
+                                { name: "PSL_2(8)", latex: "PSL_2(8)", category: "LieType", color: "#3b82f6", order: "504", schur: "1", out: "C_3", desc: "標数2の体上の2次元線形群。Ree群 $^2G_2(3)'$ と同型。", isomorphisms: ["^2G_2(3)'"], applications: "Ree群の基盤" },
+                                { name: "PSL_2(9)", latex: "PSL_2(9)", category: "LieType", color: "#3b82f6", order: "360", schur: "6", out: "C_2 \\times C_2", desc: "交代群 $A_6$ と同型な線形群。", isomorphisms: ["A_6"], applications: "モジュラー曲線 $X(3)$" },
+                                { name: "PSL_2(11)", latex: "PSL_2(11)", category: "LieType", color: "#3b82f6", order: "660", schur: "2", out: "C_2", desc: "11次非斉次線形群。11点集合上の推移的作用を持ちます。", applications: "正二十面体幾何" },
+                                { name: "PSL_3(3)", latex: "PSL_3(3)", category: "LieType", color: "#3b82f6", order: "5,616", schur: "1", out: "C_2", desc: "3次元射影特殊線形群。", applications: "射影平面 $PG(2,3)$" },
+                                { name: "PSL_3(4)", latex: "PSL_3(4)", category: "LieType", color: "#3b82f6", order: "20,160", schur: "C_3 \\times C_4", out: "D_{12}", desc: "非常に特異な中心拡大を持つ3次元線形群（シューア乗数が $C_3 \times C_4$）。", applications: "Mathieu群の構造要素" },
+                                { name: "PSp_4(3)", latex: "PSp_4(3)", category: "LieType", color: "#3b82f6", order: "25,920", schur: "2", out: "C_2", desc: "4次元射影特殊斜交群。ユニタリ群 $PSU_4(2)$ と同型。", isomorphisms: ["PSU_4(2)"], applications: "量子誤り訂正符号" },
+                                { name: "PSp_6(2)", latex: "PSp_6(2)", category: "LieType", color: "#3b82f6", order: "1,451,520", schur: "1", out: "1", desc: "6次元斜交群。Held群 $He$ の中心化群と関係。", applications: "スピノル表現" },
+                                { name: "P\\Omega_8^+(2)", latex: "P\\Omega_8^+(2)", category: "LieType", color: "#3b82f6", order: "174,182,400", schur: "C_2 \\times C_2", out: "S_3", desc: "8次元正和型直交群。Dynkin図形 $D_4$ の三位一体性（Triality）により外部自己同型群が $S_3$ になります。", applications: "トライアリティ（Triality）幾何" }
+                            ]
+                        },
+                        {
+                            name: "例外型シュヴァレー群 (G2, F4, E6, E7, E8)",
+                            latex: "G_2(q), F_4(q), E_6(q), E_7(q), E_8(q)",
+                            category: "LieType",
+                            color: "#3b82f6",
+                            desc: "5つの例外リー環に対応する有限単純群系列。八元数（Octonions）や例外ジョルダン代数の対称性を表します。",
+                            children: [
+                                { name: "G_2(3)", latex: "G_2(3)", category: "LieType", color: "#3b82f6", order: "4,245,696", schur: "1", out: "C_2", desc: "8次元八元数代数（Cayley代数）の自同型に対応する例外群。", applications: "八元数幾何学" },
+                                { name: "G_2(4)", latex: "G_2(4)", category: "LieType", color: "#3b82f6", order: "251,596,800", schur: "2", out: "C_2", desc: "標数2の体上の $G_2$ 型例外群。", applications: "Suzuki散在群の部分群" },
+                                { name: "F_4(2)", latex: "F_4(2)", category: "LieType", color: "#3b82f6", order: "\\approx 3.21 \\times 10^{17}", schur: "2", out: "C_2", desc: "27次元例外ジョルダン代数の対称性に基づく $F_4$ 群。", applications: "例外ジョルダン代数" },
+                                { name: "E_6(2)", latex: "E_6(2)", category: "LieType", color: "#3b82f6", order: "\\approx 7.82 \\times 10^{22}", schur: "1", out: "C_2", desc: "27次元表現を持つ例外型群。", applications: "超グラビティ理論" },
+                                { name: "E_7(2)", latex: "E_7(2)", category: "LieType", color: "#3b82f6", order: "\\approx 3.49 \\times 10^{39}", schur: "2", out: "1", desc: "56次元表現を持つ $E_7$ 系列。", applications: "弦理論のコンパクト化" },
+                                { name: "E_8(2)", latex: "E_8(2)", category: "LieType", color: "#3b82f6", order: "\\approx 3.25 \\times 10^{74}", schur: "1", out: "1", desc: "248次元の随伴表現を持つ最大例外群の有限体版。", applications: "E8×E8 統一理論" }
+                            ]
+                        },
+                        {
+                            name: "スタインバーグ・スズキ・Ree群 (ねじれ型)",
+                            latex: "^2A_n, ^2D_n, ^3D_4, ^2E_6, ^2B_2, ^2G_2, ^2F_4",
+                            category: "LieType",
+                            color: "#3b82f6",
+                            desc: "Dynkin図形のグラフ自己同型による「ねじれ (Twisted)」を適用して得られる単純群系列（スズキ群 $Sz(q)$ や Ree群 $Ree(q)$ を含む）。",
+                            children: [
+                                { name: "PSU_3(3)", latex: "PSU_3(3)", category: "LieType", color: "#3b82f6", order: "6,048", schur: "1", out: "C_2", desc: "3次元射影特殊ユニタリ群（$^2A_2(3^2)$）。", applications: "エルミート形式" },
+                                { name: "PSU_4(3)", latex: "PSU_4(3)", category: "LieType", color: "#3b82f6", order: "3,265,920", schur: "C_3 \\times C_3", out: "D_8", desc: "4次元ユニタリ単純群。", applications: "幾何学的グラフ" },
+                                { name: "Sz(8)", latex: "^2B_2(8) \\cong Sz(8)", category: "LieType", color: "#3b82f6", order: "29,120 = 2^6 \\cdot 5 \\cdot 7 \\cdot 13", schur: "C_2 \\times C_2", out: "C_3", desc: "鈴木(Suzuki)群の最小の個体。位数が3で割り切れない（3-自由な）唯一の非アーベル単純群系列の1つ。", applications: "2-デザイン構造" },
+                                { name: "Sz(32)", latex: "^2B_2(32) \\cong Sz(32)", category: "LieType", color: "#3b82f6", order: "32,537,600", schur: "1", out: "C_5", desc: "位数 $2^5$ で定義される鈴木群。", applications: "置換幾何" },
+                                { name: "Ree(3)'", latex: "^2G_2(3)'", category: "LieType", color: "#3b82f6", order: "504", schur: "1", out: "C_3", desc: "Ree群 $^2G_2(3)$ の派生群。$PSL_2(8)$ と同型。", isomorphisms: ["PSL_2(8)"], applications: "標数3のねじれ構造" },
+                                { name: "Ree(27)", latex: "^2G_2(27)", category: "LieType", color: "#3b82f6", order: "\\approx 2.92 \\times 10^{10}", schur: "1", out: "C_3", desc: "標数3の体上Ree群。", applications: "一元体幾何" },
+                                { name: "^3D_4(2)", latex: "^3D_4(2)", category: "LieType", color: "#3b82f6", order: "211,433,472", schur: "1", out: "C_3", desc: "トライアリティ（三位一体性）による3次元ねじれ群。", applications: "スピノル表現" }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    name: "4. 散在型単純群",
+                    latex: "\\text{Sporadic Groups (26個完全網羅)}",
+                    category: "Sporadic",
+                    color: "#a855f7",
+                    order: "\\text{26個の孤立した有限単純群}",
+                    desc: "どの無限系列にも属さない、完全に孤立した26個の例外的な有限単純群。19世紀のMathieu群から1970年代のJanko群・Monster群まで、現代数学の最も深遠な発見の1つです。",
+                    applications: "Golay符号、Leech格子（24次元最密球充填）、ムーンシャイン理論（j-不変量）、頂点作用素代数(VOA)、共形場理論(CFT)。",
+                    children: [
+                        {
+                            name: "マシュー群 (Mathieu groups - 5個)",
+                            latex: "M_{11}, M_{12}, M_{22}, M_{23}, M_{24}",
+                            category: "Sporadic",
+                            color: "#a855f7",
+                            desc: "Emile Mathieuにより1861年・1873年に発見された史上最も古い散在群。多重可移置換群として作用します。",
+                            children: [
+                                { name: "M_11", latex: "M_{11}", category: "Sporadic", color: "#a855f7", order: "7,920 = 2^4 \\cdot 3^2 \\cdot 5 \\cdot 11", schur: "1", out: "1", desc: "1861年発見。11点上の4重可移置換群。", applications: "置換群論の歴史的礎" },
+                                { name: "M_12", latex: "M_{12}", category: "Sporadic", color: "#a855f7", order: "95,040 = 2^6 \\cdot 3^3 \\cdot 5 \\cdot 11", schur: "2", out: "C_2", desc: "12点上の5重可移置換群。三極型S_5幾何に対応。", applications: "三元ゴレイ符号 $C_{12}$" },
+                                { name: "M_22", latex: "M_{22}", category: "Sporadic", color: "#a855f7", order: "443,520 = 2^7 \\cdot 3^2 \\cdot 5 \\cdot 11", schur: "12", out: "C_2", desc: "22点上の3重可移置換群。12という巨大なシューア乗数を持ちます。", applications: "Steinerシステム $S(3,5,22)$" },
+                                { name: "M_23", latex: "M_{23}", category: "Sporadic", color: "#a855f7", order: "10,200,960 = 2^7 \\cdot 3^2 \\cdot 5 \\cdot 11 \\cdot 23", schur: "1", out: "1", desc: "23点上の4重可移置換群。", applications: "Steinerシステム $S(4,6,23)$" },
+                                { name: "M_24", latex: "M_{24}", category: "Sporadic", color: "#a855f7", order: "244,823,040 = 2^{10} \\cdot 3^3 \\cdot 5 \\cdot 7 \\cdot 11 \\cdot 23", schur: "1", out: "1", desc: "24点上の5重可移置換群。24次元拡大2元Golay符号 $\\mathcal{G}_{24}$ および Steiner システム $S(5,8,24)$ の自己同型群。", applications: "Golay符号、NASAヴォイジャー探査船通信" }
+                            ]
+                        },
+                        {
+                            name: "コンウェイ群 & リーッチ格子関連 (7個)",
+                            latex: "Co_1, Co_2, Co_3, HS, McL, Suz, J_2",
+                            category: "Sporadic",
+                            color: "#a855f7",
+                            desc: "24次元の最密球充填格子である「リーッチ格子 (Leech Lattice $\\Lambda_{24}$)」の自己同型群 $\\text{Co}_0$ から派生した群構造。",
+                            children: [
+                                { name: "Co_1", latex: "Co_1", category: "Sporadic", color: "#a855f7", order: "4,157,776,806,543,360,000", schur: "2", out: "1", desc: "John Conwayが1968年に発見。リーッチ格子 $\\Lambda_{24}$ の自己同型群 $\\text{Co}_0$ の中心商群 $\\text{Co}_0/\\{\\pm 1\\}$。", applications: "24次元球体充填" },
+                                { name: "Co_2", latex: "Co_2", category: "Sporadic", color: "#a855f7", order: "42,305,421,312,000", schur: "1", out: "1", desc: "リーッチ格子のノルム4のベクトルの固定化部分群。", applications: "高次元格子幾何" },
+                                { name: "Co_3", latex: "Co_3", category: "Sporadic", color: "#a855f7", order: "495,766,656,000", schur: "1", out: "1", desc: "リーッチ格子のノルム6のベクトルの固定化部分群。", applications: "距離正則グラフ" },
+                                { name: "HS", latex: "HS", category: "Sporadic", color: "#a855f7", order: "44,352,000", schur: "2", out: "C_2", desc: "Higman-Sims群。100頂点のHigman-Simsグラフの自己同型群。", applications: "強正則グラフ理論" },
+                                { name: "McL", latex: "McL", category: "Sporadic", color: "#a855f7", order: "898,128,000", schur: "3", out: "C_2", desc: "McLaughlin群。275頂点の強正則グラフの自己同型群。", applications: "組合せデザイン" },
+                                { name: "Suz", latex: "Suz", category: "Sporadic", color: "#a855f7", order: "448,345,497,600", schur: "6", out: "C_2", desc: "Suzuki散在群。12次元複素リーッチ格子の自己同型。", applications: "複素格子の幾何" },
+                                { name: "J_2", latex: "J_2 \\text{ (HJ)}", category: "Sporadic", color: "#a855f7", order: "604,800", schur: "2", out: "C_2", desc: "Hall-Janko群。100個の重根を持つ幾何構造に作用。", applications: "四元数格子の対称性" }
+                            ]
+                        },
+                        {
+                            name: "フィッシャー 3-転置群 (3個)",
+                            latex: "Fi_{22}, Fi_{23}, Fi_{24}'",
+                            category: "Sporadic",
+                            color: "#a855f7",
+                            desc: "Bernd Fischerにより発見された、積の位数が1, 2, 3のいずれかとなる共役転置集合（3-転置）で生成される群。",
+                            children: [
+                                { name: "Fi_22", latex: "Fi_{22}", category: "Sporadic", color: "#a855f7", order: "64,561,751,040", schur: "6", out: "C_2", desc: "3,510個の3-転置の集合で生成される群。", applications: "3-転置群論" },
+                                { name: "Fi_23", latex: "Fi_{23}", category: "Sporadic", color: "#a855f7", order: "4,089,470,473,280", schur: "1", out: "1", desc: "31,671個の3-転置で生成される群。", applications: "転置幾何学" },
+                                { name: "Fi_24'", latex: "Fi_{24}'", category: "Sporadic", color: "#a855f7", order: "1,255,205,709,190,661,120", schur: "3", out: "C_2", desc: "306,936個の3-転置を持つ巨大なフィッシャー群の派生群。", applications: "モンスター群の部分構造" }
+                            ]
+                        },
+                        {
+                            name: "モンスターファミリー (5個)",
+                            latex: "M, B, Th, HN, He",
+                            category: "Sporadic",
+                            color: "#a855f7",
+                            desc: "最大単純群「モンスター群 (M)」の内部部分商群（サブモーショント）として緊密に関連する群。",
+                            children: [
+                                { name: "Monster (M)", latex: "M \\text{ (}F_1\\text{)}", category: "Sporadic", color: "#a855f7", order: "\\approx 8.08 \\times 10^{53}", schur: "1", out: "1", desc: "最大の散在群（位数: $2^{46} \\cdot 3^{20} \\cdot 5^9 \\cdot 7^6 \\cdot 11^2 \\cdot 13^3 \\cdot 17 \\cdot 19 \\cdot 23 \\cdot 29 \\cdot 31 \\cdot 41 \\cdot 47 \\cdot 59 \\cdot 71$）。196,883次元のGriess代数の自己同型群。ムーンシャイン現象（Monstrous Moonshine）により楕円モジュラー関数 $j(\\tau)$ のフーリエ係数と直結します。", applications: "超弦理論、共形場理論、頂点作用素代数(VOA)" },
+                                { name: "Baby Monster (B)", latex: "B \\text{ (}F_2\\text{)}", category: "Sporadic", color: "#a855f7", order: "\\approx 4.15 \\times 10^{33}", schur: "2", out: "1", desc: "2番目に大きい散在群。4,371次元の最小忠実表現を持ちます。", applications: "表現論・ムーンシャイン" },
+                                { name: "Thompson (Th)", latex: "Th \\text{ (}F_3\\text{)}", category: "Sporadic", color: "#a855f7", order: "90,745,943,887,872,000", schur: "1", out: "1", desc: "John Thompsonが発見した248次元表現を持つ群。E8リー代数と深遠な関連を持ちます。", applications: "E8リー代数の有限部分構造" },
+                                { name: "Harada-Norton (HN)", latex: "HN \\text{ (}F_5\\text{)}", category: "Sporadic", color: "#a855f7", order: "273,030,912,000", schur: "1", out: "C_2", desc: "原田耕一郎とSimon P. Nortonにより発見された群。", applications: "頂点作用素代数" },
+                                { name: "Held (He)", latex: "He \\text{ (}F_7\\text{)}", category: "Sporadic", color: "#a855f7", order: "4,030,387,200", schur: "1", out: "C_2", desc: "Dieter Heldにより発見された散在群。$Sp_6(2)$ の中心拡大の中心化群に由来。", applications: "行列群論" }
+                            ]
+                        },
+                        {
+                            name: "パリア (Pariahs - 完全孤立群 6個)",
+                            latex: "J_1, J_3, J_4, Ly, Ru, O'N",
+                            category: "Sporadic",
+                            color: "#a855f7",
+                            desc: "モンスター群 $M$ のサブモーショント（部分商群）として含まれない、完全独立した6つの散在群（Pariahs＝のけもの）。",
+                            children: [
+                                { name: "Janko群 J_1", latex: "J_1", category: "Sporadic", color: "#a855f7", order: "175,560", schur: "1", out: "1", desc: "Zvonimir Jankoが1966年に発見。Mathieu群以来1世紀ぶりの新しい散在群の発見となり、有限群分類研究の爆発的発展の引き金となりました。", applications: "モジュラー表現論" },
+                                { name: "Janko群 J_3", latex: "J_3", category: "Sporadic", color: "#a855f7", order: "50,232,960", schur: "3", out: "C_2", desc: "Jankoにより予言され、計算機を用いて構成された群。", applications: "計算機代数" },
+                                { name: "Janko群 J_4", latex: "J_4", category: "Sporadic", color: "#a855f7", order: "\\approx 8.68 \\times 10^{19}", schur: "1", out: "1", desc: "1976年発見。全散在群の中で最後に確認された群であり、有限単純群の完全分類の最終章を飾りました。", applications: "112次元標数2表現" },
+                                { name: "Lyons (Ly)", latex: "Ly", category: "Sporadic", color: "#a855f7", order: "\\approx 5.18 \\times 10^{16}", schur: "1", out: "1", desc: "Richard Lyonsにより1972年に発見された群。111次元の表現を持ちます。", applications: "大分類理論" },
+                                { name: "Rudvalis (Ru)", latex: "Ru", category: "Sporadic", color: "#a855f7", order: "145,926,144,000", schur: "2", out: "1", desc: "Arunas Rudvalisにより1972年に発見された群。28次元のスピン被覆群と関係。", applications: "スピン構造" },
+                                { name: "O'Nan (O'N)", latex: "O'N", category: "Sporadic", color: "#a855f7", order: "460,815,505,920", schur: "3", out: "C_2", desc: "Michael O'Nanにより1976年に発見された群。Elliptic curves のモジュラー構造に対応。", applications: "楕円曲線論" }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    name: "5. 特殊・例外ノード",
+                    latex: "T \\cong {}^2F_4(2)'",
+                    category: "Exceptional",
+                    color: "#f43f5e",
+                    order: "17,971,200",
+                    desc: "リー型群および散在群のいずれの定義枠組みにも厳密には完全適合しない特殊な単純群。分類定理において独自の位置を占めます。",
+                    children: [
+                        {
+                            name: "ティッツ群 (Tits group)",
+                            latex: "T \\cong {}^2F_4(2)'",
+                            category: "Exceptional",
+                            color: "#f43f5e",
+                            order: "17,971,200 = 2^{11} \\cdot 3^3 \\cdot 5^2 \\cdot 13",
+                            schur: "1",
+                            out: "C_2",
+                            desc: "ねじれスズキ・Ree群 ${}^2F_4(2)$ の交換子部分群（派生群）。${}^2F_4(2)$ 自体は単純群ではありませんが、その指数2の交換子部分群であるティッツ群は非可換単純群となります。厳密な意味でのBN対を持たないため、第27の散在群として扱われることもあります。",
+                            applications: "Building理論（Tits building）、抽象幾何学"
+                        }
+                    ]
+                }
+            ]
+        };
+
+        // ----------------------------------------------------
+        // D3.js Radial Lifemap 放射状レイアウト & Render Engine
+        // ----------------------------------------------------
+        const container = document.getElementById('tree-canvas');
+        let width = container.clientWidth || window.innerWidth;
+        let height = container.clientHeight || window.innerHeight;
+
+        const svg = d3.select("#tree-canvas");
+        const g = svg.append("g");
+
+        // D3 Zoom & Pan 設定
+        const zoom = d3.zoom()
+            .scaleExtent([0.1, 8])
+            .on("zoom", (event) => {
+                const scale = event.transform.k;
+                g.attr("transform", event.transform);
+
+                document.getElementById('zoom-level-badge').innerText = `Zoom: ${Math.round(scale * 100)}%`;
+
+                // ズーム尺度(scale)とノード階層(depth)に応じてラベルの可視性を滑らかに制御
+                d3.selectAll(".node").each(function(d) {
+                    const nodeEl = d3.select(this);
+                    const labelObj = nodeEl.select("foreignObject");
+
+                    if (d.depth >= 3) {
+                        labelObj.style("opacity", scale >= 0.85 ? 1 : 0);
+                    } else if (d.depth === 2) {
+                        labelObj.style("opacity", scale >= 0.45 ? 1 : 0);
+                    } else {
+                        labelObj.style("opacity", 1);
+                    }
+                });
+            });
+
+        svg.call(zoom);
+
+        // 放射状 (Radial) ツリー配置の計算
+        const radius = Math.min(width, height) * 0.85;
+        const treeLayout = d3.tree()
+            .size([2 * Math.PI, radius])
+            .separation((a, b) => (a.parent == b.parent ? 1 : 2) / a.depth);
+
+        const root = d3.hierarchy(groupHierarchy);
+        treeLayout(root);
+
+        // 極座標 -> 直交座標変換ヘルパー
+        function project(angle, radius) {
+            const x = radius * Math.cos(angle - Math.PI / 2);
+            const y = radius * Math.sin(angle - Math.PI / 2);
+            return [x, y];
+        }
+
+        // 放射状リンク（エッジ）描画
+        const linkGenerator = d3.linkRadial()
+            .angle(d => d.x)
+            .radius(d => d.y);
+
+        const links = g.selectAll(".link")
+            .data(root.links())
+            .enter()
+            .append("path")
+            .attr("class", "link")
+            .attr("d", linkGenerator);
+
+        // ノードグループ描画
+        const nodes = g.selectAll(".node")
+            .data(root.descendants())
+            .enter()
+            .append("g")
+            .attr("class", "node")
+            .attr("transform", d => {
+                const [x, y] = project(d.x, d.y);
+                return `translate(${x},${y})`;
+            })
+            .on("click", (event, d) => {
+                event.stopPropagation();
+                openDrawer(d.data);
+            });
+
+        // ノード円の描画
+        nodes.append("circle")
+            .attr("r", d => d.children ? (d.depth === 0 ? 14 : (d.depth === 1 ? 10 : 7)) : 5)
+            .attr("fill", d => d.data.color || "#3b82f6")
+            .attr("stroke", d => d.data.color ? d3.rgb(d.data.color).brighter(0.8) : "#60a5fa")
+            .attr("stroke-width", "2px");
+
+        // 【要件】LaTeX を使った頂点ラベル（foreignObject を介して MathJax をレンダリング）
+        const labelG = nodes.append("foreignObject")
+            .attr("width", 220)
+            .attr("height", 36)
+            .attr("x", d => {
+                // 中心から見た左右の方向へラベルを逃がす
+                const isRight = d.x > 0 && d.x < Math.PI;
+                return isRight ? 14 : -234;
+            })
+            .attr("y", d => {
+                // 上側・下側にも頂点から離すことで、周囲のラベルとの重なりを抑える
+                const isTop = d.x < Math.PI / 2 || d.x > Math.PI * 3 / 2;
+                return isTop ? -42 : 14;
+            })
+            .style("overflow", "visible")
+            .style("pointer-events", "none");
+
+        labelG.append("xhtml:div")
+            .attr("class", "node-label-container text-xs text-slate-200")
+            .style("justify-content", d => (d.x > 0 && d.x < Math.PI) ? "flex-start" : "flex-end")
+            .html(d => {
+                const label = d.children
+                    ? d.data.name
+                    : `\\(${d.data.latex || d.data.name}\\)`;
+                return `<div class="bg-slate-900/80 px-1.5 py-0.5 rounded border border-slate-800/80 shadow-sm">${label}</div>`;
+            });
+
+        // 初期視点位置設定（中心に配置）
+        const initialTransform = d3.zoomIdentity.translate(width / 2, height / 2).scale(0.55);
+        svg.call(zoom.transform, initialTransform);
+
+        window.addEventListener('resize', () => {
+            width = container.clientWidth;
+            height = container.clientHeight;
+        });
+
+        // ----------------------------------------------------
+        // 詳細ドロワー (Drawer) & MathJax 再レンダリング
+        // ----------------------------------------------------
+        const drawer = document.getElementById('detail-drawer');
+
+        function openDrawer(data) {
+            document.getElementById('drawer-title').innerText = data.name;
+            document.getElementById('drawer-subtitle').innerHTML = data.latex ? `\\(${data.latex}\\)` : 'N/A';
+            document.getElementById('drawer-badge').innerText = data.category || 'Group Class';
+            document.getElementById('drawer-order').innerHTML = data.order ? `\\(${data.order}\\)` : '一般構造多項式';
+            document.getElementById('drawer-schur').innerHTML = data.schur ? `\\(${data.schur}\\)` : '-';
+            document.getElementById('drawer-out').innerHTML = data.out ? `\\(${data.out}\\)` : '-';
+            document.getElementById('drawer-desc').innerHTML = data.desc ? `<p>${data.desc}</p>` : '説明データなし';
+            document.getElementById('drawer-applications').innerText = data.applications || '主要な応用例のデータ';
+
+            // 同型群 (Isomorphisms) のレンダリング
+            const isoContainer = document.getElementById('drawer-isomorphisms-container');
+            const isoList = document.getElementById('drawer-isomorphisms');
+            isoList.innerHTML = '';
+
+            if (data.isomorphisms && data.isomorphisms.length > 0) {
+                isoContainer.classList.remove('hidden');
+                data.isomorphisms.forEach(isoName => {
+                    const badge = document.createElement('span');
+                    badge.className = 'px-2 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded text-xs font-mono cursor-pointer hover:bg-amber-500/40 transition';
+                    badge.innerHTML = `\\(\\cong\\) ${isoName}`;
+                    badge.onclick = () => searchAndHighlight(isoName);
+                    isoList.appendChild(badge);
+                });
+            } else {
+                isoContainer.classList.add('hidden');
+            }
+
+            // Wikipedia 検索URL生成
+            const wikiQuery = encodeURIComponent(data.name.replace(/\(.*?\)/g, '').trim() + " finite simple group");
+            document.getElementById('drawer-wiki').href = `https://en.wikipedia.org/wiki/Special:Search?search=${wikiQuery}`;
+
+            drawer.classList.remove('translate-x-full');
+
+            // MathJax による数式動的組版
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                MathJax.typesetPromise([document.getElementById('detail-drawer')]);
+            }
+        }
+
+        document.getElementById('btn-close-drawer').addEventListener('click', () => {
+            drawer.classList.add('translate-x-full');
+        });
+
+        document.getElementById('btn-reset-zoom').addEventListener('click', () => {
+            svg.transition().duration(750).call(zoom.transform, initialTransform);
+        });
+
+        // ----------------------------------------------------
+        // 検索 & ノード放射状フォーカス
+        // ----------------------------------------------------
+        function searchAndHighlight(query) {
+            const q = query.toLowerCase().trim();
+            if (!q) {
+                nodes.selectAll("circle")
+                    .attr("r", d => d.children ? (d.depth === 0 ? 14 : (d.depth === 1 ? 10 : 7)) : 5)
+                    .attr("stroke-width", "2px");
+                return;
+            }
+
+            nodes.each(function(d) {
+                const nameMatch = d.data.name && d.data.name.toLowerCase().includes(q);
+                const latexMatch = d.data.latex && d.data.latex.toLowerCase().includes(q);
+                const isMatch = nameMatch || latexMatch;
+
+                d3.select(this).select("circle")
+                    .attr("r", isMatch ? 13 : (d.children ? 7 : 5))
+                    .attr("stroke", isMatch ? "#f59e0b" : d3.rgb(d.data.color || "#3b82f6").brighter(0.8))
+                    .attr("stroke-width", isMatch ? "4px" : "2px");
+
+                if (isMatch) {
+                    const [x, y] = project(d.x, d.y);
+                    const transform = d3.zoomIdentity
+                        .translate(width / 2 - x * 1.4, height / 2 - y * 1.4)
+                        .scale(1.4);
+                    svg.transition().duration(750).call(zoom.transform, transform);
+                    openDrawer(d.data);
+                }
+            });
+        }
+
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            searchAndHighlight(e.target.value);
+        });
+
+        // 初回ロード時 MathJax 一括レンダリング
+        window.addEventListener('load', () => {
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                MathJax.typesetPromise();
+            }
+        });
+    </script>
+</body>
+</html>
