@@ -22,7 +22,13 @@
         .node circle { cursor: pointer; transition: all 0.25s ease-in-out; }
         .node circle:hover { stroke-width: 4px !important; filter: drop-shadow(0 0 12px currentColor); }
         .node-label-container { display: flex; align-items: center; white-space: nowrap; pointer-events: none; user-select: none; transition: opacity 0.3s ease; text-shadow: 0 0 4px #0b0f19, 0 0 2px #0b0f19; }
-        .link { fill: none; stroke: #334155; stroke-opacity: 0.6; stroke-width: 1px; transition: stroke 0.3s, stroke-width 0.3s; }
+        .link { 
+            fill: none; 
+            stroke: #64748b; /* より明るいスレートグレーに変更 (#334155 → #64748b) */
+            stroke-opacity: 0.8; /* 不透明度をアップ (0.6 → 0.8) */
+            stroke-width: 1.5px; /* 線幅を拡大 (1px → 1.5px) */
+            transition: stroke 0.3s, stroke-width 0.3s; 
+        }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
@@ -105,6 +111,38 @@
     </div>
 
     <script>
+        // 追加: 挿入時完結型・LaTeXを直接Unicode文字に変換する関数
+        function texToUnicode(tex) {
+            if (!tex) return "";
+            let text = tex;
+            
+            // 1. 固定の特殊記号の置換
+            text = text.replace(/\\mathbb\{G\}_\{CFSG\}/g, "𝔾_CFSG");
+            text = text.replace(/\\mathbb\{Z\}/g, "ℤ");
+            text = text.replace(/\\Omega/g, "Ω");
+            text = text.replace(/\\cong/g, "≅");
+            text = text.replace(/\\ge/g, "≥");
+            text = text.replace(/\\text\{([^}]+)\}/g, "$1");
+            text = text.replace(/\{\}/g, ""); // 冒頭の空ブレースなどを削除
+            
+            // 2. 上付き・下付き用Unicodeマッピング
+            const supMap = {'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','+':'⁺','-':'⁻','(':'⁽',')':'⁾','n':'ⁿ'};
+            const subMap = {'0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉','+':'₊','-':'₋','(':'₍',')':'₎','p':'ₚ','n':'ₙ'};
+            
+            const toSup = (str) => str.split('').map(c => supMap[c] || c).join('');
+            const toSub = (str) => str.split('').map(c => subMap[c] || c).join('');
+            
+            // 3. 上付き文字 ( ^{...} または ^x )
+            text = text.replace(/\^\{([^}]+)\}/g, (_, g1) => toSup(g1));
+            text = text.replace(/\^([a-zA-Z0-9])/g, (_, g1) => toSup(g1));
+            
+            // 4. 下付き文字 ( _{...} または _x )
+            text = text.replace(/_\{([^}]+)\}/g, (_, g1) => toSub(g1));
+            text = text.replace(/_([a-zA-Z0-9])/g, (_, g1) => toSub(g1));
+            
+            // 残ったバックスラッシュをクリーンアップ
+            return text.replace(/\\/g, "");
+        }
         const organicHierarchy = {
             name: "有機化合物", latex: "\\text{Organic Compounds}", category: "Root", color: "#64748b",
             children: [
@@ -430,7 +468,7 @@
 
         svg.call(zoom);
 
-        const radius = 3000; 
+        const radius = 1500; 
         const treeLayout = d3.tree()
             .size([2 * Math.PI, radius])
             .separation((a, b) => (a.parent == b.parent ? 1 : 1.5) / a.depth);
@@ -504,8 +542,7 @@
             .html(d => {
                 let displayFormula = "";
                 if (d.data.latex) {
-                    displayFormula = (d.data.latex.includes('_') || d.data.latex.includes('^') || d.data.latex.includes('\\')) 
-                                     ? `\\(${d.data.latex}\\)` : d.data.latex;
+                    displayFormula = texToUnicode(d.data.latex);
                 }
                 const isLeaf = d.depth === 3;
                 const bgClass = isLeaf ? "bg-slate-900/60 border-slate-700/50" : "bg-slate-900/90 border-slate-800/80 shadow-sm font-medium";

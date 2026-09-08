@@ -18,9 +18,15 @@ const languageDatabase = {
         "languageCount": 220,
         "description": "世界の主要言語を、現代語・歴史的言語・特殊な成立形態に分け、語族→語派→語群→言語の可変深度で表示するためのサイト用データベース。",
         "sources": [
-            "Wikipedia（概説・用語確認）",
-            "Glottolog 5.3（系統分類の検証用）"
+            "Wikipedia（概説・用語確認・基礎情報）",
+            "Glottolog 5.3（系統分類の参照・確認）"
         ],
+        "provenance": {
+            "createdWith": "OpenAI ChatGPT",
+            "aiAssistance": true,
+            "description": "データ構造の設計、分類の整理、説明文の作成に生成AIを利用しています。"
+        },
+        "reliabilityNote": "本データベースは概観・教育目的の表示用データです。系統分類には学説差や資料間の相違があるため、重要な事項についてはGlottologおよび各専門資料の最新版を確認してください。",
         "notes": [
             "話者数・ISOコード・地域・文字等は空欄を許容し、後から個別に補完できる設計。",
             "分類には学説差があるため、classification.status と notes で例外を表現する。"
