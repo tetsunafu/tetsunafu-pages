@@ -1,0 +1,31 @@
+name: Assemble language hierarchy
+
+on:
+  push:
+    paths:
+      - '_chatgpt_upload/assemble-language-hierarchy.trigger'
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Assemble file
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat _chatgpt_upload/languageHierarchy_perfected.js.part* > languageHierarchy_perfected.js
+          rm -f _chatgpt_upload/languageHierarchy_perfected.js.part*
+          rm -f _chatgpt_upload/assemble-language-hierarchy.trigger
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add languageHierarchy_perfected.js
+          git rm -f --cached _chatgpt_upload/assemble-language-hierarchy.trigger 2>/dev/null || true
+          git add -A _chatgpt_upload
+          git commit -m 'Complete language hierarchy database' || exit 0
+          git push
