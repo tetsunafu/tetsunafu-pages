@@ -1,35 +1,27 @@
 /*
  * 世界の言語 — Language Hierarchy / Database
- * Version 2.0.0
- * Updated: 2026-09-08
- *
- * 重要:
- *   - tree       : 表示用の系統階層
- *   - languages  : 各言語のメタデータ
- *   - 階層の深さは固定しない
- *   - 「孤立語」「クレオール」「人工言語」などは系統樹に無理に押し込まない
+ * Version 4.0.0
+ * Updated: 2026-09-10
+ * Data enrichment: Glottolog 5.3 / ISO 639-3 / Ethnologue 2026 public summaries / Wikipedia
  */
-
 const languageDatabase = {
     "meta": {
         "name": "世界の言語",
-        "version": "2.0.0",
-        "updated": "2026-09-08",
+        "version": "4.0.0",
+        "updated": "2026-09-10",
         "languageCount": 220,
-        "description": "世界の主要言語を、現代語・歴史的言語・特殊な成立形態に分け、語族→語派→語群→言語の可変深度で表示するためのサイト用データベース。",
+        "description": "世界の主要言語を、現代語・歴史的言語・特殊な成立形態に分け、語族→語派→語群→言語の可変深度で表示するためのサイト用データベース。データの出典と不確実性を明示し、後から更新可能な構造としている。",
         "sources": [
-            "Wikipedia（概説・用語確認・基礎情報）",
-            "Glottolog 5.3（系統分類の参照・確認）"
+            "Glottolog 5.3（系統分類・Glottocode・ISO 639-3対応・地理情報の主要参照資料）",
+            "ISO 639-3（言語コード確認）",
+            "Ethnologue 2026（話者数。公開範囲で確認可能な値について、Wikipediaの集計表も照合）",
+            "Wikipedia（個別言語の概説・自称・文字・公用語・話者数の補助確認）"
         ],
-        "provenance": {
-            "createdWith": "OpenAI ChatGPT",
-            "aiAssistance": true,
-            "description": "データ構造の設計、分類の整理、説明文の作成に生成AIを利用しています。"
-        },
-        "reliabilityNote": "本データベースは概観・教育目的の表示用データです。系統分類には学説差や資料間の相違があるため、重要な事項についてはGlottologおよび各専門資料の最新版を確認してください。",
         "notes": [
             "話者数・ISOコード・地域・文字等は空欄を許容し、後から個別に補完できる設計。",
-            "分類には学説差があるため、classification.status と notes で例外を表現する。"
+            "分類には学説差があるため、classification.status と notes で例外を表現する。",
+            "話者数は特に資料差が大きいため、未確認値を推測で補完しない。",
+            "2026年版のEthnologue公開集計で確認できる主要言語について話者数を更新した。"
         ],
         "designPrinciples": [
             "分類階層の深さを固定しない",
@@ -37,7 +29,16 @@ const languageDatabase = {
             "現代語・歴史的言語・クレオール/ピジン・人工言語を同一のUIで扱いつつ、意味の違いはtypeで保持する",
             "分類に議論がある言語について断定的な系統関係を作らない"
         ],
-        "sourceNote": "Glottologは包括的なlanguoidカタログで、言語・方言・語族を系統樹として整理している。ただし分類は研究の進展により変更され得るため、本サイトでは表示用の代表分類として利用する。"
+        "sourceNote": "系統分類はGlottolog 5.3を主要な参照資料として整理し、言語コード・使用地域・文字等は複数の公開資料で確認した。話者数は資料・調査年により差が大きいため、数値を掲載する場合は推定年と出典を併記する。分類には学説差があり、Glottolog自身も分類が研究の進展により変更され得ることを明記している。",
+        "dataPolicy": {
+            "speakerCounts": "話者数は資料間で定義・調査年・言語/方言の切り分けが異なるため、出典と年を併記。十分に比較可能な信頼できる数値が確認できない場合は推測値を入れずnullを維持する。",
+            "officialStatus": "official.countriesは「国家・自治体等で公用語／共同公用語として法的地位を持つ」ことを基本とし、単なる承認・少数言語保護は原則として別扱いとする。",
+            "nativeNames": "nativeNameは代表的な自称。複数標準・複数文字・歴史語の場合はnotesで補足する。",
+            "classification": "系統分類はGlottolog 5.3を主要参照とするが、分類に議論がある場合は断定を避ける。"
+        },
+        "provenance": {
+            "description": "データ構造の設計、分類の整理、説明文の作成、公開資料に基づくメタデータ補完案の作成に生成AIを利用しています。"
+        }
     },
     "tree": {
         "id": "world_languages",
@@ -2333,31 +2334,66 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "en",
+                "2": "eng",
+                "3": "eng"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 372000000,
+                "total": 1493000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "United Kingdom",
+                    "United States",
+                    "Canada",
+                    "Australia",
+                    "New Zealand",
+                    "Ireland",
+                    "South Africa",
+                    "India",
+                    "Nigeria"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "United Kingdom",
+                    "Ireland",
+                    "Malta",
+                    "Singapore",
+                    "India",
+                    "Philippines",
+                    "South Africa",
+                    "New Zealand"
+                ]
             },
-            "description": "インド・ヨーロッパ語族・ゲルマン語派の西ゲルマン語群に属する。世界的な共通語として広く用いられ、フランス語などロマンス諸語由来の語彙も多い。",
+            "description": "インド・ヨーロッパ語族・ゲルマン語派の西ゲルマン語群に属する。世界的な共通語として広く用いられ、フランス語などロマンス諸語由来の語彙も多い。 主な分布地域はUnited Kingdom、United States、Canada、Australia、New Zealand。 現代の主要な表記にはLatinが用いられる。 歴史的にはノルマン征服後のフランス語接触などを通じて語彙が大きく拡大した。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/English",
+                "glottolog": "https://glottolog.org/glottolog?iso=eng"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "English",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "german": {
             "id": "german",
@@ -2372,31 +2408,61 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "de",
+                "2": "ger",
+                "3": "deu"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 76000000,
+                "total": 133000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Germany",
+                    "Austria",
+                    "Switzerland",
+                    "Liechtenstein",
+                    "Belgium",
+                    "Luxembourg"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Germany",
+                    "Austria",
+                    "Switzerland",
+                    "Liechtenstein",
+                    "Luxembourg",
+                    "Belgium"
+                ]
             },
-            "description": "西ゲルマン語群の主要言語。名詞の格・性・数を文法的に区別し、ドイツ、オーストリア、スイスなどで重要な公用語である。",
+            "description": "西ゲルマン語群の主要言語。名詞の格・性・数を文法的に区別し、ドイツ、オーストリア、スイスなどで重要な公用語である。 主な分布地域はGermany、Austria、Switzerland、Liechtenstein、Belgium。 現代の主要な表記にはLatinが用いられる。 定冠詞・形容詞・名詞などに格・性・数の文法的区別が現れる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/German",
+                "glottolog": "https://glottolog.org/glottolog?iso=deu"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Deutsch",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "dutch": {
             "id": "dutch",
@@ -2411,31 +2477,56 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "nl",
+                "2": "dut",
+                "3": "nld"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Netherlands",
+                    "Belgium",
+                    "Suriname"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Netherlands",
+                    "Belgium",
+                    "Suriname"
+                ]
             },
-            "description": "西ゲルマン語群の言語。英語・ドイツ語と近縁で、オランダやベルギー北部を中心に用いられる。",
+            "description": "西ゲルマン語群の言語。英語・ドイツ語と近縁で、オランダやベルギー北部を中心に用いられる。 主な分布地域はNetherlands、Belgium、Suriname。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・ゲルマン語派・西ゲルマン語群に位置づけられる。 主な分布はNetherlands、Belgium、Surinameである。 主要な表記体系としてLatinが用いられる。 英語とドイツ語の中間的な位置に見える音韻・語彙上の特徴を持つ。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Dutch",
+                "glottolog": "https://glottolog.org/glottolog?iso=nld"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Nederlands",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "afrikaans": {
             "id": "afrikaans",
@@ -2450,31 +2541,53 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "af",
+                "2": "afr",
+                "3": "afr"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "South Africa",
+                    "Namibia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "South Africa"
+                ]
             },
-            "description": "西ゲルマン語群の言語。17世紀以降のケープ地域のオランダ語を基盤に発達し、南アフリカ・ナミビアなどで用いられる。",
+            "description": "西ゲルマン語群の言語。17世紀以降のケープ地域のオランダ語を基盤に発達し、南アフリカ・ナミビアなどで用いられる。 主な分布地域はSouth Africa、Namibia。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・ゲルマン語派・西ゲルマン語群に位置づけられる。 主な分布はSouth Africa、Namibiaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Afrikaans",
+                "glottolog": "https://glottolog.org/glottolog?iso=afr"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Afrikaans",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "yiddish": {
             "id": "yiddish",
@@ -2489,31 +2602,51 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "yi",
+                "2": "yid",
+                "3": "yid"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Israel",
+                    "United States"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Hebrew"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "西ゲルマン語群に属する言語。中東欧のユダヤ人社会で発達し、伝統的にはヘブライ文字で表記される。",
+            "description": "西ゲルマン語群に属する言語。中東欧のユダヤ人社会で発達し、伝統的にはヘブライ文字で表記される。 主な分布地域はIsrael、United States。 系統分類ではインド・ヨーロッパ語族・ゲルマン語派・西ゲルマン語群に位置づけられる。 主な分布はIsrael、United Statesである。 主要な表記体系としてHebrewが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Yiddish",
+                "glottolog": "https://glottolog.org/glottolog?iso=yid"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ייִדיש",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "swedish": {
             "id": "swedish",
@@ -2528,31 +2661,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "sv",
+                "2": "swe",
+                "3": "swe"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
                 "regions": [],
-                "countries": []
+                "countries": [
+                    "Sweden",
+                    "Finland"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Sweden",
+                    "Finland"
+                ]
             },
-            "description": "北ゲルマン語群の主要言語。スウェーデンとフィンランドの一部で公用語として用いられる。",
+            "description": "北ゲルマン語群の主要言語。スウェーデンとフィンランドの一部で公用語として用いられる。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・ゲルマン語派・北ゲルマン語群に位置づけられる。 主な分布はSweden、Finlandである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Swedish",
+                "glottolog": "https://glottolog.org/glottolog?iso=swe"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "svenska",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "danish": {
             "id": "danish",
@@ -2567,31 +2721,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "da",
+                "2": "dan",
+                "3": "dan"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
                 "regions": [],
-                "countries": []
+                "countries": [
+                    "Denmark"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Denmark"
+                ]
             },
-            "description": "北ゲルマン語群の言語。デンマークの公用語で、独特の音韻特徴を持つ。",
+            "description": "北ゲルマン語群の言語。デンマークの公用語で、独特の音韻特徴を持つ。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・ゲルマン語派・北ゲルマン語群に位置づけられる。 主な分布はDenmarkである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Danish",
+                "glottolog": "https://glottolog.org/glottolog?iso=dan"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "dansk",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "norwegian": {
             "id": "norwegian",
@@ -2606,31 +2779,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "no",
+                "2": "nor",
+                "3": "nor"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
                 "regions": [],
-                "countries": []
+                "countries": [
+                    "Norway"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Norway"
+                ]
             },
-            "description": "北ゲルマン語群の言語。ノルウェー語にはブークモールとニーノシュクという二つの公的な書記規範がある。",
+            "description": "北ゲルマン語群の言語。ノルウェー語にはブークモールとニーノシュクという二つの公的な書記規範がある。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・ゲルマン語派・北ゲルマン語群に位置づけられる。 主な分布はNorwayである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Norwegian",
+                "glottolog": "https://glottolog.org/glottolog?iso=nor"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "norsk",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "icelandic": {
             "id": "icelandic",
@@ -2645,31 +2837,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "is",
+                "2": "ice",
+                "3": "isl"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
                 "regions": [],
-                "countries": []
+                "countries": [
+                    "Iceland"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Iceland"
+                ]
             },
-            "description": "北ゲルマン語群の言語。古ノルド語からの形態を比較的よく保存していることで知られる。",
+            "description": "北ゲルマン語群の言語。古ノルド語からの形態を比較的よく保存していることで知られる。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・ゲルマン語派・北ゲルマン語群に位置づけられる。 主な分布はIcelandである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Icelandic",
+                "glottolog": "https://glottolog.org/glottolog?iso=isl"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "íslenska",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "faroese": {
             "id": "faroese",
@@ -2684,31 +2895,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "fo",
+                "2": "fao",
+                "3": "fao"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
                 "regions": [],
-                "countries": []
+                "countries": [
+                    "Faroe Islands"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Faroe Islands"
+                ]
             },
-            "description": "北ゲルマン語群の言語。フェロー諸島で話され、アイスランド語やノルウェー語と系統的に近い。",
+            "description": "北ゲルマン語群の言語。フェロー諸島で話され、アイスランド語やノルウェー語と系統的に近い。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・ゲルマン語派・北ゲルマン語群に位置づけられる。 主な分布はFaroe Islandsである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Faroese",
+                "glottolog": "https://glottolog.org/glottolog?iso=fao"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "føroyskt",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "old_norse": {
             "id": "old_norse",
@@ -2723,31 +2953,48 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "non",
+                "3": "non"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
                 "regions": [],
-                "countries": []
+                "countries": [
+                    "Scandinavia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "中世北欧の北ゲルマン語。サガや北欧神話の文献を理解する上で重要である。",
+            "description": "中世スカンディナヴィアで用いられた北ゲルマン語。古ノルド語からアイスランド語・ノルウェー語などの歴史的発展を考える上で重要である。 系統分類ではインド・ヨーロッパ語族・ゲルマン語派・北ゲルマン語群に位置づけられる。 主な分布はScandinaviaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Old_Norse",
+                "glottolog": "https://glottolog.org/glottolog?iso=non"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "norrœnt mál",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "gothic": {
             "id": "gothic",
@@ -2762,31 +3009,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "got",
+                "3": "got"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
                 "regions": [],
-                "countries": []
+                "countries": [
+                    "Crimea",
+                    "Italy",
+                    "Spain"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Gothic"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "東ゲルマン語群に属する死語。ウルフィラの聖書翻訳などを通じ、古いゲルマン語の重要な資料を残す。",
+            "description": "東ゴート族・西ゴート族などの間で用いられた東ゲルマン語。4世紀のウルフィラによる聖書翻訳などが主要な文献資料として残る。 系統分類ではインド・ヨーロッパ語族・ゲルマン語派・東ゲルマン語群に位置づけられる。 主な分布はCrimea、Italy、Spainである。 主要な表記体系としてGothicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Gothic",
+                "glottolog": "https://glottolog.org/glottolog?iso=got"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "gutisk",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "spanish": {
             "id": "spanish",
@@ -2801,31 +3067,80 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "es",
+                "2": "spa",
+                "3": "spa"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 487000000,
+                "total": 561000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Spain",
+                    "Mexico",
+                    "Argentina",
+                    "Colombia",
+                    "Peru",
+                    "Chile",
+                    "Venezuela",
+                    "United States",
+                    "Ecuador",
+                    "Guatemala",
+                    "Cuba"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Spain",
+                    "Mexico",
+                    "Colombia",
+                    "Argentina",
+                    "Peru",
+                    "Chile",
+                    "Ecuador",
+                    "Guatemala",
+                    "Cuba",
+                    "Dominican Republic",
+                    "Bolivia",
+                    "Paraguay",
+                    "Uruguay",
+                    "Venezuela",
+                    "Costa Rica",
+                    "Panama",
+                    "Honduras",
+                    "El Salvador",
+                    "Nicaragua",
+                    "Equatorial Guinea"
+                ]
             },
-            "description": "ロマンス語群の主要言語。スペインから中南米へ広がり、母語話者数・学習者数ともに世界有数である。",
+            "description": "ロマンス語群の主要言語。スペインから中南米へ広がり、母語話者数・学習者数ともに世界有数である。 主な分布地域はSpain、Mexico、Argentina、Colombia、Peru。 現代の主要な表記にはLatinが用いられる。 ラテン語から発展したロマンス語の一つで、スペイン以外の広い地域にも標準語として定着した。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Spanish",
+                "glottolog": "https://glottolog.org/glottolog?iso=spa"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "español",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "french": {
             "id": "french",
@@ -2840,31 +3155,84 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "fr",
+                "2": "fre",
+                "3": "fra"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 75000000,
+                "total": 334000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "France",
+                    "Canada",
+                    "Belgium",
+                    "Switzerland",
+                    "Luxembourg",
+                    "Monaco",
+                    "Senegal",
+                    "Côte d’Ivoire",
+                    "Democratic Republic of the Congo"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "France",
+                    "Belgium",
+                    "Switzerland",
+                    "Luxembourg",
+                    "Canada",
+                    "Haiti",
+                    "Monaco",
+                    "Madagascar",
+                    "Senegal",
+                    "Côte d’Ivoire",
+                    "Mali",
+                    "Niger",
+                    "Burkina Faso",
+                    "Benin",
+                    "Togo",
+                    "Guinea",
+                    "Chad",
+                    "Central African Republic",
+                    "Gabon",
+                    "Republic of the Congo",
+                    "Democratic Republic of the Congo",
+                    "Cameroon",
+                    "Djibouti",
+                    "Comoros",
+                    "Seychelles",
+                    "Vanuatu"
+                ]
             },
-            "description": "ロマンス語群の主要言語。フランスを中心に、アフリカ、北米などにも広く分布する国際語である。",
+            "description": "ロマンス語群の主要言語。フランスを中心に、アフリカ、北米などにも広く分布する国際語である。 主な分布地域はFrance、Canada、Belgium、Switzerland、Luxembourg。 現代の主要な表記にはLatinが用いられる。 ロマンス語でありながら、フランク語などゲルマン諸語からの歴史的影響も受けている。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/French",
+                "glottolog": "https://glottolog.org/glottolog?iso=fra"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "français",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "italian": {
             "id": "italian",
@@ -2879,31 +3247,55 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "it",
+                "2": "ita",
+                "3": "ita"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 60000000,
+                "total": 66000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Italy",
+                    "Switzerland",
+                    "San Marino"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Italy",
+                    "San Marino",
+                    "Switzerland"
+                ]
             },
-            "description": "ロマンス語群の言語。イタリアを中心に用いられ、ラテン語からの発展を比較的明瞭にたどれる。",
+            "description": "ロマンス語群の言語。イタリアを中心に用いられ、ラテン語からの発展を比較的明瞭にたどれる。 主な分布地域はItaly、Switzerland、San Marino。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・イタリック語派・ロマンス語群に位置づけられる。 主な分布はItaly、Switzerland、San Marinoである。 主要な表記体系としてLatinが用いられる。 標準イタリア語はトスカーナ系の言語変種を基盤として形成された。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Italian",
+                "glottolog": "https://glottolog.org/glottolog?iso=ita"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "italiano",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "portuguese": {
             "id": "portuguese",
@@ -2918,31 +3310,65 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "pt",
+                "2": "por",
+                "3": "por"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 252000000,
+                "total": 269000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Portugal",
+                    "Brazil",
+                    "Angola",
+                    "Mozambique",
+                    "Cape Verde",
+                    "Guinea-Bissau",
+                    "São Tomé and Príncipe",
+                    "East Timor"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Portugal",
+                    "Brazil",
+                    "Angola",
+                    "Mozambique",
+                    "Guinea-Bissau",
+                    "Cape Verde",
+                    "São Tomé and Príncipe",
+                    "East Timor"
+                ]
             },
-            "description": "ロマンス語群の主要言語。ポルトガルからブラジルを中心とする南米・アフリカなどへ広がった。",
+            "description": "ロマンス語群の主要言語。ポルトガルからブラジルを中心とする南米・アフリカなどへ広がった。 主な分布地域はPortugal、Brazil、Angola、Mozambique、Cape Verde。 現代の主要な表記にはLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Portuguese",
+                "glottolog": "https://glottolog.org/glottolog?iso=por"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "português",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "romanian": {
             "id": "romanian",
@@ -2957,31 +3383,54 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "ro",
+                "2": "rum",
+                "3": "ron"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Romania",
+                    "Moldova"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Romania",
+                    "Moldova"
+                ]
             },
-            "description": "ロマンス語群の言語。東欧に位置しながらラテン語を祖とするロマンス諸語の一つである。",
+            "description": "ロマンス語群の言語。東欧に位置しながらラテン語を祖とするロマンス諸語の一つである。 主な分布地域はRomania、Moldova。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・イタリック語派・ロマンス語群に位置づけられる。 主な分布はRomania、Moldovaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Romanian",
+                "glottolog": "https://glottolog.org/glottolog?iso=ron"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "română",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "catalan": {
             "id": "catalan",
@@ -2996,31 +3445,55 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "ca",
+                "2": "cat",
+                "3": "cat"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Spain",
+                    "Andorra",
+                    "France",
+                    "Italy"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Andorra"
+                ]
             },
-            "description": "ロマンス語群の言語。スペイン東部、アンドラ、フランス南部などで用いられる。",
+            "description": "ロマンス語群の言語。スペイン東部、アンドラ、フランス南部などで用いられる。 主な分布地域はSpain、Andorra、France、Italy。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・イタリック語派・ロマンス語群に位置づけられる。 主な分布はSpain、Andorra、France、Italyである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Catalan",
+                "glottolog": "https://glottolog.org/glottolog?iso=cat"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "català",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "galician": {
             "id": "galician",
@@ -3035,31 +3508,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "gl",
+                "2": "glg",
+                "3": "glg"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Spain"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "イベリア・ロマンス諸語の一つ。スペイン北西部で話され、ポルトガル語と歴史的に近い関係を持つ。",
+            "description": "イベリア・ロマンス諸語の一つ。スペイン北西部で話され、ポルトガル語と歴史的に近い関係を持つ。 主な分布地域はSpain。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・イタリック語派・ロマンス語群に位置づけられる。 主な分布はSpainである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Galician",
+                "glottolog": "https://glottolog.org/glottolog?iso=glg"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "galego",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "occitan": {
             "id": "occitan",
@@ -3074,31 +3566,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "oc",
+                "2": "oci",
+                "3": "oci"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "France",
+                    "Spain",
+                    "Italy"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "南フランスを中心に歴史的に話されてきたロマンス語。中世のトルバドゥール文学でも重要である。",
+            "description": "南フランスを中心に歴史的に話されてきたロマンス語。中世のトルバドゥール文学でも重要である。 主な分布地域はFrance、Spain、Italy。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・イタリック語派・ロマンス語群に位置づけられる。 主な分布はFrance、Spain、Italyである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Occitan",
+                "glottolog": "https://glottolog.org/glottolog?iso=oci"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "occitan",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "sardinian": {
             "id": "sardinian",
@@ -3113,31 +3626,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "sc",
+                "2": "srd",
+                "3": "srd"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Italy"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "サルデーニャ島で話されるロマンス語。ロマンス諸語の中でも保守的な特徴を比較的多く残すことで知られる。",
+            "description": "サルデーニャ島で話されるロマンス語。ロマンス諸語の中でも保守的な特徴を比較的多く残すことで知られる。 主な分布地域はItaly。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・イタリック語派・ロマンス語群に位置づけられる。 主な分布はItalyである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Sardinian",
+                "glottolog": "https://glottolog.org/glottolog?iso=srd"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "sardu",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "sicilian": {
             "id": "sicilian",
@@ -3152,31 +3684,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "scn",
+                "3": "scn"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Italy"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "シチリア島を中心に話されるロマンス語。地中海の多様な言語との接触を受けた豊かな語彙を持つ。",
+            "description": "シチリア島を中心に話されるロマンス語。地中海の多様な言語との接触を受けた豊かな語彙を持つ。 主な分布地域はItaly。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・イタリック語派・ロマンス語群に位置づけられる。 主な分布はItalyである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Sicilian",
+                "glottolog": "https://glottolog.org/glottolog?iso=scn"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "sicilianu",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "latin": {
             "id": "latin",
@@ -3190,31 +3741,49 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "la",
+                "2": "lat",
+                "3": "lat"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
                 "regions": [],
-                "countries": []
+                "countries": [
+                    "Italy",
+                    "Mediterranean Europe"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "古代ローマの言語。ロマンス諸語の歴史的基盤となり、ヨーロッパの学術・宗教・法の語彙にも大きな影響を与えた。",
+            "description": "古代ローマを中心に用いられたイタリック語派の言語。ロマンス諸語の歴史的な母体となり、中世以降も学術・宗教・行政で広く用いられた。 系統分類ではインド・ヨーロッパ語族・イタリック語派に位置づけられる。 主な分布はItaly、Mediterranean Europeである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Latin",
+                "glottolog": "https://glottolog.org/glottolog?iso=lat"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "lingua Latina",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "russian": {
             "id": "russian",
@@ -3229,31 +3798,56 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "ru",
+                "2": "rus",
+                "3": "rus"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 133000000,
+                "total": 210000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Russia",
+                    "Belarus",
+                    "Kazakhstan",
+                    "Kyrgyzstan"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Russia",
+                    "Belarus",
+                    "Kyrgyzstan"
+                ]
             },
-            "description": "東スラヴ語群の主要言語。キリル文字を用い、ロシアを中心にユーラシア各地で話される。",
+            "description": "東スラヴ語群の主要言語。キリル文字を用い、ロシアを中心にユーラシア各地で話される。 主な分布地域はRussia、Belarus、Kazakhstan、Kyrgyzstan。 系統分類ではインド・ヨーロッパ語族・スラヴ語派・東スラヴ語群に位置づけられる。 主な分布はRussia、Belarus、Kazakhstan、Kyrgyzstanである。 主要な表記体系としてCyrillicが用いられる。 名詞・形容詞・代名詞などに格変化があり、動詞ではアスペクトの対立が重要である。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Russian",
+                "glottolog": "https://glottolog.org/glottolog?iso=rus"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "русский язык",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "ukrainian": {
             "id": "ukrainian",
@@ -3268,31 +3862,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "uk",
+                "2": "ukr",
+                "3": "ukr"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Ukraine"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Ukraine"
+                ]
             },
-            "description": "東スラヴ語群の言語。ウクライナを中心に用い、ポーランド語など周辺諸語との接触も受けてきた。",
+            "description": "東スラヴ語群の言語。ウクライナを中心に用い、ポーランド語など周辺諸語との接触も受けてきた。 主な分布地域はUkraine。 現代の主要な表記にはCyrillicが用いられる。 系統分類ではインド・ヨーロッパ語族・スラヴ語派・東スラヴ語群に位置づけられる。 主な分布はUkraineである。 主要な表記体系としてCyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Ukrainian",
+                "glottolog": "https://glottolog.org/glottolog?iso=ukr"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "українська мова",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "belarusian": {
             "id": "belarusian",
@@ -3307,31 +3922,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "be",
+                "2": "bel",
+                "3": "bel"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Belarus"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Belarus"
+                ]
             },
-            "description": "東スラヴ語群の言語。ベラルーシを中心に話され、ロシア語・ウクライナ語と近縁である。",
+            "description": "東スラヴ語群の言語。ベラルーシを中心に話され、ロシア語・ウクライナ語と近縁である。 主な分布地域はBelarus。 現代の主要な表記にはCyrillicが用いられる。 系統分類ではインド・ヨーロッパ語族・スラヴ語派・東スラヴ語群に位置づけられる。 主な分布はBelarusである。 主要な表記体系としてCyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Belarusian",
+                "glottolog": "https://glottolog.org/glottolog?iso=bel"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "беларуская мова",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "polish": {
             "id": "polish",
@@ -3346,31 +3982,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "pl",
+                "2": "pol",
+                "3": "pol"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Poland"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Poland"
+                ]
             },
-            "description": "西スラヴ語群の主要言語。ポーランドの公用語で、ラテン文字による正書法を用いる。",
+            "description": "西スラヴ語群の主要言語。ポーランドの公用語で、ラテン文字による正書法を用いる。 主な分布地域はPoland。 系統分類ではインド・ヨーロッパ語族・スラヴ語派・西スラヴ語群に位置づけられる。 主な分布はPolandである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Polish",
+                "glottolog": "https://glottolog.org/glottolog?iso=pol"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "polski",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "czech": {
             "id": "czech",
@@ -3385,31 +4042,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "cs",
+                "2": "cze",
+                "3": "ces"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Czechia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Czechia"
+                ]
             },
-            "description": "西スラヴ語群の言語。チェコの公用語で、スロバキア語とは特に近い関係にある。",
+            "description": "西スラヴ語群の言語。チェコの公用語で、スロバキア語とは特に近い関係にある。 主な分布地域はCzechia。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・スラヴ語派・西スラヴ語群に位置づけられる。 主な分布はCzechiaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Czech",
+                "glottolog": "https://glottolog.org/glottolog?iso=ces"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "čeština",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "slovak": {
             "id": "slovak",
@@ -3424,31 +4102,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "sk",
+                "2": "slo",
+                "3": "slk"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Slovakia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Slovakia"
+                ]
             },
-            "description": "西スラヴ語群の言語。スロバキアの公用語で、チェコ語との近さが特徴的である。",
+            "description": "西スラヴ語群の言語。スロバキアの公用語で、チェコ語との近さが特徴的である。 主な分布地域はSlovakia。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・スラヴ語派・西スラヴ語群に位置づけられる。 主な分布はSlovakiaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Slovak",
+                "glottolog": "https://glottolog.org/glottolog?iso=slk"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "slovenčina",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "sorbian": {
             "id": "sorbian",
@@ -3463,31 +4162,48 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": null,
+                "3": "wen"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
                 "regions": [],
-                "countries": []
+                "countries": [
+                    "Germany"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "西スラヴ語群の少数言語。ドイツ東部のラウジッツ地方を中心に話される。",
+            "description": "西スラヴ語群の少数言語。ドイツ東部のラウジッツ地方を中心に話される。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・スラヴ語派・西スラヴ語群に位置づけられる。 主な分布はGermanyである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Sorbian",
+                "glottolog": "https://glottolog.org/glottolog?iso=wen"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Serbščina / Sorbian",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "bulgarian": {
             "id": "bulgarian",
@@ -3502,31 +4218,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "bg",
+                "2": "bul",
+                "3": "bul"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Bulgaria"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Bulgaria"
+                ]
             },
-            "description": "南スラヴ語群の言語。現代スラヴ諸語では格変化が大幅に失われ、後置定冠詞などバルカン言語圏的特徴を持つ。",
+            "description": "南スラヴ語群の言語。現代スラヴ諸語では格変化が大幅に失われ、後置定冠詞などバルカン言語圏的特徴を持つ。 主な分布地域はBulgaria。 現代の主要な表記にはCyrillicが用いられる。 系統分類ではインド・ヨーロッパ語族・スラヴ語派・南スラヴ語群に位置づけられる。 主な分布はBulgariaである。 主要な表記体系としてCyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Bulgarian",
+                "glottolog": "https://glottolog.org/glottolog?iso=bul"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "български език",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "macedonian": {
             "id": "macedonian",
@@ -3541,31 +4278,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "mk",
+                "2": "mac",
+                "3": "mkd"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "North Macedonia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "North Macedonia"
+                ]
             },
-            "description": "南スラヴ語群の言語。北マケドニアの公用語で、ブルガリア語などと近縁である。",
+            "description": "南スラヴ語群の言語。北マケドニアの公用語で、ブルガリア語などと近縁である。 主な分布地域はNorth Macedonia。 現代の主要な表記にはCyrillicが用いられる。 系統分類ではインド・ヨーロッパ語族・スラヴ語派・南スラヴ語群に位置づけられる。 主な分布はNorth Macedoniaである。 主要な表記体系としてCyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Macedonian",
+                "glottolog": "https://glottolog.org/glottolog?iso=mkd"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "македонски јазик",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "serbian": {
             "id": "serbian",
@@ -3580,31 +4338,55 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "sr",
+                "2": "srp",
+                "3": "srp"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Serbia",
+                    "Bosnia and Herzegovina",
+                    "Croatia",
+                    "Montenegro"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Serbia"
+                ]
             },
-            "description": "南スラヴ語群の言語。キリル文字とラテン文字の双方が広く用いられる。",
+            "description": "南スラヴ語群の言語。キリル文字とラテン文字の双方が広く用いられる。 主な分布地域はSerbia、Bosnia and Herzegovina、Croatia、Montenegro。 系統分類ではインド・ヨーロッパ語族・スラヴ語派・南スラヴ語群に位置づけられる。 主な分布はSerbia、Bosnia and Herzegovina、Croatia、Montenegroである。 主要な表記体系としてCyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Serbian",
+                "glottolog": "https://glottolog.org/glottolog?iso=srp"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "српски језик",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "croatian": {
             "id": "croatian",
@@ -3619,31 +4401,54 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "hr",
+                "2": "hrv",
+                "3": "hrv"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Croatia",
+                    "Bosnia and Herzegovina"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Croatia",
+                    "Bosnia and Herzegovina"
+                ]
             },
-            "description": "南スラヴ語群の言語。クロアチアの公用語で、ラテン文字を用いる。",
+            "description": "南スラヴ語群の言語。クロアチアの公用語で、ラテン文字を用いる。 主な分布地域はCroatia、Bosnia and Herzegovina。 系統分類ではインド・ヨーロッパ語族・スラヴ語派・南スラヴ語群に位置づけられる。 主な分布はCroatia、Bosnia and Herzegovinaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Croatian",
+                "glottolog": "https://glottolog.org/glottolog?iso=hrv"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "hrvatski",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "bosnian": {
             "id": "bosnian",
@@ -3658,31 +4463,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "bs",
+                "2": "bos",
+                "3": "bos"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Bosnia and Herzegovina"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Bosnia and Herzegovina"
+                ]
             },
-            "description": "南スラヴ語群の言語。ボスニア・ヘルツェゴビナで用いられ、セルビア語・クロアチア語と近い関係にある。",
+            "description": "南スラヴ語群の言語。ボスニア・ヘルツェゴビナで用いられ、セルビア語・クロアチア語と近い関係にある。 主な分布地域はBosnia and Herzegovina。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・スラヴ語派・南スラヴ語群に位置づけられる。 主な分布はBosnia and Herzegovinaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Bosnian",
+                "glottolog": "https://glottolog.org/glottolog?iso=bos"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "bosanski",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "slovenian": {
             "id": "slovenian",
@@ -3697,31 +4523,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "sl",
+                "2": "slv",
+                "3": "slv"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Slovenia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Slovenia"
+                ]
             },
-            "description": "南スラヴ語群の言語。スロベニアの公用語で、現代ヨーロッパの標準語としては珍しく双数を保持する。",
+            "description": "南スラヴ語群の言語。スロベニアの公用語で、現代ヨーロッパの標準語としては珍しく双数を保持する。 主な分布地域はSlovenia。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・スラヴ語派・南スラヴ語群に位置づけられる。 主な分布はSloveniaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Slovenian",
+                "glottolog": "https://glottolog.org/glottolog?iso=slv"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "slovenščina",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "old_church_slavonic": {
             "id": "old_church_slavonic",
@@ -3736,31 +4583,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "cu",
+                "2": "chu",
+                "3": "chu"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
                 "regions": [],
-                "countries": []
+                "countries": [
+                    "Balkans",
+                    "Eastern Europe"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Glagolitic",
+                    "Cyrillic"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "最古級のスラヴ語文献を担った典礼語。南スラヴ系の言語資料として重要である。",
+            "description": "9世紀頃にスラヴ諸語を基盤として成立した最初期の文語。キリル文字・グラゴル文字によるスラヴ世界の宗教文献で重要な役割を果たした。 系統分類ではインド・ヨーロッパ語族・スラヴ語派・南スラヴ語群に位置づけられる。 主な分布はBalkans、Eastern Europeである。 主要な表記体系としてGlagolitic、Cyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Old_Church_Slavonic",
+                "glottolog": "https://glottolog.org/glottolog?iso=chu"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ⰔⰎⰑⰂⰡⰐⰔⰍⰡ",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "hindi": {
             "id": "hindi",
@@ -3775,31 +4641,51 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "hi",
+                "2": "hin",
+                "3": "hin"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 347000000,
+                "total": 611000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "India"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Devanagari"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "India"
+                ]
             },
-            "description": "インド・アーリア語群の主要言語。インド北部を中心に広く用い、標準語はデーヴァナーガリー文字で書かれる。",
+            "description": "インド・アーリア語群の主要言語。インド北部を中心に広く用い、標準語はデーヴァナーガリー文字で書かれる。 主な分布地域はIndia。 系統分類ではインド・ヨーロッパ語族・インド・イラン語派・インド・アーリア語群に位置づけられる。 主な分布はIndiaである。 主要な表記体系としてDevanagariが用いられる。 標準ヒンディー語はデーヴァナーガリー文字で書かれ、ウルドゥー語と話し言葉で高い共通性を持つ。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Hindi",
+                "glottolog": "https://glottolog.org/glottolog?iso=hin"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "हिन्दी",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "bengali": {
             "id": "bengali",
@@ -3814,31 +4700,53 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "bn",
+                "2": "ben",
+                "3": "ben"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 234000000,
+                "total": 274000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Bangladesh",
+                    "India"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Bengali-Assamese"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Bangladesh",
+                    "India"
+                ]
             },
-            "description": "インド・アーリア語群の主要言語。バングラデシュとインド東部を中心に話され、豊かな文学文化を持つ。",
+            "description": "インド・アーリア語群の主要言語。バングラデシュとインド東部を中心に話され、豊かな文学文化を持つ。 主な分布地域はBangladesh、India。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・インド・イラン語派・インド・アーリア語群に位置づけられる。 主な分布はBangladesh、Indiaである。 主要な表記体系としてBengali-Assameseが用いられる。 ベンガル文字を用いるインド・アーリア語で、豊かな文学伝統を持つ。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Bengali",
+                "glottolog": "https://glottolog.org/glottolog?iso=ben"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "বাংলা",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "urdu": {
             "id": "urdu",
@@ -3853,31 +4761,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "ur",
+                "2": "urd",
+                "3": "urd"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 78000000,
+                "total": 246000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Pakistan",
+                    "India"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Arabic"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Pakistan"
+                ]
             },
-            "description": "インド・アーリア語群の言語。ヒンディー語と日常口語の基盤を大きく共有する一方、標準的な書記言語ではペルシア・アラビア系語彙とアラビア文字系表記が特徴的である。",
+            "description": "インド・アーリア語群の言語。ヒンディー語と日常口語の基盤を大きく共有する一方、標準的な書記言語ではペルシア・アラビア系語彙とアラビア文字系表記が特徴的である。 主な分布地域はPakistan、India。 系統分類ではインド・ヨーロッパ語族・インド・イラン語派・インド・アーリア語群に位置づけられる。 主な分布はPakistan、Indiaである。 主要な表記体系としてArabicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Urdu",
+                "glottolog": "https://glottolog.org/glottolog?iso=urd"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "اردو",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "western_punjabi": {
             "id": "western_punjabi",
@@ -3892,31 +4821,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "pnb",
+                "3": "pnb"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Pakistan"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Shahmukhi"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "パンジャーブ語群の主要変種の一つ。パキスタンのパンジャーブ地方を中心に話される。",
+            "description": "パンジャーブ語群の主要変種の一つ。パキスタンのパンジャーブ地方を中心に話される。 主な分布地域はPakistan。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・インド・イラン語派・インド・アーリア語群に位置づけられる。 主な分布はPakistanである。 主要な表記体系としてShahmukhiが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Western_Punjabi",
+                "glottolog": "https://glottolog.org/glottolog?iso=pnb"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "پنجابی",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "marathi": {
             "id": "marathi",
@@ -3931,31 +4879,51 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "mr",
+                "2": "mar",
+                "3": "mar"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 83000000,
+                "total": 99000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "India"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Devanagari"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "India"
+                ]
             },
-            "description": "インド・アーリア語群の言語。インド西部のマハーラーシュトラ州を中心に話される。",
+            "description": "インド・アーリア語群の言語。インド西部のマハーラーシュトラ州を中心に話される。 主な分布地域はIndia。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・インド・イラン語派・インド・アーリア語群に位置づけられる。 主な分布はIndiaである。 主要な表記体系としてDevanagariが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Marathi",
+                "glottolog": "https://glottolog.org/glottolog?iso=mar"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "मराठी",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "gujarati": {
             "id": "gujarati",
@@ -3970,31 +4938,51 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "gu",
+                "2": "guj",
+                "3": "guj"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 58000000,
+                "total": 62000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "India"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Gujarati"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "India"
+                ]
             },
-            "description": "インド・アーリア語群の言語。インド西部を中心に話され、独自のグジャラート文字を用いる。",
+            "description": "インド・アーリア語群の言語。インド西部を中心に話され、独自のグジャラート文字を用いる。 主な分布地域はIndia。 系統分類ではインド・ヨーロッパ語族・インド・イラン語派・インド・アーリア語群に位置づけられる。 主な分布はIndiaである。 主要な表記体系としてGujaratiが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Gujarati",
+                "glottolog": "https://glottolog.org/glottolog?iso=guj"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ગુજરાતી",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "bhojpuri": {
             "id": "bhojpuri",
@@ -4009,31 +4997,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "bho",
+                "3": "bho"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 53000000,
+                "total": 53000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "India",
+                    "Nepal"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Devanagari"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "インド・アーリア語群の言語。インド北部やネパール南部などに広く分布する。",
+            "description": "インド・アーリア語群の言語。インド北部やネパール南部などに広く分布する。 主な分布地域はIndia、Nepal。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・インド・イラン語派・インド・アーリア語群に位置づけられる。 主な分布はIndia、Nepalである。 主要な表記体系としてDevanagariが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Bhojpuri",
+                "glottolog": "https://glottolog.org/glottolog?iso=bho"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "भोजपुरी",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "assamese": {
             "id": "assamese",
@@ -4048,31 +5055,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "as",
+                "2": "asm",
+                "3": "asm"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "India"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Bengali-Assamese"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "India"
+                ]
             },
-            "description": "インド・アーリア語群の東部語。インド北東部アッサム州を中心に話される。",
+            "description": "インド・アーリア語群の東部語。インド北東部アッサム州を中心に話される。 主な分布地域はIndia。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・インド・イラン語派・インド・アーリア語群に位置づけられる。 主な分布はIndiaである。 主要な表記体系としてBengali-Assameseが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Assamese",
+                "glottolog": "https://glottolog.org/glottolog?iso=asm"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "অসমীয়া",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "odia": {
             "id": "odia",
@@ -4087,31 +5115,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "ory",
+                "3": "ory"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "India"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Odia"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "India"
+                ]
             },
-            "description": "インド・アーリア語群の言語。インド東部オディシャ州を中心に話され、独自の丸みを帯びた文字を持つ。",
+            "description": "インド・アーリア語群の言語。インド東部オディシャ州を中心に話され、独自の丸みを帯びた文字を持つ。 主な分布地域はIndia。 系統分類ではインド・ヨーロッパ語族・インド・イラン語派・インド・アーリア語群に位置づけられる。 主な分布はIndiaである。 主要な表記体系としてOdiaが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Odia",
+                "glottolog": "https://glottolog.org/glottolog?iso=ory"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ଓଡ଼ିଆ",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "nepali": {
             "id": "nepali",
@@ -4126,31 +5175,53 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "npi",
+                "3": "npi"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Nepal",
+                    "India"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Devanagari"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Nepal"
+                ]
             },
-            "description": "インド・アーリア語群の言語。ネパールの主要公用語で、デーヴァナーガリー文字を用いる。",
+            "description": "インド・アーリア語群の言語。ネパールの主要公用語で、デーヴァナーガリー文字を用いる。 主な分布地域はNepal、India。 系統分類ではインド・ヨーロッパ語族・インド・イラン語派・インド・アーリア語群に位置づけられる。 主な分布はNepal、Indiaである。 主要な表記体系としてDevanagariが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Nepali",
+                "glottolog": "https://glottolog.org/glottolog?iso=npi"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "नेपाली",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "sinhala": {
             "id": "sinhala",
@@ -4165,31 +5236,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "si",
+                "2": "sin",
+                "3": "sin"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Sri Lanka"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Sinhala"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Sri Lanka"
+                ]
             },
-            "description": "インド・アーリア語群の言語。スリランカを中心に話され、独自の丸みを帯びたシンハラ文字を用いる。",
+            "description": "インド・アーリア語群の言語。スリランカを中心に話され、独自の丸みを帯びたシンハラ文字を用いる。 主な分布地域はSri Lanka。 系統分類ではインド・ヨーロッパ語族・インド・イラン語派・インド・アーリア語群に位置づけられる。 主な分布はSri Lankaである。 主要な表記体系としてSinhalaが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Sinhala",
+                "glottolog": "https://glottolog.org/glottolog?iso=sin"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "සිංහල",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "sindhi": {
             "id": "sindhi",
@@ -4204,31 +5296,54 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "sd",
+                "2": "snd",
+                "3": "snd"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Pakistan",
+                    "India"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Arabic",
+                    "Devanagari"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Pakistan"
+                ]
             },
-            "description": "インド・アーリア語群の言語。パキスタンのシンド州などで話され、地域によって複数の文字が使われる。",
+            "description": "インド・アーリア語群の言語。パキスタンのシンド州などで話され、地域によって複数の文字が使われる。 主な分布地域はPakistan、India。 系統分類ではインド・ヨーロッパ語族・インド・イラン語派・インド・アーリア語群に位置づけられる。 主な分布はPakistan、Indiaである。 主要な表記体系としてArabic、Devanagariが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Sindhi",
+                "glottolog": "https://glottolog.org/glottolog?iso=snd"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "سنڌي",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "kashmiri": {
             "id": "kashmiri",
@@ -4243,31 +5358,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "ks",
+                "2": "kas",
+                "3": "kas"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "India",
+                    "Pakistan"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Perso-Arabic",
+                    "Devanagari"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "インド・アーリア語群のダルド諸語に分類される言語。カシミール地域を中心に話される。",
+            "description": "インド・アーリア語群のダルド諸語に分類される言語。カシミール地域を中心に話される。 主な分布地域はIndia、Pakistan。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・インド・イラン語派・インド・アーリア語群に位置づけられる。 主な分布はIndia、Pakistanである。 主要な表記体系としてPerso-Arabic、Devanagariが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Kashmiri",
+                "glottolog": "https://glottolog.org/glottolog?iso=kas"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "कॉशुर / کٲشُر",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "konkani": {
             "id": "konkani",
@@ -4282,31 +5418,54 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "kok",
+                "3": "kok"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "India"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Devanagari",
+                    "Kannada",
+                    "Roman"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "India"
+                ]
             },
-            "description": "インド・アーリア語群の言語。インド西岸に沿って分布し、地域によって異なる文字が使われる。",
+            "description": "インド・アーリア語群の言語。インド西岸に沿って分布し、地域によって異なる文字が使われる。 主な分布地域はIndia。 系統分類ではインド・ヨーロッパ語族・インド・イラン語派・インド・アーリア語群に位置づけられる。 主な分布はIndiaである。 主要な表記体系としてDevanagari、Kannada、Romanが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Konkani",
+                "glottolog": "https://glottolog.org/glottolog?iso=kok"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "कोंकणी / ಕೊಂಕಣಿ",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "romani": {
             "id": "romani",
@@ -4321,31 +5480,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "rom",
+                "3": "rom"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Europe",
+                    "Turkey",
+                    "United States"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "インド・ヨーロッパ語族に分類される言語。より細かな分類は「インド・イラン語派 → インド・アーリア語群」で表されます。",
+            "description": "インド・ヨーロッパ語族に分類される言語。より細かな分類は「インド・イラン語派 → インド・アーリア語群」で表されます。 主な分布地域はEurope、Turkey、United States。 現代の主要な表記にはLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Romani",
+                "glottolog": "https://glottolog.org/glottolog?iso=rom"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "romani čhib",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "sanskrit": {
             "id": "sanskrit",
@@ -4360,31 +5540,49 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "sa",
+                "2": "san",
+                "3": "san"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
                 "regions": [],
-                "countries": []
+                "countries": [
+                    "India"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Devanagari",
+                    "その他のインド系文字"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "古代インドのインド・アーリア語。宗教・哲学・文学の重要な古典語で、比較言語学史でも重要である。",
+            "description": "古代インドの古典語。インド・ヨーロッパ語族のインド・アーリア語群に属し、ヴェーダ文献や古典文学・宗教文献で用いられた。 系統分類ではインド・ヨーロッパ語族・インド・イラン語派・インド・アーリア語群に位置づけられる。 主な分布はIndiaである。 主要な表記体系としてDevanagari、その他のインド系文字が用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Sanskrit",
+                "glottolog": "https://glottolog.org/glottolog?iso=san"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "संस्कृतम्",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "persian": {
             "id": "persian",
@@ -4399,31 +5597,54 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "fa",
+                "2": "per",
+                "3": "fas"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 65000000,
+                "total": 82000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表のIranian Persian）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Iran",
+                    "Afghanistan",
+                    "Tajikistan"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Perso-Arabic"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Iran",
+                    "Afghanistan"
+                ]
             },
-            "description": "イラン語群の主要言語。イラン、アフガニスタン、中央アジアなどに歴史的・文化的影響を持つ。",
+            "description": "イラン語群の主要言語。イラン、アフガニスタン、中央アジアなどに歴史的・文化的影響を持つ。 主な分布地域はIran、Afghanistan、Tajikistan。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・インド・イラン語派・イラン語群に位置づけられる。 主な分布はIran、Afghanistan、Tajikistanである。 主要な表記体系としてPerso-Arabicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Persian",
+                "glottolog": "https://glottolog.org/glottolog?iso=fas"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "فارسی",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "pashto": {
             "id": "pashto",
@@ -4438,31 +5659,54 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "ps",
+                "2": "pus",
+                "3": "pus"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Afghanistan",
+                    "Pakistan"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Perso-Arabic"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Afghanistan",
+                    "Pakistan"
+                ]
             },
-            "description": "イラン語群の言語。アフガニスタンとパキスタン西部を中心に話される。",
+            "description": "イラン語群の言語。アフガニスタンとパキスタン西部を中心に話される。 主な分布地域はAfghanistan、Pakistan。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・インド・イラン語派・イラン語群に位置づけられる。 主な分布はAfghanistan、Pakistanである。 主要な表記体系としてPerso-Arabicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Pashto",
+                "glottolog": "https://glottolog.org/glottolog?iso=pus"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "پښتو",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "kurdish": {
             "id": "kurdish",
@@ -4477,31 +5721,55 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "ku",
+                "2": "kur",
+                "3": "kur"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Turkey",
+                    "Iraq",
+                    "Iran",
+                    "Syria"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin",
+                    "Arabic",
+                    "Cyrillic"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "イラン語群の言語群。クルド人社会で用いられ、複数の主要変種と複数の標準表記がある。",
+            "description": "イラン語群の言語群。クルド人社会で用いられ、複数の主要変種と複数の標準表記がある。 主な分布地域はTurkey、Iraq、Iran、Syria。 系統分類ではインド・ヨーロッパ語族・インド・イラン語派・イラン語群に位置づけられる。 主な分布はTurkey、Iraq、Iran、Syriaである。 主要な表記体系としてLatin、Arabic、Cyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Kurdish",
+                "glottolog": "https://glottolog.org/glottolog?iso=kur"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Kurdî / کوردی",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "tajik": {
             "id": "tajik",
@@ -4516,31 +5784,53 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "tg",
+                "2": "tgk",
+                "3": "tgk"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Tajikistan",
+                    "Uzbekistan"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Tajikistan"
+                ]
             },
-            "description": "インド・ヨーロッパ語族に分類される言語。より細かな分類は「インド・イラン語派 → イラン語群」で表されます。",
+            "description": "インド・ヨーロッパ語族に分類される言語。より細かな分類は「インド・イラン語派 → イラン語群」で表されます。 主な分布地域はTajikistan、Uzbekistan。 現代の主要な表記にはCyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Tajik",
+                "glottolog": "https://glottolog.org/glottolog?iso=tgk"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "тоҷикӣ",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "balochi": {
             "id": "balochi",
@@ -4555,31 +5845,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "bal",
+                "3": "bal"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Pakistan",
+                    "Iran",
+                    "Afghanistan"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Perso-Arabic"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "インド・ヨーロッパ語族に分類される言語。より細かな分類は「インド・イラン語派 → イラン語群」で表されます。",
+            "description": "インド・ヨーロッパ語族に分類される言語。より細かな分類は「インド・イラン語派 → イラン語群」で表されます。 主な分布地域はPakistan、Iran、Afghanistan。 現代の主要な表記にはLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Balochi",
+                "glottolog": "https://glottolog.org/glottolog?iso=bal"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "بلوچی",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "ossetian": {
             "id": "ossetian",
@@ -4594,31 +5905,53 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "os",
+                "2": "oss",
+                "3": "oss"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Russia",
+                    "Georgia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "South Ossetia"
+                ]
             },
-            "description": "インド・ヨーロッパ語族に分類される言語。より細かな分類は「インド・イラン語派 → イラン語群」で表されます。",
+            "description": "インド・ヨーロッパ語族に分類される言語。より細かな分類は「インド・イラン語派 → イラン語群」で表されます。 主な分布地域はRussia、Georgia。 現代の主要な表記にはCyrillicが用いられる。 系統分類ではインド・ヨーロッパ語族・インド・イラン語派・イラン語群に位置づけられる。 主な分布はRussia、Georgiaである。 主要な表記体系としてCyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Ossetian",
+                "glottolog": "https://glottolog.org/glottolog?iso=oss"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ирон æвзаг",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "greek": {
             "id": "greek",
@@ -4632,31 +5965,54 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "el",
+                "2": "gre",
+                "3": "ell"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Greece",
+                    "Cyprus"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Greek"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Greece",
+                    "Cyprus"
+                ]
             },
-            "description": "インド・ヨーロッパ語族に分類される言語。より細かな分類は「ギリシア語派」で表されます。",
+            "description": "インド・ヨーロッパ語族に分類される言語。より細かな分類は「ギリシア語派」で表されます。 主な分布地域はGreece、Cyprus。 現代の主要な表記にはGreekが用いられる。 系統分類ではインド・ヨーロッパ語族・ギリシア語派に位置づけられる。 主な分布はGreece、Cyprusである。 主要な表記体系としてGreekが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Greek",
+                "glottolog": "https://glottolog.org/glottolog?iso=ell"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ελληνικά",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "ancient_greek": {
             "id": "ancient_greek",
@@ -4670,31 +6026,51 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "grc",
+                "3": "grc"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
                 "regions": [],
-                "countries": []
+                "countries": [
+                    "Greece",
+                    "Eastern Mediterranean"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Greek"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "古代ギリシア世界で用いられたギリシア語。哲学・科学・文学の重要な文献を残す。",
-            "notes": [],
+            "description": "古代ギリシア世界で用いられたギリシア語。ホメロス文学、古典期の哲学・歴史・科学などの重要な文献を残す。 系統分類ではインド・ヨーロッパ語族・ギリシア語派に位置づけられる。 主な分布はGreece、Eastern Mediterraneanである。 主要な表記体系としてGreekが用いられる。",
+            "notes": [
+                "ISO 639-3 は現代語・歴史語の区別やマクロ言語との関係に注意が必要。"
+            ],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Ancient_Greek",
+                "glottolog": "https://glottolog.org/glottolog?iso=grc"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ἑλληνική",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "koine_greek": {
             "id": "koine_greek",
@@ -4708,31 +6084,51 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "grc",
+                "3": "grc"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
                 "regions": [],
-                "countries": []
+                "countries": [
+                    "Eastern Mediterranean",
+                    "Roman Empire"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Greek"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "ヘレニズム時代以降に広域で使われたギリシア語の共通語。新約聖書の主要な言語でもある。",
-            "notes": [],
+            "description": "ヘレニズム期以降に広域共通語として発達したギリシア語。新約聖書など初期キリスト教文献の主要言語でもある。 系統分類ではインド・ヨーロッパ語族・ギリシア語派に位置づけられる。 主な分布はEastern Mediterranean、Roman Empireである。 主要な表記体系としてGreekが用いられる。",
+            "notes": [
+                "ISO 639-3 は現代語・歴史語の区別やマクロ言語との関係に注意が必要。"
+            ],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Koine_Greek",
+                "glottolog": "https://glottolog.org/glottolog?iso=grc"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "κοινὴ διάλεκτος",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "albanian": {
             "id": "albanian",
@@ -4746,31 +6142,57 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "sq",
+                "2": "alb",
+                "3": "sqi"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Albania",
+                    "Kosovo",
+                    "North Macedonia",
+                    "Montenegro"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Albania",
+                    "Kosovo",
+                    "North Macedonia"
+                ]
             },
-            "description": "インド・ヨーロッパ語族に分類される言語。より細かな分類は「アルバニア語派」で表されます。",
+            "description": "インド・ヨーロッパ語族に分類される言語。より細かな分類は「アルバニア語派」で表されます。 主な分布地域はAlbania、Kosovo、North Macedonia、Montenegro。 現代の主要な表記にはLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Albanian",
+                "glottolog": "https://glottolog.org/glottolog?iso=sqi"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "shqip",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "armenian": {
             "id": "armenian",
@@ -4784,31 +6206,54 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "hy",
+                "2": "arm",
+                "3": "hye"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Armenia",
+                    "Georgia",
+                    "Russia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Armenian"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Armenia"
+                ]
             },
-            "description": "インド・ヨーロッパ語族に分類される言語。より細かな分類は「アルメニア語派」で表されます。",
+            "description": "インド・ヨーロッパ語族に分類される言語。より細かな分類は「アルメニア語派」で表されます。 主な分布地域はArmenia、Georgia、Russia。 現代の主要な表記にはArmenianが用いられる。 系統分類ではインド・ヨーロッパ語族・アルメニア語派に位置づけられる。 主な分布はArmenia、Georgia、Russiaである。 主要な表記体系としてArmenianが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Armenian",
+                "glottolog": "https://glottolog.org/glottolog?iso=hye"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "հայերեն",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "lithuanian": {
             "id": "lithuanian",
@@ -4822,31 +6267,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "lt",
+                "2": "lit",
+                "3": "lit"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Lithuania"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Lithuania"
+                ]
             },
-            "description": "インド・ヨーロッパ語族に分類される言語。より細かな分類は「バルト語派」で表されます。",
+            "description": "インド・ヨーロッパ語族に分類される言語。より細かな分類は「バルト語派」で表されます。 主な分布地域はLithuania。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・バルト語派に位置づけられる。 主な分布はLithuaniaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Lithuanian",
+                "glottolog": "https://glottolog.org/glottolog?iso=lit"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "lietuvių kalba",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "latvian": {
             "id": "latvian",
@@ -4860,31 +6326,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "lv",
+                "2": "lav",
+                "3": "lav"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Latvia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Latvia"
+                ]
             },
-            "description": "インド・ヨーロッパ語族に分類される言語。より細かな分類は「バルト語派」で表されます。",
+            "description": "インド・ヨーロッパ語族に分類される言語。より細かな分類は「バルト語派」で表されます。 主な分布地域はLatvia。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・バルト語派に位置づけられる。 主な分布はLatviaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Latvian",
+                "glottolog": "https://glottolog.org/glottolog?iso=lav"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "latviešu valoda",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "irish": {
             "id": "irish",
@@ -4899,31 +6386,53 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "ga",
+                "2": "gle",
+                "3": "gle"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "Ireland"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Ireland",
+                    "European Union"
+                ]
             },
-            "description": "インド・ヨーロッパ語族に分類される言語。より細かな分類は「ケルト語派 → 島嶼ケルト語」で表されます。",
+            "description": "インド・ヨーロッパ語族に分類される言語。より細かな分類は「ケルト語派 → 島嶼ケルト語」で表されます。 主な分布地域はIreland。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・ケルト語派・島嶼ケルト語に位置づけられる。 主な分布はIrelandである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Irish",
+                "glottolog": "https://glottolog.org/glottolog?iso=gle"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Gaeilge",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "scottish_gaelic": {
             "id": "scottish_gaelic",
@@ -4938,31 +6447,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "gd",
+                "2": "gla",
+                "3": "gla"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "United Kingdom"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "インド・ヨーロッパ語族に分類される言語。より細かな分類は「ケルト語派 → 島嶼ケルト語」で表されます。",
+            "description": "インド・ヨーロッパ語族に分類される言語。より細かな分類は「ケルト語派 → 島嶼ケルト語」で表されます。 主な分布地域はUnited Kingdom。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・ケルト語派・島嶼ケルト語に位置づけられる。 主な分布はUnited Kingdomである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Scottish_Gaelic",
+                "glottolog": "https://glottolog.org/glottolog?iso=gla"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Gàidhlig",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "welsh": {
             "id": "welsh",
@@ -4977,31 +6505,53 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "cy",
+                "2": "wel",
+                "3": "cym"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "United Kingdom"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Wales",
+                    "United Kingdom"
+                ]
             },
-            "description": "インド・ヨーロッパ語族に分類される言語。より細かな分類は「ケルト語派 → 島嶼ケルト語」で表されます。",
+            "description": "インド・ヨーロッパ語族に分類される言語。より細かな分類は「ケルト語派 → 島嶼ケルト語」で表されます。 主な分布地域はUnited Kingdom。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・ケルト語派・島嶼ケルト語に位置づけられる。 主な分布はUnited Kingdomである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Welsh",
+                "glottolog": "https://glottolog.org/glottolog?iso=cym"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Cymraeg",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "breton": {
             "id": "breton",
@@ -5016,31 +6566,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "br",
+                "2": "bre",
+                "3": "bre"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Europe / South Asia / West Asia"
+                ],
+                "countries": [
+                    "France"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "インド・ヨーロッパ語族に分類される言語。より細かな分類は「ケルト語派 → 島嶼ケルト語」で表されます。",
+            "description": "インド・ヨーロッパ語族に分類される言語。より細かな分類は「ケルト語派 → 島嶼ケルト語」で表されます。 主な分布地域はFrance。 現代の主要な表記にはLatinが用いられる。 系統分類ではインド・ヨーロッパ語族・ケルト語派・島嶼ケルト語に位置づけられる。 主な分布はFranceである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Breton",
+                "glottolog": "https://glottolog.org/glottolog?iso=bre"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "brezhoneg",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "mandarin_chinese": {
             "id": "mandarin_chinese",
@@ -5054,31 +6623,55 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "cmn",
+                "3": "cmn"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 988000000,
+                "total": 1183000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "East Asia / South Asia / Southeast Asia"
+                ],
+                "countries": [
+                    "China",
+                    "Taiwan",
+                    "Singapore"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Chinese characters"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "China",
+                    "Taiwan",
+                    "Singapore"
+                ]
             },
-            "description": "シナ・チベット語族に分類される言語。より細かな分類は「シナ語派」で表されます。",
+            "description": "シナ・チベット語族に分類される言語。より細かな分類は「シナ語派」で表されます。 主な分布地域はChina、Taiwan、Singapore。 現代の主要な表記にはChinese charactersが用いられる。 系統分類ではシナ・チベット語族・シナ語派に位置づけられる。 主な分布はChina、Taiwan、Singaporeである。 主要な表記体系としてChinese charactersが用いられる。 漢語の一変種で、中国語の他の主要変種とは音韻・語彙・文法の面で差がある。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Mandarin_Chinese",
+                "glottolog": "https://glottolog.org/glottolog?iso=cmn"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "普通话",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "cantonese": {
             "id": "cantonese",
@@ -5092,31 +6685,55 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "yue",
+                "3": "yue"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "East Asia / South Asia / Southeast Asia"
+                ],
+                "countries": [
+                    "China",
+                    "Hong Kong",
+                    "Macau"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Chinese characters"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Hong Kong",
+                    "Macau"
+                ]
             },
-            "description": "シナ・チベット語族に分類される言語。より細かな分類は「シナ語派」で表されます。",
+            "description": "シナ・チベット語族に分類される言語。より細かな分類は「シナ語派」で表されます。 主な分布地域はChina、Hong Kong、Macau。 現代の主要な表記にはChinese charactersが用いられる。 系統分類ではシナ・チベット語族・シナ語派に位置づけられる。 主な分布はChina、Hong Kong、Macauである。 主要な表記体系としてChinese charactersが用いられる。 粤語の主要な変種で、香港・マカオや華人社会で広く使われる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Cantonese",
+                "glottolog": "https://glottolog.org/glottolog?iso=yue"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "廣東話 / 粵語",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "wu_chinese": {
             "id": "wu_chinese",
@@ -5130,31 +6747,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "wuu",
+                "3": "wuu"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "East Asia / South Asia / Southeast Asia"
+                ],
+                "countries": [
+                    "China"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Chinese characters"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "シナ・チベット語族に分類される言語。より細かな分類は「シナ語派」で表されます。",
+            "description": "シナ・チベット語族に分類される言語。より細かな分類は「シナ語派」で表されます。 主な分布地域はChina。 現代の主要な表記にはChinese charactersが用いられる。 系統分類ではシナ・チベット語族・シナ語派に位置づけられる。 主な分布はChinaである。 主要な表記体系としてChinese charactersが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Wu_Chinese",
+                "glottolog": "https://glottolog.org/glottolog?iso=wuu"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "吳語",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "southern_min": {
             "id": "southern_min",
@@ -5168,31 +6804,54 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "nan",
+                "3": "nan"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "East Asia / South Asia / Southeast Asia"
+                ],
+                "countries": [
+                    "China",
+                    "Taiwan",
+                    "Singapore",
+                    "Malaysia",
+                    "Philippines"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Chinese characters"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "シナ・チベット語族に分類される言語。より細かな分類は「シナ語派」で表されます。",
+            "description": "シナ・チベット語族に分類される言語。より細かな分類は「シナ語派」で表されます。 主な分布地域はChina、Taiwan、Singapore、Malaysia、Philippines。 現代の主要な表記にはChinese charactersが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Southern_Min",
+                "glottolog": "https://glottolog.org/glottolog?iso=nan"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "閩南語",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "eastern_min": {
             "id": "eastern_min",
@@ -5206,31 +6865,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "cdo",
+                "3": "cdo"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "East Asia / South Asia / Southeast Asia"
+                ],
+                "countries": [
+                    "China"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Chinese characters"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "シナ・チベット語族に分類される言語。より細かな分類は「シナ語派」で表されます。",
+            "description": "シナ・チベット語族に分類される言語。より細かな分類は「シナ語派」で表されます。 主な分布地域はChina。 現代の主要な表記にはChinese charactersが用いられる。 系統分類ではシナ・チベット語族・シナ語派に位置づけられる。 主な分布はChinaである。 主要な表記体系としてChinese charactersが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Eastern_Min",
+                "glottolog": "https://glottolog.org/glottolog?iso=cdo"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "閩東語",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "hakka": {
             "id": "hakka",
@@ -5244,31 +6922,51 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "hak",
+                "3": "hak"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "East Asia / South Asia / Southeast Asia"
+                ],
+                "countries": [
+                    "China",
+                    "Taiwan"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Chinese characters"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "シナ・チベット語族に分類される言語。より細かな分類は「シナ語派」で表されます。",
+            "description": "シナ・チベット語族に分類される言語。より細かな分類は「シナ語派」で表されます。 主な分布地域はChina、Taiwan。 現代の主要な表記にはChinese charactersが用いられる。 系統分類ではシナ・チベット語族・シナ語派に位置づけられる。 主な分布はChina、Taiwanである。 主要な表記体系としてChinese charactersが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Hakka",
+                "glottolog": "https://glottolog.org/glottolog?iso=hak"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "客家話",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "jin_chinese": {
             "id": "jin_chinese",
@@ -5282,31 +6980,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "cjy",
+                "3": "cjy"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "East Asia / South Asia / Southeast Asia"
+                ],
+                "countries": [
+                    "China"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Chinese characters"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "シナ・チベット語族に分類される言語。より細かな分類は「シナ語派」で表されます。",
+            "description": "シナ・チベット語族に分類される言語。より細かな分類は「シナ語派」で表されます。 主な分布地域はChina。 現代の主要な表記にはChinese charactersが用いられる。 系統分類ではシナ・チベット語族・シナ語派に位置づけられる。 主な分布はChinaである。 主要な表記体系としてChinese charactersが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Jin_Chinese",
+                "glottolog": "https://glottolog.org/glottolog?iso=cjy"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "晋语",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "xiang_chinese": {
             "id": "xiang_chinese",
@@ -5320,31 +7037,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "hsn",
+                "3": "hsn"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "East Asia / South Asia / Southeast Asia"
+                ],
+                "countries": [
+                    "China"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Chinese characters"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "シナ・チベット語族に分類される言語。より細かな分類は「シナ語派」で表されます。",
+            "description": "シナ・チベット語族に分類される言語。より細かな分類は「シナ語派」で表されます。 主な分布地域はChina。 現代の主要な表記にはChinese charactersが用いられる。 系統分類ではシナ・チベット語族・シナ語派に位置づけられる。 主な分布はChinaである。 主要な表記体系としてChinese charactersが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Xiang_Chinese",
+                "glottolog": "https://glottolog.org/glottolog?iso=hsn"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "湘语",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "tibetan": {
             "id": "tibetan",
@@ -5358,31 +7094,55 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "bo",
+                "2": "tib",
+                "3": "bod"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "East Asia / South Asia / Southeast Asia"
+                ],
+                "countries": [
+                    "China",
+                    "India",
+                    "Nepal",
+                    "Bhutan"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Tibetan"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "China"
+                ]
             },
-            "description": "シナ・チベット語族に分類される言語。より細かな分類は「チベット諸語」で表されます。",
+            "description": "シナ・チベット語族に分類される言語。より細かな分類は「チベット諸語」で表されます。 主な分布地域はChina、India、Nepal、Bhutan。 現代の主要な表記にはTibetanが用いられる。 系統分類ではシナ・チベット語族・チベット諸語に位置づけられる。 主な分布はChina、India、Nepal、Bhutanである。 主要な表記体系としてTibetanが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Tibetan",
+                "glottolog": "https://glottolog.org/glottolog?iso=bod"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "བོད་སྐད་",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "burmese": {
             "id": "burmese",
@@ -5396,37 +7156,58 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "my",
+                "2": "bur",
+                "3": "mya"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "East Asia / South Asia / Southeast Asia"
+                ],
+                "countries": [
+                    "Myanmar"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Myanmar"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Myanmar"
+                ]
             },
-            "description": "シナ・チベット語族に分類される言語。より細かな分類は「ロロ・ビルマ語派」で表されます。",
+            "description": "シナ・チベット語族に分類される言語。より細かな分類は「ロロ・ビルマ語派」で表されます。 主な分布地域はMyanmar。 現代の主要な表記にはMyanmarが用いられる。 系統分類ではシナ・チベット語族・ロロ・ビルマ語派に位置づけられる。 主な分布はMyanmarである。 主要な表記体系としてMyanmarが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Burmese",
+                "glottolog": "https://glottolog.org/glottolog?iso=mya"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "မြန်မာဘာသာ",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "karen_languages": {
             "id": "karen_languages",
             "name": "カレン諸語",
             "englishName": "Karen languages",
-            "type": "language",
+            "type": "language_group",
             "classification": {
                 "path": [
                     "シナ・チベット語族",
@@ -5434,31 +7215,54 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": null,
+                "3": null
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "East Asia / South Asia / Southeast Asia"
+                ],
+                "countries": [
+                    "Myanmar",
+                    "Thailand"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Burmese-derived scripts",
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "シナ・チベット語族に分類される言語。より細かな分類は「カレン諸語」で表されます。",
-            "notes": [],
+            "description": "カレン諸語はミャンマーとタイを中心に分布する諸言語のグループ。シナ・チベット語族の中で独自の位置を占めるとされるが、内部分類には議論がある。 系統分類ではシナ・チベット語族・カレン諸語に位置づけられる。 主な分布はMyanmar、Thailandである。 主要な表記体系としてBurmese-derived scripts、Latinが用いられる。",
+            "notes": [
+                "カレン諸語は複数言語のグループであり、単一のISO 639-3コードを割り当てることはできない。"
+            ],
             "links": {
-                "wikipedia": null,
+                "wikipedia": "https://en.wikipedia.org/wiki/Karen_languages",
                 "glottolog": null
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Karen languages",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "meitei": {
             "id": "meitei",
@@ -5472,31 +7276,53 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "mni",
+                "3": "mni"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "East Asia / South Asia / Southeast Asia"
+                ],
+                "countries": [
+                    "India"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Meitei Mayek",
+                    "Bengali-Assamese"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "India"
+                ]
             },
-            "description": "シナ・チベット語族に分類される言語。より細かな分類は「クキ・チン・メイテイ諸語」で表されます。",
+            "description": "シナ・チベット語族に分類される言語。より細かな分類は「クキ・チン・メイテイ諸語」で表されます。 主な分布地域はIndia。 現代の主要な表記にはMeitei Mayek・Bengali-Assameseが用いられる。 系統分類ではシナ・チベット語族・クキ・チン・メイテイ諸語に位置づけられる。 主な分布はIndiaである。 主要な表記体系としてMeitei Mayek、Bengali-Assameseが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Meitei",
+                "glottolog": "https://glottolog.org/glottolog?iso=mni"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "মৈতৈলোন্ / মৈতৈলোন্",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "modern_standard_arabic": {
             "id": "modern_standard_arabic",
@@ -5510,31 +7336,73 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "arb",
+                "3": "arb"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "North Africa / West Asia / Horn of Africa"
+                ],
+                "countries": [
+                    "Arab countries across North Africa and West Asia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Arabic"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Algeria",
+                    "Bahrain",
+                    "Comoros",
+                    "Djibouti",
+                    "Egypt",
+                    "Iraq",
+                    "Jordan",
+                    "Kuwait",
+                    "Lebanon",
+                    "Libya",
+                    "Mauritania",
+                    "Morocco",
+                    "Oman",
+                    "Palestine",
+                    "Qatar",
+                    "Saudi Arabia",
+                    "Somalia",
+                    "Sudan",
+                    "Syria",
+                    "Tunisia",
+                    "United Arab Emirates",
+                    "Yemen"
+                ]
             },
-            "description": "アフロ・アジア語族に分類される言語。より細かな分類は「セム語派」で表されます。",
+            "description": "アフロ・アジア語族に分類される言語。より細かな分類は「セム語派」で表されます。 主な分布地域はArab countries across North Africa and West Asia。 現代の主要な表記にはArabicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Modern_Standard_Arabic",
+                "glottolog": "https://glottolog.org/glottolog?iso=arb"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "العربية الفصحى",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "hebrew": {
             "id": "hebrew",
@@ -5548,31 +7416,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "he",
+                "2": "heb",
+                "3": "heb"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "North Africa / West Asia / Horn of Africa"
+                ],
+                "countries": [
+                    "Israel"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Hebrew"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Israel"
+                ]
             },
-            "description": "アフロ・アジア語族に分類される言語。より細かな分類は「セム語派」で表されます。",
+            "description": "アフロ・アジア語族に分類される言語。より細かな分類は「セム語派」で表されます。 主な分布地域はIsrael。 現代の主要な表記にはHebrewが用いられる。 系統分類ではアフロ・アジア語族・セム語派に位置づけられる。 主な分布はIsraelである。 主要な表記体系としてHebrewが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Hebrew",
+                "glottolog": "https://glottolog.org/glottolog?iso=heb"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "עברית",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "amharic": {
             "id": "amharic",
@@ -5586,31 +7475,51 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "am",
+                "2": "amh",
+                "3": "amh"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 39000000,
+                "total": 78000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "North Africa / West Asia / Horn of Africa"
+                ],
+                "countries": [
+                    "Ethiopia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Geʽez"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Ethiopia"
+                ]
             },
-            "description": "アフロ・アジア語族に分類される言語。より細かな分類は「セム語派」で表されます。",
+            "description": "アフロ・アジア語族に分類される言語。より細かな分類は「セム語派」で表されます。 主な分布地域はEthiopia。 現代の主要な表記にはGeʽezが用いられる。 系統分類ではアフロ・アジア語族・セム語派に位置づけられる。 主な分布はEthiopiaである。 主要な表記体系としてGeʽezが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Amharic",
+                "glottolog": "https://glottolog.org/glottolog?iso=amh"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "አማርኛ",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "tigrinya": {
             "id": "tigrinya",
@@ -5624,31 +7533,54 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "ti",
+                "2": "tir",
+                "3": "tir"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "North Africa / West Asia / Horn of Africa"
+                ],
+                "countries": [
+                    "Eritrea",
+                    "Ethiopia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Geʽez"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Eritrea",
+                    "Ethiopia"
+                ]
             },
-            "description": "アフロ・アジア語族に分類される言語。より細かな分類は「セム語派」で表されます。",
+            "description": "アフロ・アジア語族に分類される言語。より細かな分類は「セム語派」で表されます。 主な分布地域はEritrea、Ethiopia。 現代の主要な表記にはGeʽezが用いられる。 系統分類ではアフロ・アジア語族・セム語派に位置づけられる。 主な分布はEritrea、Ethiopiaである。 主要な表記体系としてGeʽezが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Tigrinya",
+                "glottolog": "https://glottolog.org/glottolog?iso=tir"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ትግርኛ",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "maltese": {
             "id": "maltese",
@@ -5662,31 +7594,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "mt",
+                "2": "mlt",
+                "3": "mlt"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "North Africa / West Asia / Horn of Africa"
+                ],
+                "countries": [
+                    "Malta"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Malta"
+                ]
             },
-            "description": "アフロ・アジア語族に分類される言語。より細かな分類は「セム語派」で表されます。",
+            "description": "アフロ・アジア語族に分類される言語。より細かな分類は「セム語派」で表されます。 主な分布地域はMalta。 系統分類ではアフロ・アジア語族・セム語派に位置づけられる。 主な分布はMaltaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Maltese",
+                "glottolog": "https://glottolog.org/glottolog?iso=mlt"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Malti",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "classical_arabic": {
             "id": "classical_arabic",
@@ -5700,31 +7653,53 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "ara",
+                "3": "arb"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
                 "regions": [],
-                "countries": []
+                "countries": [
+                    "Arabian Peninsula",
+                    "Middle East",
+                    "North Africa"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Arabic"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "古典期のアラビア語。イスラーム文化の形成において中心的な文語であり、現代標準アラビア語の歴史的基盤でもある。",
-            "notes": [],
+            "description": "古典期のアラビア語。イスラム教成立期以降の宗教・文学・学術文献で重要で、現代標準アラビア語の歴史的基盤となっている。 系統分類ではアフロ・アジア語族・セム語派に位置づけられる。 主な分布はArabian Peninsula、Middle East、North Africaである。 主要な表記体系としてArabicが用いられる。",
+            "notes": [
+                "歴史的言語・言語群としての扱いに資料差があるため、ISOコードは参考値として扱う。",
+                "ISO 639-3では古典アラビア語だけを独立コードで区別せず、Standard Arabic（arb）として扱われる。"
+            ],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Classical_Arabic",
+                "glottolog": "https://glottolog.org/glottolog?iso=arc"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "العربية الكلاسيكية",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "akkadian": {
             "id": "akkadian",
@@ -5738,31 +7713,48 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "akk",
+                "3": "akk"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
                 "regions": [],
-                "countries": []
+                "countries": [
+                    "Mesopotamia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cuneiform"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "古代メソポタミアのセム語派言語。楔形文字で大量に記録され、古代オリエントの重要な文書言語だった。",
+            "description": "古代メソポタミアで用いられたセム語派の言語。楔形文字で記録され、アッシリア語・バビロニア語などの方言・変種を含む歴史的資料が残る。 系統分類ではアフロ・アジア語族・セム語派に位置づけられる。 主な分布はMesopotamiaである。 主要な表記体系としてCuneiformが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Akkadian",
+                "glottolog": "https://glottolog.org/glottolog?iso=akk"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "𒀝𒅗𒁺𒌑 / akkadû",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "aramaic": {
             "id": "aramaic",
@@ -5776,31 +7768,51 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "arc",
+                "3": "arc"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
                 "regions": [],
-                "countries": []
+                "countries": [
+                    "Middle East"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Syriac",
+                    "Hebrew"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "古代オリエントで広く用いられたセム語派の言語群。歴史的に広域の共通語として重要な役割を果たした。",
-            "notes": [],
+            "description": "古代西アジアで広く用いられたセム語派の言語群・歴史的言語。帝国アラム語などが広域行政語として用いられ、後代にも多数の方言が発達した。 系統分類ではアフロ・アジア語族・セム語派に位置づけられる。 主な分布はMiddle Eastである。 主要な表記体系としてSyriac、Hebrewが用いられる。",
+            "notes": [
+                "歴史的言語・言語群としての扱いに資料差があるため、ISOコードは参考値として扱う。"
+            ],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Aramaic",
+                "glottolog": "https://glottolog.org/glottolog?iso=arc"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ܐܪܡܝܐ / Aramaic",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "egyptian_arabic": {
             "id": "egyptian_arabic",
@@ -5815,31 +7827,49 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "arz",
+                "3": "arz"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 83000000,
+                "total": 118000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "North Africa / West Asia / Horn of Africa"
+                ],
+                "countries": [
+                    "Egypt"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Arabic"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "アフロ・アジア語族に分類される言語。より細かな分類は「セム語派 → アラビア語」で表されます。",
+            "description": "アフロ・アジア語族に分類される言語。より細かな分類は「セム語派 → アラビア語」で表されます。 主な分布地域はEgypt。 現代の主要な表記にはArabicが用いられる。 系統分類ではアフロ・アジア語族・セム語派・アラビア語に位置づけられる。 主な分布はEgyptである。 主要な表記体系としてArabicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Egyptian_Arabic",
+                "glottolog": "https://glottolog.org/glottolog?iso=arz"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "مصرى",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "levantine_arabic": {
             "id": "levantine_arabic",
@@ -5854,31 +7884,53 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "apc",
+                "3": "apc"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 55000000,
+                "total": 58000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "North Africa / West Asia / Horn of Africa"
+                ],
+                "countries": [
+                    "Lebanon",
+                    "Syria",
+                    "Jordan",
+                    "Palestine",
+                    "Israel"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Arabic"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "アフロ・アジア語族に分類される言語。より細かな分類は「セム語派 → アラビア語」で表されます。",
+            "description": "アフロ・アジア語族に分類される言語。より細かな分類は「セム語派 → アラビア語」で表されます。 主な分布地域はLebanon、Syria、Jordan、Palestine、Israel。 現代の主要な表記にはArabicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Levantine_Arabic",
+                "glottolog": "https://glottolog.org/glottolog?iso=apc"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "شامي",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "moroccan_arabic": {
             "id": "moroccan_arabic",
@@ -5893,31 +7945,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "ary",
+                "3": "ary"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "North Africa / West Asia / Horn of Africa"
+                ],
+                "countries": [
+                    "Morocco"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Arabic"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "アフロ・アジア語族に分類される言語。より細かな分類は「セム語派 → アラビア語」で表されます。",
+            "description": "アフロ・アジア語族に分類される言語。より細かな分類は「セム語派 → アラビア語」で表されます。 主な分布地域はMorocco。 現代の主要な表記にはArabicが用いられる。 系統分類ではアフロ・アジア語族・セム語派・アラビア語に位置づけられる。 主な分布はMoroccoである。 主要な表記体系としてArabicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Moroccan_Arabic",
+                "glottolog": "https://glottolog.org/glottolog?iso=ary"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "الدارجة المغربية",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "hausa": {
             "id": "hausa",
@@ -5931,31 +8002,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "ha",
+                "2": "hau",
+                "3": "hau"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 58000000,
+                "total": 94000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "North Africa / West Asia / Horn of Africa"
+                ],
+                "countries": [
+                    "Nigeria",
+                    "Niger",
+                    "Ghana"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin",
+                    "Arabic (Ajami)"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "アフロ・アジア語族に分類される言語。より細かな分類は「チャド語派」で表されます。",
+            "description": "アフロ・アジア語族に分類される言語。より細かな分類は「チャド語派」で表されます。 主な分布地域はNigeria、Niger、Ghana。 系統分類ではアフロ・アジア語族・チャド語派に位置づけられる。 主な分布はNigeria、Niger、Ghanaである。 主要な表記体系としてLatin、Arabic (Ajami)が用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Hausa",
+                "glottolog": "https://glottolog.org/glottolog?iso=hau"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Hausa",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "somali": {
             "id": "somali",
@@ -5969,31 +8061,53 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "so",
+                "2": "som",
+                "3": "som"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "North Africa / West Asia / Horn of Africa"
+                ],
+                "countries": [
+                    "Somalia",
+                    "Ethiopia",
+                    "Djibouti",
+                    "Kenya"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "アフロ・アジア語族に分類される言語。より細かな分類は「クシ語派」で表されます。",
+            "description": "アフロ・アジア語族に分類される言語。より細かな分類は「クシ語派」で表されます。 主な分布地域はSomalia、Ethiopia、Djibouti、Kenya。 系統分類ではアフロ・アジア語族・クシ語派に位置づけられる。 主な分布はSomalia、Ethiopia、Djibouti、Kenyaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Somali",
+                "glottolog": "https://glottolog.org/glottolog?iso=som"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Af-Soomaali",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "oromo": {
             "id": "oromo",
@@ -6007,31 +8121,51 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "om",
+                "2": "orm",
+                "3": "orm"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "North Africa / West Asia / Horn of Africa"
+                ],
+                "countries": [
+                    "Ethiopia",
+                    "Kenya"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "アフロ・アジア語族に分類される言語。より細かな分類は「クシ語派」で表されます。",
+            "description": "アフロ・アジア語族に分類される言語。より細かな分類は「クシ語派」で表されます。 主な分布地域はEthiopia、Kenya。 系統分類ではアフロ・アジア語族・クシ語派に位置づけられる。 主な分布はEthiopia、Kenyaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Oromo",
+                "glottolog": "https://glottolog.org/glottolog?iso=orm"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Afaan Oromoo",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "kabyle": {
             "id": "kabyle",
@@ -6045,31 +8179,51 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "kab",
+                "3": "kab"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "North Africa / West Asia / Horn of Africa"
+                ],
+                "countries": [
+                    "Algeria"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin",
+                    "Tifinagh"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "アフロ・アジア語族に分類される言語。より細かな分類は「ベルベル語派」で表されます。",
+            "description": "アフロ・アジア語族に分類される言語。より細かな分類は「ベルベル語派」で表されます。 主な分布地域はAlgeria。 系統分類ではアフロ・アジア語族・ベルベル語派に位置づけられる。 主な分布はAlgeriaである。 主要な表記体系としてLatin、Tifinaghが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Kabyle",
+                "glottolog": "https://glottolog.org/glottolog?iso=kab"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Taqbaylit",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "ancient_egyptian": {
             "id": "ancient_egyptian",
@@ -6083,31 +8237,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "egy",
+                "3": "egy"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
                 "regions": [],
-                "countries": []
+                "countries": [
+                    "Egypt"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Egyptian hieroglyphs",
+                    "Hieratic",
+                    "Demotic"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "古代エジプトで用いられたアフロ・アジア語族の言語。ヒエログリフなど複数の書記体系で記録された。",
+            "description": "古代エジプトで約3000年以上にわたって用いられた言語。ヒエログリフ、ヒエラティック、デモティックなどの文字資料が残り、後のコプト語へつながる。 系統分類ではアフロ・アジア語族・エジプト語派に位置づけられる。 主な分布はEgyptである。 主要な表記体系としてEgyptian hieroglyphs、Hieratic、Demoticが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Ancient_Egyptian",
+                "glottolog": "https://glottolog.org/glottolog?iso=egy"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "mdw nṯr",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "indonesian": {
             "id": "indonesian",
@@ -6121,31 +8294,51 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "id",
+                "2": "ind",
+                "3": "ind"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 78000000,
+                "total": 255000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Southeast Asia / Oceania / Madagascar"
+                ],
+                "countries": [
+                    "Indonesia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Indonesia"
+                ]
             },
-            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派」で表されます。",
+            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派」で表されます。 主な分布地域はIndonesia。 現代の主要な表記にはLatinが用いられる。 系統分類ではオーストロネシア語族・マレー・ポリネシア語派に位置づけられる。 主な分布はIndonesiaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Indonesian",
+                "glottolog": "https://glottolog.org/glottolog?iso=ind"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Bahasa Indonesia",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "malay": {
             "id": "malay",
@@ -6159,31 +8352,57 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "ms",
+                "2": "may",
+                "3": "msa"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Southeast Asia / Oceania / Madagascar"
+                ],
+                "countries": [
+                    "Malaysia",
+                    "Brunei",
+                    "Singapore",
+                    "Indonesia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Malaysia",
+                    "Brunei",
+                    "Singapore"
+                ]
             },
-            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派」で表されます。",
+            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派」で表されます。 主な分布地域はMalaysia、Brunei、Singapore、Indonesia。 現代の主要な表記にはLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Malay",
+                "glottolog": "https://glottolog.org/glottolog?iso=msa"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Bahasa Melayu",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "javanese": {
             "id": "javanese",
@@ -6197,31 +8416,51 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "jv",
+                "2": "jav",
+                "3": "jav"
+            },
             "speakers": {
                 "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "total": 69000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Southeast Asia / Oceania / Madagascar"
+                ],
+                "countries": [
+                    "Indonesia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Indonesia"
+                ]
             },
-            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派」で表されます。",
+            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派」で表されます。 主な分布地域はIndonesia。 現代の主要な表記にはLatinが用いられる。 系統分類ではオーストロネシア語族・マレー・ポリネシア語派に位置づけられる。 主な分布はIndonesiaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Javanese",
+                "glottolog": "https://glottolog.org/glottolog?iso=jav"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Basa Jawa",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "sundanese": {
             "id": "sundanese",
@@ -6235,31 +8474,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "su",
+                "2": "sun",
+                "3": "sun"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Southeast Asia / Oceania / Madagascar"
+                ],
+                "countries": [
+                    "Indonesia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派」で表されます。",
+            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派」で表されます。 主な分布地域はIndonesia。 現代の主要な表記にはLatinが用いられる。 系統分類ではオーストロネシア語族・マレー・ポリネシア語派に位置づけられる。 主な分布はIndonesiaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Sundanese",
+                "glottolog": "https://glottolog.org/glottolog?iso=sun"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Basa Sunda",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "madurese": {
             "id": "madurese",
@@ -6273,31 +8531,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "mad",
+                "3": "mad"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Southeast Asia / Oceania / Madagascar"
+                ],
+                "countries": [
+                    "Indonesia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派」で表されます。",
+            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派」で表されます。 主な分布地域はIndonesia。 現代の主要な表記にはLatinが用いられる。 系統分類ではオーストロネシア語族・マレー・ポリネシア語派に位置づけられる。 主な分布はIndonesiaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Madurese",
+                "glottolog": "https://glottolog.org/glottolog?iso=mad"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Bhâsa Madhurâ",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "malagasy": {
             "id": "malagasy",
@@ -6311,31 +8588,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "mg",
+                "2": "mlg",
+                "3": "mlg"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Southeast Asia / Oceania / Madagascar"
+                ],
+                "countries": [
+                    "Madagascar"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Madagascar"
+                ]
             },
-            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派」で表されます。",
+            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派」で表されます。 主な分布地域はMadagascar。 現代の主要な表記にはLatinが用いられる。 系統分類ではオーストロネシア語族・マレー・ポリネシア語派に位置づけられる。 主な分布はMadagascarである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Malagasy",
+                "glottolog": "https://glottolog.org/glottolog?iso=mlg"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Malagasy",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "fijian": {
             "id": "fijian",
@@ -6349,31 +8647,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "fj",
+                "2": "fij",
+                "3": "fij"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Southeast Asia / Oceania / Madagascar"
+                ],
+                "countries": [
+                    "Fiji"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Fiji"
+                ]
             },
-            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派」で表されます。",
+            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派」で表されます。 主な分布地域はFiji。 現代の主要な表記にはLatinが用いられる。 系統分類ではオーストロネシア語族・マレー・ポリネシア語派に位置づけられる。 主な分布はFijiである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Fijian",
+                "glottolog": "https://glottolog.org/glottolog?iso=fij"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "vosa Vakaviti",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "palauan": {
             "id": "palauan",
@@ -6387,31 +8706,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "pau",
+                "3": "pau"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Southeast Asia / Oceania / Madagascar"
+                ],
+                "countries": [
+                    "Palau"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Palau"
+                ]
             },
-            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派」で表されます。",
+            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派」で表されます。 主な分布地域はPalau。 現代の主要な表記にはLatinが用いられる。 系統分類ではオーストロネシア語族・マレー・ポリネシア語派に位置づけられる。 主な分布はPalauである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Palauan",
+                "glottolog": "https://glottolog.org/glottolog?iso=pau"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "a tekoi er a Belau",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "chamorro": {
             "id": "chamorro",
@@ -6425,31 +8765,54 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "ch",
+                "2": "cha",
+                "3": "cha"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Southeast Asia / Oceania / Madagascar"
+                ],
+                "countries": [
+                    "Guam",
+                    "Northern Mariana Islands"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Guam",
+                    "Northern Mariana Islands"
+                ]
             },
-            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派」で表されます。",
+            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派」で表されます。 主な分布地域はGuam、Northern Mariana Islands。 現代の主要な表記にはLatinが用いられる。 系統分類ではオーストロネシア語族・マレー・ポリネシア語派に位置づけられる。 主な分布はGuam、Northern Mariana Islandsである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Chamorro",
+                "glottolog": "https://glottolog.org/glottolog?iso=cha"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Finuʼ Chamoru",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "tagalog": {
             "id": "tagalog",
@@ -6464,31 +8827,51 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "tl",
+                "2": "tgl",
+                "3": "tgl"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 33000000,
+                "total": 87000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Southeast Asia / Oceania / Madagascar"
+                ],
+                "countries": [
+                    "Philippines"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Philippines"
+                ]
             },
-            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派 → フィリピン諸語」で表されます。",
+            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派 → フィリピン諸語」で表されます。 主な分布地域はPhilippines。 現代の主要な表記にはLatinが用いられる。 系統分類ではオーストロネシア語族・マレー・ポリネシア語派・フィリピン諸語に位置づけられる。 主な分布はPhilippinesである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Tagalog",
+                "glottolog": "https://glottolog.org/glottolog?iso=tgl"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Tagalog",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "cebuano": {
             "id": "cebuano",
@@ -6503,31 +8886,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "ceb",
+                "3": "ceb"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Southeast Asia / Oceania / Madagascar"
+                ],
+                "countries": [
+                    "Philippines"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派 → フィリピン諸語」で表されます。",
+            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派 → フィリピン諸語」で表されます。 主な分布地域はPhilippines。 現代の主要な表記にはLatinが用いられる。 系統分類ではオーストロネシア語族・マレー・ポリネシア語派・フィリピン諸語に位置づけられる。 主な分布はPhilippinesである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Cebuano",
+                "glottolog": "https://glottolog.org/glottolog?iso=ceb"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Sinugboanon",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "ilocano": {
             "id": "ilocano",
@@ -6542,31 +8944,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "ilo",
+                "3": "ilo"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Southeast Asia / Oceania / Madagascar"
+                ],
+                "countries": [
+                    "Philippines"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派 → フィリピン諸語」で表されます。",
+            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派 → フィリピン諸語」で表されます。 主な分布地域はPhilippines。 現代の主要な表記にはLatinが用いられる。 系統分類ではオーストロネシア語族・マレー・ポリネシア語派・フィリピン諸語に位置づけられる。 主な分布はPhilippinesである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Ilocano",
+                "glottolog": "https://glottolog.org/glottolog?iso=ilo"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Ilokano",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "m_ori": {
             "id": "m_ori",
@@ -6581,31 +9002,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "mi",
+                "2": "mao",
+                "3": "mri"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Southeast Asia / Oceania / Madagascar"
+                ],
+                "countries": [
+                    "New Zealand"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派 → ポリネシア諸語」で表されます。",
+            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派 → ポリネシア諸語」で表されます。 主な分布地域はNew Zealand。 現代の主要な表記にはLatinが用いられる。 系統分類ではオーストロネシア語族・マレー・ポリネシア語派・ポリネシア諸語に位置づけられる。 主な分布はNew Zealandである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/M%C4%81ori",
+                "glottolog": "https://glottolog.org/glottolog?iso=mri"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Māori",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "hawaiian": {
             "id": "hawaiian",
@@ -6620,31 +9060,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "haw",
+                "3": "haw"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Southeast Asia / Oceania / Madagascar"
+                ],
+                "countries": [
+                    "United States"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "United States (Hawaii)"
+                ]
             },
-            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派 → ポリネシア諸語」で表されます。",
+            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派 → ポリネシア諸語」で表されます。 主な分布地域はUnited States。 現代の主要な表記にはLatinが用いられる。 系統分類ではオーストロネシア語族・マレー・ポリネシア語派・ポリネシア諸語に位置づけられる。 主な分布はUnited Statesである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Hawaiian",
+                "glottolog": "https://glottolog.org/glottolog?iso=haw"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ʻŌlelo Hawaiʻi",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "samoan": {
             "id": "samoan",
@@ -6659,31 +9120,53 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "sm",
+                "2": "smo",
+                "3": "smo"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Southeast Asia / Oceania / Madagascar"
+                ],
+                "countries": [
+                    "Samoa",
+                    "American Samoa"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Samoa"
+                ]
             },
-            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派 → ポリネシア諸語」で表されます。",
+            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派 → ポリネシア諸語」で表されます。 主な分布地域はSamoa、American Samoa。 現代の主要な表記にはLatinが用いられる。 系統分類ではオーストロネシア語族・マレー・ポリネシア語派・ポリネシア諸語に位置づけられる。 主な分布はSamoa、American Samoaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Samoan",
+                "glottolog": "https://glottolog.org/glottolog?iso=smo"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Gagana Samoa",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "tongan": {
             "id": "tongan",
@@ -6698,31 +9181,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "to",
+                "2": "ton",
+                "3": "ton"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Southeast Asia / Oceania / Madagascar"
+                ],
+                "countries": [
+                    "Tonga"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Tonga"
+                ]
             },
-            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派 → ポリネシア諸語」で表されます。",
+            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派 → ポリネシア諸語」で表されます。 主な分布地域はTonga。 現代の主要な表記にはLatinが用いられる。 系統分類ではオーストロネシア語族・マレー・ポリネシア語派・ポリネシア諸語に位置づけられる。 主な分布はTongaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Tongan",
+                "glottolog": "https://glottolog.org/glottolog?iso=ton"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "lea faka-Tonga",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "tahitian": {
             "id": "tahitian",
@@ -6737,31 +9241,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "ty",
+                "2": "tah",
+                "3": "tah"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Southeast Asia / Oceania / Madagascar"
+                ],
+                "countries": [
+                    "French Polynesia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "French Polynesia"
+                ]
             },
-            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派 → ポリネシア諸語」で表されます。",
+            "description": "オーストロネシア語族に分類される言語。より細かな分類は「マレー・ポリネシア語派 → ポリネシア諸語」で表されます。 主な分布地域はFrench Polynesia。 現代の主要な表記にはLatinが用いられる。 系統分類ではオーストロネシア語族・マレー・ポリネシア語派・ポリネシア諸語に位置づけられる。 主な分布はFrench Polynesiaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Tahitian",
+                "glottolog": "https://glottolog.org/glottolog?iso=tah"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "reo Tahiti",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "vietnamese": {
             "id": "vietnamese",
@@ -6775,31 +9300,51 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "vi",
+                "2": "vie",
+                "3": "vie"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 86000000,
+                "total": 97000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Mainland Southeast Asia / South Asia"
+                ],
+                "countries": [
+                    "Vietnam"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Vietnam"
+                ]
             },
-            "description": "オーストロアジア語族に分類される言語。より細かな分類は「モン・クメール語派」で表されます。",
+            "description": "オーストロアジア語族に分類される言語。より細かな分類は「モン・クメール語派」で表されます。 主な分布地域はVietnam。 現代の主要な表記にはLatinが用いられる。 系統分類ではオーストロアジア語族・モン・クメール語派に位置づけられる。 主な分布はVietnamである。 主要な表記体系としてLatinが用いられる。 声調を持つ分析的な言語で、現在はラテン文字を基盤とするクオック・グーを用いる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Vietnamese",
+                "glottolog": "https://glottolog.org/glottolog?iso=vie"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Tiếng Việt",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "khmer": {
             "id": "khmer",
@@ -6813,31 +9358,53 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "km",
+                "2": "khm",
+                "3": "khm"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Mainland Southeast Asia / South Asia"
+                ],
+                "countries": [
+                    "Cambodia",
+                    "Vietnam"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Khmer"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Cambodia"
+                ]
             },
-            "description": "オーストロアジア語族に分類される言語。より細かな分類は「モン・クメール語派」で表されます。",
+            "description": "オーストロアジア語族に分類される言語。より細かな分類は「モン・クメール語派」で表されます。 主な分布地域はCambodia、Vietnam。 現代の主要な表記にはKhmerが用いられる。 系統分類ではオーストロアジア語族・モン・クメール語派に位置づけられる。 主な分布はCambodia、Vietnamである。 主要な表記体系としてKhmerが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Khmer",
+                "glottolog": "https://glottolog.org/glottolog?iso=khm"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ភាសាខ្មែរ",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "mon": {
             "id": "mon",
@@ -6851,31 +9418,53 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "mnw",
+                "3": "mnw"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Mainland Southeast Asia / South Asia"
+                ],
+                "countries": [
+                    "Myanmar",
+                    "Thailand"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Mon"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Myanmar"
+                ]
             },
-            "description": "オーストロアジア語族に分類される言語。より細かな分類は「モン・クメール語派」で表されます。",
+            "description": "オーストロアジア語族に分類される言語。より細かな分類は「モン・クメール語派」で表されます。 主な分布地域はMyanmar、Thailand。 現代の主要な表記にはLatinが用いられる。 系統分類ではオーストロアジア語族・モン・クメール語派に位置づけられる。 主な分布はMyanmar、Thailandである。 主要な表記体系としてMonが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Mon",
+                "glottolog": "https://glottolog.org/glottolog?iso=mnw"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ဘာသာ မန်",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "santali": {
             "id": "santali",
@@ -6889,31 +9478,56 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "sat",
+                "3": "sat"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Mainland Southeast Asia / South Asia"
+                ],
+                "countries": [
+                    "India",
+                    "Bangladesh",
+                    "Nepal"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Ol Chiki",
+                    "Devanagari",
+                    "Bengali-Assamese"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "India"
+                ]
             },
-            "description": "オーストロアジア語族に分類される言語。より細かな分類は「ムンダ語派」で表されます。",
+            "description": "オーストロアジア語族に分類される言語。より細かな分類は「ムンダ語派」で表されます。 主な分布地域はIndia、Bangladesh、Nepal。 現代の主要な表記にはLatinが用いられる。 系統分類ではオーストロアジア語族・ムンダ語派に位置づけられる。 主な分布はIndia、Bangladesh、Nepalである。 主要な表記体系としてOl Chiki、Devanagari、Bengali-Assameseが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Santali",
+                "glottolog": "https://glottolog.org/glottolog?iso=sat"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ᱥᱟᱱᱛᱟᱲᱤ",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "mundari": {
             "id": "mundari",
@@ -6927,31 +9541,51 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "unr",
+                "3": "unr"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Mainland Southeast Asia / South Asia"
+                ],
+                "countries": [
+                    "India"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Ol Chiki",
+                    "Devanagari"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "オーストロアジア語族に分類される言語。より細かな分類は「ムンダ語派」で表されます。",
+            "description": "オーストロアジア語族に分類される言語。より細かな分類は「ムンダ語派」で表されます。 主な分布地域はIndia。 現代の主要な表記にはLatinが用いられる。 系統分類ではオーストロアジア語族・ムンダ語派に位置づけられる。 主な分布はIndiaである。 主要な表記体系としてOl Chiki、Devanagariが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Mundari",
+                "glottolog": "https://glottolog.org/glottolog?iso=unr"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "मुंडारी",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "tamil": {
             "id": "tamil",
@@ -6965,31 +9599,55 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "ta",
+                "2": "tam",
+                "3": "tam"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 79000000,
+                "total": 86000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "South Asia"
+                ],
+                "countries": [
+                    "India",
+                    "Sri Lanka",
+                    "Singapore"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Tamil"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "India",
+                    "Sri Lanka",
+                    "Singapore"
+                ]
             },
-            "description": "ドラヴィダ語族に分類される言語。より細かな分類は「南ドラヴィダ語派」で表されます。",
+            "description": "ドラヴィダ語族に分類される言語。より細かな分類は「南ドラヴィダ語派」で表されます。 主な分布地域はIndia、Sri Lanka、Singapore。 現代の主要な表記にはTamilが用いられる。 系統分類ではドラヴィダ語族・南ドラヴィダ語派に位置づけられる。 主な分布はIndia、Sri Lanka、Singaporeである。 主要な表記体系としてTamilが用いられる。 長い文献史を持つドラヴィダ語族の言語で、古典語としても重要である。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Tamil",
+                "glottolog": "https://glottolog.org/glottolog?iso=tam"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "தமிழ்",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "kannada": {
             "id": "kannada",
@@ -7003,31 +9661,51 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "kn",
+                "2": "kan",
+                "3": "kan"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 44000000,
+                "total": 59000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "South Asia"
+                ],
+                "countries": [
+                    "India"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Kannada"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "India"
+                ]
             },
-            "description": "ドラヴィダ語族に分類される言語。より細かな分類は「南ドラヴィダ語派」で表されます。",
+            "description": "ドラヴィダ語族に分類される言語。より細かな分類は「南ドラヴィダ語派」で表されます。 主な分布地域はIndia。 現代の主要な表記にはKannadaが用いられる。 系統分類ではドラヴィダ語族・南ドラヴィダ語派に位置づけられる。 主な分布はIndiaである。 主要な表記体系としてKannadaが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Kannada",
+                "glottolog": "https://glottolog.org/glottolog?iso=kan"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ಕನ್ನಡ",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "malayalam": {
             "id": "malayalam",
@@ -7041,31 +9719,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "ml",
+                "2": "mal",
+                "3": "mal"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "South Asia"
+                ],
+                "countries": [
+                    "India"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Malayalam"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "India"
+                ]
             },
-            "description": "ドラヴィダ語族に分類される言語。より細かな分類は「南ドラヴィダ語派」で表されます。",
+            "description": "ドラヴィダ語族に分類される言語。より細かな分類は「南ドラヴィダ語派」で表されます。 主な分布地域はIndia。 現代の主要な表記にはMalayalamが用いられる。 系統分類ではドラヴィダ語族・南ドラヴィダ語派に位置づけられる。 主な分布はIndiaである。 主要な表記体系としてMalayalamが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Malayalam",
+                "glottolog": "https://glottolog.org/glottolog?iso=mal"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "മലയാളം",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "tulu": {
             "id": "tulu",
@@ -7079,31 +9778,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "tcy",
+                "3": "tcy"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "South Asia"
+                ],
+                "countries": [
+                    "India"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Kannada"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "ドラヴィダ語族に分類される言語。より細かな分類は「南ドラヴィダ語派」で表されます。",
+            "description": "ドラヴィダ語族に分類される言語。より細かな分類は「南ドラヴィダ語派」で表されます。 主な分布地域はIndia。 現代の主要な表記にはLatinが用いられる。 系統分類ではドラヴィダ語族・南ドラヴィダ語派に位置づけられる。 主な分布はIndiaである。 主要な表記体系としてKannadaが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Tulu",
+                "glottolog": "https://glottolog.org/glottolog?iso=tcy"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ತುಳು",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "telugu": {
             "id": "telugu",
@@ -7117,31 +9835,51 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "te",
+                "2": "tel",
+                "3": "tel"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 83000000,
+                "total": 96000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "South Asia"
+                ],
+                "countries": [
+                    "India"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Telugu"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "India"
+                ]
             },
-            "description": "ドラヴィダ語族に分類される言語。より細かな分類は「南中央ドラヴィダ語派」で表されます。",
+            "description": "ドラヴィダ語族に分類される言語。より細かな分類は「南中央ドラヴィダ語派」で表されます。 主な分布地域はIndia。 現代の主要な表記にはTeluguが用いられる。 系統分類ではドラヴィダ語族・南中央ドラヴィダ語派に位置づけられる。 主な分布はIndiaである。 主要な表記体系としてTeluguが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Telugu",
+                "glottolog": "https://glottolog.org/glottolog?iso=tel"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "తెలుగు",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "gondi": {
             "id": "gondi",
@@ -7155,31 +9893,51 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "gon",
+                "3": "gon"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "South Asia"
+                ],
+                "countries": [
+                    "India"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Devanagari",
+                    "Telugu"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "ドラヴィダ語族に分類される言語。より細かな分類は「南中央ドラヴィダ語派」で表されます。",
+            "description": "ドラヴィダ語族に分類される言語。より細かな分類は「南中央ドラヴィダ語派」で表されます。 主な分布地域はIndia。 現代の主要な表記にはLatinが用いられる。 系統分類ではドラヴィダ語族・南中央ドラヴィダ語派に位置づけられる。 主な分布はIndiaである。 主要な表記体系としてDevanagari、Teluguが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Gondi",
+                "glottolog": "https://glottolog.org/glottolog?iso=gon"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Gōṇḍī",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "brahui": {
             "id": "brahui",
@@ -7193,31 +9951,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "brh",
+                "3": "brh"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "South Asia"
+                ],
+                "countries": [
+                    "Pakistan"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Arabic"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "ドラヴィダ語族に分類される言語。より細かな分類は「北ドラヴィダ語派」で表されます。",
+            "description": "ドラヴィダ語族に分類される言語。より細かな分類は「北ドラヴィダ語派」で表されます。 主な分布地域はPakistan。 現代の主要な表記にはLatinが用いられる。 系統分類ではドラヴィダ語族・北ドラヴィダ語派に位置づけられる。 主な分布はPakistanである。 主要な表記体系としてArabicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Brahui",
+                "glottolog": "https://glottolog.org/glottolog?iso=brh"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "براوی",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "turkish": {
             "id": "turkish",
@@ -7231,31 +10008,53 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "tr",
+                "2": "tur",
+                "3": "tur"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 86000000,
+                "total": 94000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Eurasia"
+                ],
+                "countries": [
+                    "Turkey",
+                    "Cyprus"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Turkey",
+                    "Cyprus"
+                ]
             },
-            "description": "テュルク語族に分類される言語。より細かな分類は「オグズ語群」で表されます。",
+            "description": "テュルク語族に分類される言語。より細かな分類は「オグズ語群」で表されます。 主な分布地域はTurkey、Cyprus。 現代の主要な表記にはLatinが用いられる。 系統分類ではテュルク語族・オグズ語群に位置づけられる。 主な分布はTurkey、Cyprusである。 主要な表記体系としてLatinが用いられる。 母音調和と膠着的な形態論が特徴的で、ラテン文字による現代トルコ語正書法が定着している。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Turkish",
+                "glottolog": "https://glottolog.org/glottolog?iso=tur"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Türkçe",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "azerbaijani": {
             "id": "azerbaijani",
@@ -7269,31 +10068,55 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "az",
+                "2": "aze",
+                "3": "aze"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Eurasia"
+                ],
+                "countries": [
+                    "Azerbaijan",
+                    "Iran",
+                    "Georgia",
+                    "Russia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Azerbaijan"
+                ]
             },
-            "description": "テュルク語族に分類される言語。より細かな分類は「オグズ語群」で表されます。",
+            "description": "テュルク語族に分類される言語。より細かな分類は「オグズ語群」で表されます。 主な分布地域はAzerbaijan、Iran、Georgia、Russia。 現代の主要な表記にはLatinが用いられる。 系統分類ではテュルク語族・オグズ語群に位置づけられる。 主な分布はAzerbaijan、Iran、Georgia、Russiaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Azerbaijani",
+                "glottolog": "https://glottolog.org/glottolog?iso=aze"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "azərbaycan dili",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "turkmen": {
             "id": "turkmen",
@@ -7307,31 +10130,54 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "tk",
+                "2": "tuk",
+                "3": "tuk"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Eurasia"
+                ],
+                "countries": [
+                    "Turkmenistan",
+                    "Afghanistan",
+                    "Iran"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Turkmenistan"
+                ]
             },
-            "description": "テュルク語族に分類される言語。より細かな分類は「オグズ語群」で表されます。",
+            "description": "テュルク語族に分類される言語。より細かな分類は「オグズ語群」で表されます。 主な分布地域はTurkmenistan、Afghanistan、Iran。 現代の主要な表記にはLatinが用いられる。 系統分類ではテュルク語族・オグズ語群に位置づけられる。 主な分布はTurkmenistan、Afghanistan、Iranである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Turkmen",
+                "glottolog": "https://glottolog.org/glottolog?iso=tuk"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Türkmen dili",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "chuvash": {
             "id": "chuvash",
@@ -7341,35 +10187,56 @@ const languageDatabase = {
             "classification": {
                 "path": [
                     "テュルク語族",
-                    "オグズ語群"
+                    "オグール語群"
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "cv",
+                "2": "chv",
+                "3": "chv"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Eurasia"
+                ],
+                "countries": [
+                    "Russia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Chuvash Republic"
+                ]
             },
-            "description": "テュルク語族に分類される言語。より細かな分類は「オグズ語群」で表されます。",
+            "description": "テュルク語族のオグール語群に属する言語。ロシア連邦チュヴァシ共和国を中心に話され、現代の標準表記にはキリル文字を用いる。テュルク諸語の中でもブルガール語群につながる独特の位置を占める。 系統分類ではテュルク語族・オグール語群に位置づけられる。 主な分布はRussiaである。 主要な表記体系としてCyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Chuvash",
+                "glottolog": "https://glottolog.org/glottolog?iso=chv"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "чӑвашла",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "uzbek": {
             "id": "uzbek",
@@ -7383,31 +10250,53 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "uz",
+                "2": "uzb",
+                "3": "uzb"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Eurasia"
+                ],
+                "countries": [
+                    "Uzbekistan",
+                    "Afghanistan"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Uzbekistan"
+                ]
             },
-            "description": "テュルク語族に分類される言語。より細かな分類は「カルルク語群」で表されます。",
+            "description": "テュルク語族に分類される言語。より細かな分類は「カルルク語群」で表されます。 主な分布地域はUzbekistan、Afghanistan。 現代の主要な表記にはLatinが用いられる。 系統分類ではテュルク語族・カルルク語群に位置づけられる。 主な分布はUzbekistan、Afghanistanである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Uzbek",
+                "glottolog": "https://glottolog.org/glottolog?iso=uzb"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Oʻzbekcha",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "uyghur": {
             "id": "uyghur",
@@ -7421,31 +10310,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "ug",
+                "2": "uig",
+                "3": "uig"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Eurasia"
+                ],
+                "countries": [
+                    "China",
+                    "Kazakhstan",
+                    "Kyrgyzstan"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Arabic"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "テュルク語族に分類される言語。より細かな分類は「カルルク語群」で表されます。",
+            "description": "テュルク語族に分類される言語。より細かな分類は「カルルク語群」で表されます。 主な分布地域はChina、Kazakhstan、Kyrgyzstan。 現代の主要な表記にはLatinが用いられる。 系統分類ではテュルク語族・カルルク語群に位置づけられる。 主な分布はChina、Kazakhstan、Kyrgyzstanである。 主要な表記体系としてArabicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Uyghur",
+                "glottolog": "https://glottolog.org/glottolog?iso=uig"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ئۇيغۇرچە",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "kazakh": {
             "id": "kazakh",
@@ -7459,31 +10369,56 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "kk",
+                "2": "kaz",
+                "3": "kaz"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Eurasia"
+                ],
+                "countries": [
+                    "Kazakhstan",
+                    "China",
+                    "Mongolia",
+                    "Russia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic",
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Kazakhstan"
+                ]
             },
-            "description": "テュルク語族に分類される言語。より細かな分類は「キプチャク語群」で表されます。",
+            "description": "テュルク語族に分類される言語。より細かな分類は「キプチャク語群」で表されます。 主な分布地域はKazakhstan、China、Mongolia、Russia。 現代の主要な表記にはCyrillicが用いられる。 系統分類ではテュルク語族・キプチャク語群に位置づけられる。 主な分布はKazakhstan、China、Mongolia、Russiaである。 主要な表記体系としてCyrillic、Latinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Kazakh",
+                "glottolog": "https://glottolog.org/glottolog?iso=kaz"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "қазақ тілі",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "kyrgyz": {
             "id": "kyrgyz",
@@ -7497,31 +10432,53 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "ky",
+                "2": "kir",
+                "3": "kir"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Eurasia"
+                ],
+                "countries": [
+                    "Kyrgyzstan",
+                    "China"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Kyrgyzstan"
+                ]
             },
-            "description": "テュルク語族に分類される言語。より細かな分類は「キプチャク語群」で表されます。",
+            "description": "テュルク語族に分類される言語。より細かな分類は「キプチャク語群」で表されます。 主な分布地域はKyrgyzstan、China。 現代の主要な表記にはCyrillicが用いられる。 系統分類ではテュルク語族・キプチャク語群に位置づけられる。 主な分布はKyrgyzstan、Chinaである。 主要な表記体系としてCyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Kyrgyz",
+                "glottolog": "https://glottolog.org/glottolog?iso=kir"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "кыргызча",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "tatar": {
             "id": "tatar",
@@ -7535,31 +10492,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "tt",
+                "2": "tat",
+                "3": "tat"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Eurasia"
+                ],
+                "countries": [
+                    "Russia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Tatarstan"
+                ]
             },
-            "description": "テュルク語族に分類される言語。より細かな分類は「キプチャク語群」で表されます。",
+            "description": "テュルク語族に分類される言語。より細かな分類は「キプチャク語群」で表されます。 主な分布地域はRussia。 現代の主要な表記にはCyrillicが用いられる。 系統分類ではテュルク語族・キプチャク語群に位置づけられる。 主な分布はRussiaである。 主要な表記体系としてCyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Tatar",
+                "glottolog": "https://glottolog.org/glottolog?iso=tat"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "татарча",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "bashkir": {
             "id": "bashkir",
@@ -7573,31 +10551,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "ba",
+                "2": "bak",
+                "3": "bak"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Eurasia"
+                ],
+                "countries": [
+                    "Russia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Bashkortostan"
+                ]
             },
-            "description": "テュルク語族に分類される言語。より細かな分類は「キプチャク語群」で表されます。",
+            "description": "テュルク語族に分類される言語。より細かな分類は「キプチャク語群」で表されます。 主な分布地域はRussia。 現代の主要な表記にはCyrillicが用いられる。 系統分類ではテュルク語族・キプチャク語群に位置づけられる。 主な分布はRussiaである。 主要な表記体系としてCyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Bashkir",
+                "glottolog": "https://glottolog.org/glottolog?iso=bak"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "башҡортса",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "sakha": {
             "id": "sakha",
@@ -7611,31 +10610,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "sah",
+                "3": "sah"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Eurasia"
+                ],
+                "countries": [
+                    "Russia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Sakha Republic"
+                ]
             },
-            "description": "テュルク語族に分類される言語。より細かな分類は「シベリア・テュルク諸語」で表されます。",
+            "description": "テュルク語族に分類される言語。より細かな分類は「シベリア・テュルク諸語」で表されます。 主な分布地域はRussia。 現代の主要な表記にはCyrillicが用いられる。 系統分類ではテュルク語族・シベリア・テュルク諸語に位置づけられる。 主な分布はRussiaである。 主要な表記体系としてCyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Sakha",
+                "glottolog": "https://glottolog.org/glottolog?iso=sah"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "саха тыла",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "finnish": {
             "id": "finnish",
@@ -7649,31 +10669,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "fi",
+                "2": "fin",
+                "3": "fin"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Northern Eurasia / Europe"
+                ],
+                "countries": [
+                    "Finland"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Finland"
+                ]
             },
-            "description": "ウラル語族に分類される言語。より細かな分類は「フィン・ウゴル語派」で表されます。",
+            "description": "ウラル語族に分類される言語。より細かな分類は「フィン・ウゴル語派」で表されます。 主な分布地域はFinland。 現代の主要な表記にはLatinが用いられる。 系統分類ではウラル語族・フィン・ウゴル語派に位置づけられる。 主な分布はFinlandである。 主要な表記体系としてLatinが用いられる。 豊富な格体系と母音調和を持つウラル語族の言語である。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Finnish",
+                "glottolog": "https://glottolog.org/glottolog?iso=fin"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "suomi",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "estonian": {
             "id": "estonian",
@@ -7687,31 +10728,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "et",
+                "2": "est",
+                "3": "est"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Northern Eurasia / Europe"
+                ],
+                "countries": [
+                    "Estonia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Estonia"
+                ]
             },
-            "description": "ウラル語族に分類される言語。より細かな分類は「フィン・ウゴル語派」で表されます。",
+            "description": "ウラル語族に分類される言語。より細かな分類は「フィン・ウゴル語派」で表されます。 主な分布地域はEstonia。 現代の主要な表記にはLatinが用いられる。 系統分類ではウラル語族・フィン・ウゴル語派に位置づけられる。 主な分布はEstoniaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Estonian",
+                "glottolog": "https://glottolog.org/glottolog?iso=est"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "eesti keel",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "mari": {
             "id": "mari",
@@ -7725,31 +10787,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "chm",
+                "3": "chm"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Northern Eurasia / Europe"
+                ],
+                "countries": [
+                    "Russia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "ウラル語族に分類される言語。より細かな分類は「フィン・ウゴル語派」で表されます。",
+            "description": "ウラル語族に分類される言語。より細かな分類は「フィン・ウゴル語派」で表されます。 主な分布地域はRussia。 現代の主要な表記にはLatinが用いられる。 系統分類ではウラル語族・フィン・ウゴル語派に位置づけられる。 主な分布はRussiaである。 主要な表記体系としてCyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Mari",
+                "glottolog": "https://glottolog.org/glottolog?iso=chm"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "марий йылме",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "udmurt": {
             "id": "udmurt",
@@ -7763,31 +10844,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "udm",
+                "3": "udm"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Northern Eurasia / Europe"
+                ],
+                "countries": [
+                    "Russia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "ウラル語族に分類される言語。より細かな分類は「フィン・ウゴル語派」で表されます。",
+            "description": "ウラル語族に分類される言語。より細かな分類は「フィン・ウゴル語派」で表されます。 主な分布地域はRussia。 現代の主要な表記にはLatinが用いられる。 系統分類ではウラル語族・フィン・ウゴル語派に位置づけられる。 主な分布はRussiaである。 主要な表記体系としてCyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Udmurt",
+                "glottolog": "https://glottolog.org/glottolog?iso=udm"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "удмурт кыл",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "komi": {
             "id": "komi",
@@ -7801,31 +10901,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "kv",
+                "2": "kom",
+                "3": "kom"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Northern Eurasia / Europe"
+                ],
+                "countries": [
+                    "Russia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "ウラル語族に分類される言語。より細かな分類は「フィン・ウゴル語派」で表されます。",
+            "description": "ウラル語族に分類される言語。より細かな分類は「フィン・ウゴル語派」で表されます。 主な分布地域はRussia。 現代の主要な表記にはLatinが用いられる。 系統分類ではウラル語族・フィン・ウゴル語派に位置づけられる。 主な分布はRussiaである。 主要な表記体系としてCyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Komi",
+                "glottolog": "https://glottolog.org/glottolog?iso=kom"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "коми кыв",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "erzya": {
             "id": "erzya",
@@ -7839,31 +10958,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "myv",
+                "3": "myv"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Northern Eurasia / Europe"
+                ],
+                "countries": [
+                    "Russia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "ウラル語族に分類される言語。より細かな分類は「フィン・ウゴル語派」で表されます。",
+            "description": "ウラル語族に分類される言語。より細かな分類は「フィン・ウゴル語派」で表されます。 主な分布地域はRussia。 現代の主要な表記にはLatinが用いられる。 系統分類ではウラル語族・フィン・ウゴル語派に位置づけられる。 主な分布はRussiaである。 主要な表記体系としてCyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Erzya",
+                "glottolog": "https://glottolog.org/glottolog?iso=myv"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "эрзянь кель",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "moksha": {
             "id": "moksha",
@@ -7877,31 +11015,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "mdf",
+                "3": "mdf"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Northern Eurasia / Europe"
+                ],
+                "countries": [
+                    "Russia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "ウラル語族に分類される言語。より細かな分類は「フィン・ウゴル語派」で表されます。",
+            "description": "ウラル語族に分類される言語。より細かな分類は「フィン・ウゴル語派」で表されます。 主な分布地域はRussia。 現代の主要な表記にはLatinが用いられる。 系統分類ではウラル語族・フィン・ウゴル語派に位置づけられる。 主な分布はRussiaである。 主要な表記体系としてCyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Moksha",
+                "glottolog": "https://glottolog.org/glottolog?iso=mdf"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "мокшень кяль",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "hungarian": {
             "id": "hungarian",
@@ -7915,31 +11072,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "hu",
+                "2": "hun",
+                "3": "hun"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Northern Eurasia / Europe"
+                ],
+                "countries": [
+                    "Hungary"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Hungary"
+                ]
             },
-            "description": "ウラル語族に分類される言語。より細かな分類は「ウゴル語派」で表されます。",
+            "description": "ウラル語族に分類される言語。より細かな分類は「ウゴル語派」で表されます。 主な分布地域はHungary。 現代の主要な表記にはLatinが用いられる。 系統分類ではウラル語族・ウゴル語派に位置づけられる。 主な分布はHungaryである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Hungarian",
+                "glottolog": "https://glottolog.org/glottolog?iso=hun"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "magyar",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "northern_sami": {
             "id": "northern_sami",
@@ -7953,31 +11131,56 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "se",
+                "2": "sme",
+                "3": "sme"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Northern Eurasia / Europe"
+                ],
+                "countries": [
+                    "Norway",
+                    "Sweden",
+                    "Finland"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Norway",
+                    "Sweden",
+                    "Finland"
+                ]
             },
-            "description": "ウラル語族に分類される言語。より細かな分類は「サーミ語派」で表されます。",
+            "description": "ウラル語族に分類される言語。より細かな分類は「サーミ語派」で表されます。 主な分布地域はNorway、Sweden、Finland。 現代の主要な表記にはLatinが用いられる。 系統分類ではウラル語族・サーミ語派に位置づけられる。 主な分布はNorway、Sweden、Finlandである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Northern_Sami",
+                "glottolog": "https://glottolog.org/glottolog?iso=sme"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "davvisámegiella",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "thai": {
             "id": "thai",
@@ -7991,31 +11194,51 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "th",
+                "2": "tha",
+                "3": "tha"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 27000000,
+                "total": 71000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Southeast Asia / South China"
+                ],
+                "countries": [
+                    "Thailand"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Thai"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Thailand"
+                ]
             },
-            "description": "タイ・カダイ語族に分類される言語。より細かな分類は「タイ語派」で表されます。",
+            "description": "タイ・カダイ語族に分類される言語。より細かな分類は「タイ語派」で表されます。 主な分布地域はThailand。 現代の主要な表記にはThaiが用いられる。 系統分類ではタイ・カダイ語族・タイ語派に位置づけられる。 主な分布はThailandである。 主要な表記体系としてThaiが用いられる。 声調・声門化などの音韻的特徴を持ち、独自のタイ文字で表記される。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Thai",
+                "glottolog": "https://glottolog.org/glottolog?iso=tha"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ภาษาไทย",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "lao": {
             "id": "lao",
@@ -8029,31 +11252,53 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "lo",
+                "2": "lao",
+                "3": "lao"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Southeast Asia / South China"
+                ],
+                "countries": [
+                    "Laos",
+                    "Thailand"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Lao"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Laos"
+                ]
             },
-            "description": "タイ・カダイ語族に分類される言語。より細かな分類は「タイ語派」で表されます。",
+            "description": "タイ・カダイ語族に分類される言語。より細かな分類は「タイ語派」で表されます。 主な分布地域はLaos、Thailand。 現代の主要な表記にはLaoが用いられる。 系統分類ではタイ・カダイ語族・タイ語派に位置づけられる。 主な分布はLaos、Thailandである。 主要な表記体系としてLaoが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Lao",
+                "glottolog": "https://glottolog.org/glottolog?iso=lao"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ພາສາລາວ",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "zhuang": {
             "id": "zhuang",
@@ -8067,31 +11312,53 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "za",
+                "2": "zha",
+                "3": "zha"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Southeast Asia / South China"
+                ],
+                "countries": [
+                    "China"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin",
+                    "Chinese characters"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "China"
+                ]
             },
-            "description": "タイ・カダイ語族に分類される言語。より細かな分類は「タイ語派」で表されます。",
+            "description": "タイ・カダイ語族に分類される言語。より細かな分類は「タイ語派」で表されます。 主な分布地域はChina。 現代の主要な表記にはLatinが用いられる。 系統分類ではタイ・カダイ語族・タイ語派に位置づけられる。 主な分布はChinaである。 主要な表記体系としてLatin、Chinese charactersが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Zhuang",
+                "glottolog": "https://glottolog.org/glottolog?iso=zha"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Vahcuengh",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "shan": {
             "id": "shan",
@@ -8105,31 +11372,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "shn",
+                "3": "shn"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Southeast Asia / South China"
+                ],
+                "countries": [
+                    "Myanmar"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Myanmar"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Myanmar"
+                ]
             },
-            "description": "タイ・カダイ語族に分類される言語。より細かな分類は「タイ語派」で表されます。",
+            "description": "タイ・カダイ語族に分類される言語。より細かな分類は「タイ語派」で表されます。 主な分布地域はMyanmar。 現代の主要な表記にはLatinが用いられる。 系統分類ではタイ・カダイ語族・タイ語派に位置づけられる。 主な分布はMyanmarである。 主要な表記体系としてMyanmarが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Shan",
+                "glottolog": "https://glottolog.org/glottolog?iso=shn"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ၽႃႇသႃႇတႆး",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "tai_nuea": {
             "id": "tai_nuea",
@@ -8143,31 +11431,53 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "tdd",
+                "3": "tdd"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Southeast Asia / South China"
+                ],
+                "countries": [
+                    "China",
+                    "Laos",
+                    "Thailand"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Tai Tham",
+                    "Thai"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "タイ・カダイ語族に分類される言語。より細かな分類は「タイ語派」で表されます。",
+            "description": "タイ・カダイ語族に分類される言語。より細かな分類は「タイ語派」で表されます。 主な分布地域はChina、Laos、Thailand。 現代の主要な表記にはLatinが用いられる。 系統分類ではタイ・カダイ語族・タイ語派に位置づけられる。 主な分布はChina、Laos、Thailandである。 主要な表記体系としてTai Tham、Thaiが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Tai_Nuea",
+                "glottolog": "https://glottolog.org/glottolog?iso=tdd"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ᦅ᧴ᦑᦺᦟᦾᦵ",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "japanese": {
             "id": "japanese",
@@ -8181,31 +11491,53 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "ja",
+                "2": "jpn",
+                "3": "jpn"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 124000000,
+                "total": 126000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Japan"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Kanji",
+                    "Hiragana",
+                    "Katakana"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Japan"
+                ]
             },
-            "description": "日琉語族に属する言語。漢字と仮名を組み合わせる独自の書記体系を発達させ、日本列島を中心に用いられる。",
+            "description": "日琉語族に属する言語。漢字と仮名を組み合わせる独自の書記体系を発達させ、日本列島を中心に用いられる。 主な分布地域はJapan。 現代の主要な表記にはKanji・Hiragana・Katakanaが用いられる。 系統分類では日琉語族・日本語派に位置づけられる。 主な分布はJapanである。 主要な表記体系としてKanji、Hiragana、Katakanaが用いられる。 日本語の系統的位置には議論があるが、GlottologではJaponic（日琉語族）に分類される。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Japanese",
+                "glottolog": "https://glottolog.org/glottolog?iso=jpn"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "日本語",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "amami": {
             "id": "amami",
@@ -8220,31 +11552,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "ryn",
+                "3": "ryn"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Japan"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Japanese kana/kanji"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "日琉語族に分類される言語。より細かな分類は「琉球語派 → 北琉球諸語」で表されます。",
+            "description": "日琉語族に分類される言語。より細かな分類は「琉球語派 → 北琉球諸語」で表されます。 主な分布地域はJapan。 系統分類では日琉語族・琉球語派・北琉球諸語に位置づけられる。 主な分布はJapanである。 主要な表記体系としてJapanese kana/kanjiが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Amami",
+                "glottolog": "https://glottolog.org/glottolog?iso=ryn"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "シマユムタ",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "okinawan": {
             "id": "okinawan",
@@ -8259,31 +11610,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "ryu",
+                "3": "ryu"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Japan"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Japanese kana/kanji"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "日琉語族に分類される言語。より細かな分類は「琉球語派 → 南琉球諸語」で表されます。",
+            "description": "日琉語族に分類される言語。より細かな分類は「琉球語派 → 南琉球諸語」で表されます。 主な分布地域はJapan。 系統分類では日琉語族・琉球語派・南琉球諸語に位置づけられる。 主な分布はJapanである。 主要な表記体系としてJapanese kana/kanjiが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Okinawan",
+                "glottolog": "https://glottolog.org/glottolog?iso=ryu"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ウチナーグチ",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "miyako": {
             "id": "miyako",
@@ -8298,31 +11668,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "mvi",
+                "3": "mvi"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Japan"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Japanese kana/kanji"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "日琉語族に分類される言語。より細かな分類は「琉球語派 → 南琉球諸語」で表されます。",
+            "description": "日琉語族に分類される言語。より細かな分類は「琉球語派 → 南琉球諸語」で表されます。 主な分布地域はJapan。 系統分類では日琉語族・琉球語派・南琉球諸語に位置づけられる。 主な分布はJapanである。 主要な表記体系としてJapanese kana/kanjiが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Miyako",
+                "glottolog": "https://glottolog.org/glottolog?iso=mvi"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ミャークフツ",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "yaeyama": {
             "id": "yaeyama",
@@ -8337,31 +11726,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "rys",
+                "3": "rys"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Japan"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Japanese kana/kanji"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "日琉語族に分類される言語。より細かな分類は「琉球語派 → 南琉球諸語」で表されます。",
+            "description": "日琉語族に分類される言語。より細かな分類は「琉球語派 → 南琉球諸語」で表されます。 主な分布地域はJapan。 系統分類では日琉語族・琉球語派・南琉球諸語に位置づけられる。 主な分布はJapanである。 主要な表記体系としてJapanese kana/kanjiが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Yaeyama",
+                "glottolog": "https://glottolog.org/glottolog?iso=rys"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ヤイマムニ",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "yonaguni": {
             "id": "yonaguni",
@@ -8376,31 +11784,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "yoi",
+                "3": "yoi"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Japan"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Japanese kana/kanji"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "日琉語族に分類される言語。より細かな分類は「琉球語派 → 南琉球諸語」で表されます。",
+            "description": "日琉語族に分類される言語。より細かな分類は「琉球語派 → 南琉球諸語」で表されます。 主な分布地域はJapan。 系統分類では日琉語族・琉球語派・南琉球諸語に位置づけられる。 主な分布はJapanである。 主要な表記体系としてJapanese kana/kanjiが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Yonaguni",
+                "glottolog": "https://glottolog.org/glottolog?iso=yoi"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ドゥナンムヌイ",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "korean": {
             "id": "korean",
@@ -8413,31 +11840,53 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "ko",
+                "2": "kor",
+                "3": "kor"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 82000000,
+                "total": 82000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Korean Peninsula"
+                ],
+                "countries": [
+                    "South Korea",
+                    "North Korea"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Hangul"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "South Korea",
+                    "North Korea"
+                ]
             },
-            "description": "朝鮮語族に属する言語。韓国・北朝鮮を中心に用い、ハングルという体系的な文字を持つ。",
+            "description": "朝鮮語族に属する言語。韓国・北朝鮮を中心に用い、ハングルという体系的な文字を持つ。 主な分布地域はSouth Korea、North Korea。 系統分類では朝鮮語族に位置づけられる。 主な分布はSouth Korea、North Koreaである。 主要な表記体系としてHangulが用いられる。 朝鮮半島を中心に用いられ、ハングルを主要な表記体系とする。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Korean",
+                "glottolog": "https://glottolog.org/glottolog?iso=kor"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "한국어 / 조선말",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "jeju": {
             "id": "jeju",
@@ -8450,31 +11899,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "jje",
+                "3": "jje"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Korean Peninsula"
+                ],
+                "countries": [
+                    "South Korea"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Hangul"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "朝鮮語族に分類される言語。より細かな分類は「」で表されます。",
+            "description": "朝鮮語族に分類される言語。分類上は朝鮮語族に位置づけられる。 主な分布地域はSouth Korea。 主な分布地域はSouth Korea。 系統分類では朝鮮語族に位置づけられる。 主な分布はSouth Koreaである。 主要な表記体系としてHangulが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Jeju",
+                "glottolog": "https://glottolog.org/glottolog?iso=jje"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "제주어",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "mongolian": {
             "id": "mongolian",
@@ -8487,31 +11955,53 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "mn",
+                "2": "mon",
+                "3": "mon"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Central Asia / East Asia"
+                ],
+                "countries": [
+                    "Mongolia",
+                    "China"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Mongolia"
+                ]
             },
-            "description": "モンゴル語族に分類される言語。より細かな分類は「」で表されます。",
+            "description": "モンゴル語族に分類される言語。分類上はモンゴル語族に位置づけられる。 主な分布地域はMongolia、China。 現代の主要な表記にはCyrillicが用いられる。 主な分布地域はMongolia、China。 系統分類ではモンゴル語族に位置づけられる。 主な分布はMongolia、Chinaである。 主要な表記体系としてCyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Mongolian",
+                "glottolog": "https://glottolog.org/glottolog?iso=mon"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "монгол хэл",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "buryat": {
             "id": "buryat",
@@ -8524,31 +12014,51 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "bua",
+                "3": "bua"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Central Asia / East Asia"
+                ],
+                "countries": [
+                    "Russia",
+                    "Mongolia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "モンゴル語族に分類される言語。より細かな分類は「」で表されます。",
+            "description": "モンゴル語族に分類される言語。分類上はモンゴル語族に位置づけられる。 主な分布地域はRussia、Mongolia。 現代の主要な表記にはCyrillicが用いられる。 主な分布地域はRussia、Mongolia。 系統分類ではモンゴル語族に位置づけられる。 主な分布はRussia、Mongoliaである。 主要な表記体系としてCyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Buryat",
+                "glottolog": "https://glottolog.org/glottolog?iso=bua"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "буряад хэлэн",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "kalmyk": {
             "id": "kalmyk",
@@ -8561,31 +12071,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "xal",
+                "3": "xal"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Central Asia / East Asia"
+                ],
+                "countries": [
+                    "Russia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "モンゴル語族に分類される言語。より細かな分類は「」で表されます。",
+            "description": "モンゴル語族に分類される言語。分類上はモンゴル語族に位置づけられる。 主な分布地域はRussia。 現代の主要な表記にはCyrillicが用いられる。 主な分布地域はRussia。 系統分類ではモンゴル語族に位置づけられる。 主な分布はRussiaである。 主要な表記体系としてCyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Kalmyk",
+                "glottolog": "https://glottolog.org/glottolog?iso=xal"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "хальмг келн",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "swahili": {
             "id": "swahili",
@@ -8599,31 +12128,57 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "sw",
+                "2": "swa",
+                "3": "swa"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 4000000,
+                "total": 95000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "West / Central / Southern Africa"
+                ],
+                "countries": [
+                    "Tanzania",
+                    "Kenya",
+                    "Uganda",
+                    "Democratic Republic of the Congo"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Tanzania",
+                    "Kenya",
+                    "Uganda",
+                    "Rwanda"
+                ]
             },
-            "description": "ニジェール・コンゴ語族に分類される言語。より細かな分類は「バントゥー諸語」で表されます。",
+            "description": "ニジェール・コンゴ語族に分類される言語。より細かな分類は「バントゥー諸語」で表されます。 主な分布地域はTanzania、Kenya、Uganda、Democratic Republic of the Congo。 現代の主要な表記にはLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Swahili",
+                "glottolog": "https://glottolog.org/glottolog?iso=swa"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Kiswahili",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "zulu": {
             "id": "zulu",
@@ -8637,31 +12192,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "zu",
+                "2": "zul",
+                "3": "zul"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "West / Central / Southern Africa"
+                ],
+                "countries": [
+                    "South Africa"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "South Africa"
+                ]
             },
-            "description": "ニジェール・コンゴ語族に分類される言語。より細かな分類は「バントゥー諸語」で表されます。",
+            "description": "ニジェール・コンゴ語族に分類される言語。より細かな分類は「バントゥー諸語」で表されます。 主な分布地域はSouth Africa。 現代の主要な表記にはLatinが用いられる。 系統分類ではニジェール・コンゴ語族・バントゥー諸語に位置づけられる。 主な分布はSouth Africaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Zulu",
+                "glottolog": "https://glottolog.org/glottolog?iso=zul"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "isiZulu",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "xhosa": {
             "id": "xhosa",
@@ -8675,31 +12251,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "xh",
+                "2": "xho",
+                "3": "xho"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "West / Central / Southern Africa"
+                ],
+                "countries": [
+                    "South Africa"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "South Africa"
+                ]
             },
-            "description": "ニジェール・コンゴ語族に分類される言語。より細かな分類は「バントゥー諸語」で表されます。",
+            "description": "ニジェール・コンゴ語族に分類される言語。より細かな分類は「バントゥー諸語」で表されます。 主な分布地域はSouth Africa。 現代の主要な表記にはLatinが用いられる。 系統分類ではニジェール・コンゴ語族・バントゥー諸語に位置づけられる。 主な分布はSouth Africaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Xhosa",
+                "glottolog": "https://glottolog.org/glottolog?iso=xho"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "isiXhosa",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "southern_sotho": {
             "id": "southern_sotho",
@@ -8713,31 +12310,54 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "st",
+                "2": "sot",
+                "3": "sot"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "West / Central / Southern Africa"
+                ],
+                "countries": [
+                    "Lesotho",
+                    "South Africa"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Lesotho",
+                    "South Africa"
+                ]
             },
-            "description": "ニジェール・コンゴ語族に分類される言語。より細かな分類は「バントゥー諸語」で表されます。",
+            "description": "ニジェール・コンゴ語族に分類される言語。より細かな分類は「バントゥー諸語」で表されます。 主な分布地域はLesotho、South Africa。 現代の主要な表記にはLatinが用いられる。 系統分類ではニジェール・コンゴ語族・バントゥー諸語に位置づけられる。 主な分布はLesotho、South Africaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Southern_Sotho",
+                "glottolog": "https://glottolog.org/glottolog?iso=sot"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Sesotho",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "tswana": {
             "id": "tswana",
@@ -8751,31 +12371,54 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "tn",
+                "2": "tsn",
+                "3": "tsn"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "West / Central / Southern Africa"
+                ],
+                "countries": [
+                    "Botswana",
+                    "South Africa"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Botswana",
+                    "South Africa"
+                ]
             },
-            "description": "ニジェール・コンゴ語族に分類される言語。より細かな分類は「バントゥー諸語」で表されます。",
+            "description": "ニジェール・コンゴ語族に分類される言語。より細かな分類は「バントゥー諸語」で表されます。 主な分布地域はBotswana、South Africa。 現代の主要な表記にはLatinが用いられる。 系統分類ではニジェール・コンゴ語族・バントゥー諸語に位置づけられる。 主な分布はBotswana、South Africaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Tswana",
+                "glottolog": "https://glottolog.org/glottolog?iso=tsn"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Setswana",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "shona": {
             "id": "shona",
@@ -8789,31 +12432,51 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "sn",
+                "2": "sna",
+                "3": "sna"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "West / Central / Southern Africa"
+                ],
+                "countries": [
+                    "Zimbabwe",
+                    "Mozambique"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "ニジェール・コンゴ語族に分類される言語。より細かな分類は「バントゥー諸語」で表されます。",
+            "description": "ニジェール・コンゴ語族に分類される言語。より細かな分類は「バントゥー諸語」で表されます。 主な分布地域はZimbabwe、Mozambique。 現代の主要な表記にはLatinが用いられる。 系統分類ではニジェール・コンゴ語族・バントゥー諸語に位置づけられる。 主な分布はZimbabwe、Mozambiqueである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Shona",
+                "glottolog": "https://glottolog.org/glottolog?iso=sna"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "chiShona",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "lingala": {
             "id": "lingala",
@@ -8827,31 +12490,54 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "ln",
+                "2": "lin",
+                "3": "lin"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "West / Central / Southern Africa"
+                ],
+                "countries": [
+                    "Democratic Republic of the Congo",
+                    "Republic of the Congo"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Democratic Republic of the Congo",
+                    "Republic of the Congo"
+                ]
             },
-            "description": "ニジェール・コンゴ語族に分類される言語。より細かな分類は「バントゥー諸語」で表されます。",
+            "description": "ニジェール・コンゴ語族に分類される言語。より細かな分類は「バントゥー諸語」で表されます。 主な分布地域はDemocratic Republic of the Congo、Republic of the Congo。 現代の主要な表記にはLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Lingala",
+                "glottolog": "https://glottolog.org/glottolog?iso=lin"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Lingála",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "kikongo": {
             "id": "kikongo",
@@ -8865,31 +12551,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "kg",
+                "2": "kon",
+                "3": "kon"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "West / Central / Southern Africa"
+                ],
+                "countries": [
+                    "Angola",
+                    "Democratic Republic of the Congo",
+                    "Republic of the Congo"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "ニジェール・コンゴ語族に分類される言語。より細かな分類は「バントゥー諸語」で表されます。",
+            "description": "ニジェール・コンゴ語族に分類される言語。より細かな分類は「バントゥー諸語」で表されます。 主な分布地域はAngola、Democratic Republic of the Congo、Republic of the Congo。 現代の主要な表記にはLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Kikongo",
+                "glottolog": "https://glottolog.org/glottolog?iso=kon"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Kikongo",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "kinyarwanda": {
             "id": "kinyarwanda",
@@ -8903,31 +12610,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "rw",
+                "2": "kin",
+                "3": "kin"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "West / Central / Southern Africa"
+                ],
+                "countries": [
+                    "Rwanda"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Rwanda"
+                ]
             },
-            "description": "ニジェール・コンゴ語族に分類される言語。より細かな分類は「バントゥー諸語」で表されます。",
+            "description": "ニジェール・コンゴ語族に分類される言語。より細かな分類は「バントゥー諸語」で表されます。 主な分布地域はRwanda。 現代の主要な表記にはLatinが用いられる。 系統分類ではニジェール・コンゴ語族・バントゥー諸語に位置づけられる。 主な分布はRwandaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Kinyarwanda",
+                "glottolog": "https://glottolog.org/glottolog?iso=kin"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Ikinyarwanda",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "kirundi": {
             "id": "kirundi",
@@ -8941,31 +12669,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "rn",
+                "2": "run",
+                "3": "run"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "West / Central / Southern Africa"
+                ],
+                "countries": [
+                    "Burundi"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Burundi"
+                ]
             },
-            "description": "ニジェール・コンゴ語族に分類される言語。より細かな分類は「バントゥー諸語」で表されます。",
+            "description": "ニジェール・コンゴ語族に分類される言語。より細かな分類は「バントゥー諸語」で表されます。 主な分布地域はBurundi。 現代の主要な表記にはLatinが用いられる。 系統分類ではニジェール・コンゴ語族・バントゥー諸語に位置づけられる。 主な分布はBurundiである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Kirundi",
+                "glottolog": "https://glottolog.org/glottolog?iso=run"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Kirundi",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "yoruba": {
             "id": "yoruba",
@@ -8979,31 +12728,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "yo",
+                "2": "yor",
+                "3": "yor"
+            },
             "speakers": {
-                "native": null,
-                "total": null,
-                "year": null,
-                "source": null
+                "native": 48000000,
+                "total": 53000000,
+                "year": 2026,
+                "source": "Ethnologue 2026（Wikipedia公開集計表による確認）"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "West / Central / Southern Africa"
+                ],
+                "countries": [
+                    "Nigeria",
+                    "Benin"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Nigeria"
+                ]
             },
-            "description": "ニジェール・コンゴ語族に分類される言語。より細かな分類は「デファ・ヨルバ語派」で表されます。",
+            "description": "ニジェール・コンゴ語族に分類される言語。より細かな分類は「デファ・ヨルバ語派」で表されます。 主な分布地域はNigeria、Benin。 現代の主要な表記にはLatinが用いられる。 系統分類ではニジェール・コンゴ語族・デファ・ヨルバ語派に位置づけられる。 主な分布はNigeria、Beninである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Yoruba",
+                "glottolog": "https://glottolog.org/glottolog?iso=yor"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Yorùbá",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "reviewed"
         },
         "igbo": {
             "id": "igbo",
@@ -9017,31 +12787,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "ig",
+                "2": "ibo",
+                "3": "ibo"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "West / Central / Southern Africa"
+                ],
+                "countries": [
+                    "Nigeria"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Nigeria"
+                ]
             },
-            "description": "ニジェール・コンゴ語族に分類される言語。より細かな分類は「ボルタ・ニジェール語派」で表されます。",
+            "description": "ニジェール・コンゴ語族に分類される言語。より細かな分類は「ボルタ・ニジェール語派」で表されます。 主な分布地域はNigeria。 現代の主要な表記にはLatinが用いられる。 系統分類ではニジェール・コンゴ語族・ボルタ・ニジェール語派に位置づけられる。 主な分布はNigeriaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Igbo",
+                "glottolog": "https://glottolog.org/glottolog?iso=ibo"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Asụsụ Igbo",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "fon": {
             "id": "fon",
@@ -9055,31 +12846,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "fon",
+                "3": "fon"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "West / Central / Southern Africa"
+                ],
+                "countries": [
+                    "Benin"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Benin"
+                ]
             },
-            "description": "ニジェール・コンゴ語族に分類される言語。より細かな分類は「ボルタ・ニジェール語派」で表されます。",
+            "description": "ニジェール・コンゴ語族に分類される言語。より細かな分類は「ボルタ・ニジェール語派」で表されます。 主な分布地域はBenin。 現代の主要な表記にはLatinが用いられる。 系統分類ではニジェール・コンゴ語族・ボルタ・ニジェール語派に位置づけられる。 主な分布はBeninである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Fon",
+                "glottolog": "https://glottolog.org/glottolog?iso=fon"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Fɔ̀ngbè",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "nahuatl": {
             "id": "nahuatl",
@@ -9092,31 +12904,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "nch",
+                "3": "nch"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "North / Central / South America"
+                ],
+                "countries": [
+                    "Mexico"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "ユト・アステカ語族に分類される言語。より細かな分類は「」で表されます。",
+            "description": "ユト・アステカ語族に分類される言語。分類上はユト・アステカ語族に位置づけられる。 主な分布地域はMexico。 現代の主要な表記にはLatinが用いられる。 主な分布地域はMexico。 系統分類ではユト・アステカ語族に位置づけられる。 主な分布はMexicoである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Nahuatl",
+                "glottolog": "https://glottolog.org/glottolog?iso=nch"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Nāhuatl",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "yucatec_maya": {
             "id": "yucatec_maya",
@@ -9129,31 +12960,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "yua",
+                "3": "yua"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "North / Central / South America"
+                ],
+                "countries": [
+                    "Mexico"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "マヤ語族に分類される言語。より細かな分類は「」で表されます。",
+            "description": "マヤ語族に分類される言語。分類上はマヤ語族に位置づけられる。 主な分布地域はMexico。 現代の主要な表記にはLatinが用いられる。 主な分布地域はMexico。 系統分類ではマヤ語族に位置づけられる。 主な分布はMexicoである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Yucatec_Maya",
+                "glottolog": "https://glottolog.org/glottolog?iso=yua"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Maaya tʼàan",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "k_iche": {
             "id": "k_iche",
@@ -9166,31 +13016,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "quc",
+                "3": "quc"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "North / Central / South America"
+                ],
+                "countries": [
+                    "Guatemala"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "マヤ語族に分類される言語。より細かな分類は「」で表されます。",
+            "description": "マヤ語族に分類される言語。分類上はマヤ語族に位置づけられる。 主な分布地域はGuatemala。 現代の主要な表記にはLatinが用いられる。 主な分布地域はGuatemala。 系統分類ではマヤ語族に位置づけられる。 主な分布はGuatemalaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/K%CA%BCiche%CA%BC",
+                "glottolog": "https://glottolog.org/glottolog?iso=quc"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Qʼeqchiʼ / Kʼicheʼ",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "quechua": {
             "id": "quechua",
@@ -9203,31 +13072,58 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "qu",
+                "2": "que",
+                "3": "que"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "North / Central / South America"
+                ],
+                "countries": [
+                    "Peru",
+                    "Bolivia",
+                    "Ecuador",
+                    "Colombia",
+                    "Argentina",
+                    "Chile"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Peru",
+                    "Bolivia"
+                ]
             },
-            "description": "ケチュア語族に分類される言語。より細かな分類は「」で表されます。",
+            "description": "ケチュア語族に分類される言語。分類上はケチュア語族に位置づけられる。 主な分布地域はPeru、Bolivia、Ecuador、Colombia、Argentina。 現代の主要な表記にはLatinが用いられる。 主な分布地域はPeru、Bolivia、Ecuador、Colombia。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Quechua",
+                "glottolog": "https://glottolog.org/glottolog?iso=que"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Runa Simi / Quechua",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "aymara": {
             "id": "aymara",
@@ -9240,31 +13136,55 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "ay",
+                "2": "aym",
+                "3": "aym"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "North / Central / South America"
+                ],
+                "countries": [
+                    "Bolivia",
+                    "Peru",
+                    "Chile"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Bolivia",
+                    "Peru"
+                ]
             },
-            "description": "アイマラ語族に分類される言語。より細かな分類は「」で表されます。",
+            "description": "アイマラ語族に分類される言語。分類上はアイマラ語族に位置づけられる。 主な分布地域はBolivia、Peru、Chile。 現代の主要な表記にはLatinが用いられる。 主な分布地域はBolivia、Peru、Chile。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Aymara",
+                "glottolog": "https://glottolog.org/glottolog?iso=aym"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Aymar aru",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "guaran": {
             "id": "guaran",
@@ -9278,31 +13198,53 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "gn",
+                "2": "grn",
+                "3": "grn"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "North / Central / South America"
+                ],
+                "countries": [
+                    "Paraguay",
+                    "Bolivia",
+                    "Brazil",
+                    "Argentina"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "トゥピ語族に分類される言語。より細かな分類は「トゥピ・グアラニー語派」で表されます。",
+            "description": "トゥピ語族に分類される言語。より細かな分類は「トゥピ・グアラニー語派」で表されます。 主な分布地域はParaguay、Bolivia、Brazil、Argentina。 現代の主要な表記にはLatinが用いられる。 系統分類ではトゥピ語族・トゥピ・グアラニー語派に位置づけられる。 主な分布はParaguay、Bolivia、Brazil、Argentinaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Guaran%C3%AD",
+                "glottolog": "https://glottolog.org/glottolog?iso=grn"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Avañeʼẽ",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "mohawk": {
             "id": "mohawk",
@@ -9316,31 +13258,51 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "moh",
+                "3": "moh"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "North / Central / South America"
+                ],
+                "countries": [
+                    "Canada",
+                    "United States"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "イロコイ語族に分類される言語。より細かな分類は「北部イロコイ諸語」で表されます。",
+            "description": "イロコイ語族に分類される言語。より細かな分類は「北部イロコイ諸語」で表されます。 主な分布地域はCanada、United States。 現代の主要な表記にはLatinが用いられる。 系統分類ではイロコイ語族・北部イロコイ諸語に位置づけられる。 主な分布はCanada、United Statesである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Mohawk",
+                "glottolog": "https://glottolog.org/glottolog?iso=moh"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Kanienʼkéha",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "cherokee": {
             "id": "cherokee",
@@ -9354,31 +13316,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "chr",
+                "3": "chr"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "North / Central / South America"
+                ],
+                "countries": [
+                    "United States"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "イロコイ語族に分類される言語。より細かな分類は「南部イロコイ諸語」で表されます。",
+            "description": "イロコイ語族に分類される言語。より細かな分類は「南部イロコイ諸語」で表されます。 主な分布地域はUnited States。 現代の主要な表記にはLatinが用いられる。 系統分類ではイロコイ語族・南部イロコイ諸語に位置づけられる。 主な分布はUnited Statesである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Cherokee",
+                "glottolog": "https://glottolog.org/glottolog?iso=chr"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ᏣᎳᎩ",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "navajo": {
             "id": "navajo",
@@ -9392,31 +13373,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "nv",
+                "2": "nav",
+                "3": "nav"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "North / Central / South America"
+                ],
+                "countries": [
+                    "United States"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "United States"
+                ]
             },
-            "description": "デネ・イェニセイ語族に分類される言語。より細かな分類は「アサバスカ諸語」で表されます。",
+            "description": "デネ・イェニセイ語族に分類される言語。より細かな分類は「アサバスカ諸語」で表されます。 主な分布地域はUnited States。 現代の主要な表記にはLatinが用いられる。 系統分類ではデネ・イェニセイ語族・アサバスカ諸語に位置づけられる。 主な分布はUnited Statesである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Navajo",
+                "glottolog": "https://glottolog.org/glottolog?iso=nav"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Diné bizaad",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "inuktitut": {
             "id": "inuktitut",
@@ -9430,31 +13432,53 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "iu",
+                "2": "iku",
+                "3": "iku"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Canada"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Canadian Aboriginal syllabics",
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Canada"
+                ]
             },
-            "description": "エスキモー・アレウト語族に分類される言語。より細かな分類は「イヌイット諸語」で表されます。",
+            "description": "エスキモー・アレウト語族に分類される言語。より細かな分類は「イヌイット諸語」で表されます。 主な分布地域はCanada。 現代の主要な表記にはLatinが用いられる。 系統分類ではエスキモー・アレウト語族・イヌイット諸語に位置づけられる。 主な分布はCanadaである。 主要な表記体系としてCanadian Aboriginal syllabics、Latinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Inuktitut",
+                "glottolog": "https://glottolog.org/glottolog?iso=iku"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ᐃᓄᒃᑎᑐᑦ",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "greenlandic": {
             "id": "greenlandic",
@@ -9468,31 +13492,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "kl",
+                "2": "kal",
+                "3": "kal"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Greenland"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Greenland"
+                ]
             },
-            "description": "エスキモー・アレウト語族に分類される言語。より細かな分類は「イヌイット諸語」で表されます。",
+            "description": "エスキモー・アレウト語族に分類される言語。より細かな分類は「イヌイット諸語」で表されます。 主な分布地域はGreenland。 現代の主要な表記にはLatinが用いられる。 系統分類ではエスキモー・アレウト語族・イヌイット諸語に位置づけられる。 主な分布はGreenlandである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Greenlandic",
+                "glottolog": "https://glottolog.org/glottolog?iso=kal"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "kalaallisut",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "pitjantjatjara": {
             "id": "pitjantjatjara",
@@ -9505,31 +13550,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "pjt",
+                "3": "pjt"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Australia / New Guinea"
+                ],
+                "countries": [
+                    "Australia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "パマ・ニュンガ語族に分類される言語。より細かな分類は「」で表されます。",
+            "description": "パマ・ニュンガ語族に分類される言語。分類上はパマ・ニュンガ語族に位置づけられる。 主な分布地域はAustralia。 現代の主要な表記にはLatinが用いられる。 主な分布地域はAustralia。 系統分類ではパマ・ニュンガ語族に位置づけられる。 主な分布はAustraliaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Pitjantjatjara",
+                "glottolog": "https://glottolog.org/glottolog?iso=pjt"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Pitjantjatjara",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "warlpiri": {
             "id": "warlpiri",
@@ -9542,31 +13606,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "wbp",
+                "3": "wbp"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Australia / New Guinea"
+                ],
+                "countries": [
+                    "Australia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "パマ・ニュンガ語族に分類される言語。より細かな分類は「」で表されます。",
+            "description": "パマ・ニュンガ語族に分類される言語。分類上はパマ・ニュンガ語族に位置づけられる。 主な分布地域はAustralia。 現代の主要な表記にはLatinが用いられる。 主な分布地域はAustralia。 系統分類ではパマ・ニュンガ語族に位置づけられる。 主な分布はAustraliaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Warlpiri",
+                "glottolog": "https://glottolog.org/glottolog?iso=wbp"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Warlpiri",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "arrernte": {
             "id": "arrernte",
@@ -9579,31 +13662,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "aer",
+                "3": "aer"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Australia / New Guinea"
+                ],
+                "countries": [
+                    "Australia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "パマ・ニュンガ語族に分類される言語。より細かな分類は「」で表されます。",
+            "description": "パマ・ニュンガ語族に分類される言語。分類上はパマ・ニュンガ語族に位置づけられる。 主な分布地域はAustralia。 現代の主要な表記にはLatinが用いられる。 主な分布地域はAustralia。 系統分類ではパマ・ニュンガ語族に位置づけられる。 主な分布はAustraliaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Arrernte",
+                "glottolog": "https://glottolog.org/glottolog?iso=aer"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Arrernte",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "huli": {
             "id": "huli",
@@ -9616,31 +13718,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "hui",
+                "3": "hui"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Australia / New Guinea"
+                ],
+                "countries": [
+                    "Papua New Guinea"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "トランス・ニューギニア語族に分類される言語。より細かな分類は「」で表されます。",
+            "description": "トランス・ニューギニア語族に分類される言語。分類上はトランス・ニューギニア語族に位置づけられる。 主な分布地域はPapua New Guinea。 現代の主要な表記にはLatinが用いられる。 主な分布地域はPapua New Guinea。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Huli",
+                "glottolog": "https://glottolog.org/glottolog?iso=hui"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Huli",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "dani": {
             "id": "dani",
@@ -9653,31 +13774,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "dnu",
+                "3": "dnu"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Australia / New Guinea"
+                ],
+                "countries": [
+                    "Indonesia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "トランス・ニューギニア語族に分類される言語。より細かな分類は「」で表されます。",
+            "description": "トランス・ニューギニア語族に分類される言語。分類上はトランス・ニューギニア語族に位置づけられる。 主な分布地域はIndonesia。 現代の主要な表記にはLatinが用いられる。 主な分布地域はIndonesia。 系統分類ではトランス・ニューギニア語族に位置づけられる。 主な分布はIndonesiaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Dani",
+                "glottolog": "https://glottolog.org/glottolog?iso=dnu"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Dani",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "chukchi": {
             "id": "chukchi",
@@ -9690,31 +13830,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "ckt",
+                "3": "ckt"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Russia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "チュクチ・カムチャツカ語族に分類される言語。より細かな分類は「」で表されます。",
+            "description": "チュクチ・カムチャツカ語族に分類される言語。分類上はチュクチ・カムチャツカ語族に位置づけられる。 主な分布地域はRussia。 現代の主要な表記にはLatinが用いられる。 主な分布地域はRussia。 系統分類ではチュクチ・カムチャツカ語族に位置づけられる。 主な分布はRussiaである。 主要な表記体系としてCyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Chukchi",
+                "glottolog": "https://glottolog.org/glottolog?iso=ckt"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ԓыгъоравэтԓьэн",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "koryak": {
             "id": "koryak",
@@ -9727,31 +13886,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "kpy",
+                "3": "kpy"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Russia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "チュクチ・カムチャツカ語族に分類される言語。より細かな分類は「」で表されます。",
+            "description": "チュクチ・カムチャツカ語族に分類される言語。分類上はチュクチ・カムチャツカ語族に位置づけられる。 主な分布地域はRussia。 現代の主要な表記にはLatinが用いられる。 主な分布地域はRussia。 系統分類ではチュクチ・カムチャツカ語族に位置づけられる。 主な分布はRussiaである。 主要な表記体系としてCyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Koryak",
+                "glottolog": "https://glottolog.org/glottolog?iso=kpy"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "нымылан",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "evenki": {
             "id": "evenki",
@@ -9764,31 +13942,51 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "evn",
+                "3": "evn"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Russia",
+                    "China"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "ツングース諸語に分類される言語。より細かな分類は「」で表されます。",
+            "description": "ツングース諸語に分類される言語。分類上はツングース諸語に位置づけられる。 主な分布地域はRussia、China。 現代の主要な表記にはLatinが用いられる。 主な分布地域はRussia、China。 系統分類ではツングース諸語に位置づけられる。 主な分布はRussia、Chinaである。 主要な表記体系としてCyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Evenki",
+                "glottolog": "https://glottolog.org/glottolog?iso=evn"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "эвэнки",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "ulch": {
             "id": "ulch",
@@ -9801,31 +13999,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "ulc",
+                "3": "ulc"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Russia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "ツングース諸語に分類される言語。より細かな分類は「」で表されます。",
+            "description": "ツングース諸語に分類される言語。分類上はツングース諸語に位置づけられる。 主な分布地域はRussia。 現代の主要な表記にはLatinが用いられる。 主な分布地域はRussia。 系統分類ではツングース諸語に位置づけられる。 主な分布はRussiaである。 主要な表記体系としてCyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Ulch",
+                "glottolog": "https://glottolog.org/glottolog?iso=ulc"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "нани",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "nivkh": {
             "id": "nivkh",
@@ -9838,31 +14055,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "niv",
+                "3": "niv"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Russia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cyrillic"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "ニヴフ語族に分類される言語。より細かな分類は「」で表されます。",
+            "description": "ニヴフ語族に分類される言語。分類上はニヴフ語族に位置づけられる。 主な分布地域はRussia。 現代の主要な表記にはLatinが用いられる。 主な分布地域はRussia。 系統分類ではニヴフ語族に位置づけられる。 主な分布はRussiaである。 主要な表記体系としてCyrillicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Nivkh",
+                "glottolog": "https://glottolog.org/glottolog?iso=niv"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "ниӷвңгун",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "basque": {
             "id": "basque",
@@ -9875,31 +14111,53 @@ const languageDatabase = {
                 ],
                 "status": "uncertain"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "eu",
+                "2": "baq",
+                "3": "eus"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Spain",
+                    "France"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Spain"
+                ]
             },
-            "description": "既知の他言語との確立した系統関係を持たない孤立言語。スペイン北部とフランス南西部のバスク地方で話される。",
+            "description": "既知の他言語との確立した系統関係を持たない孤立言語。スペイン北部とフランス南西部のバスク地方で話される。 主な分布地域はSpain、France。 現代の主要な表記にはLatinが用いられる。 系統分類では孤立語族に位置づけられる。 主な分布はSpain、Franceである。 主要な表記体系としてLatinが用いられる。 インド・ヨーロッパ語族に属さない言語で、ヨーロッパに現存する主要な系統孤立言語として知られる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Basque",
+                "glottolog": "https://glottolog.org/glottolog?iso=eus"
             },
-            "nativeName": null,
-            "status": "uncertain"
+            "nativeName": "euskara",
+            "status": "uncertain",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "ainu": {
             "id": "ainu",
@@ -9912,31 +14170,51 @@ const languageDatabase = {
                 ],
                 "status": "uncertain"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "ain",
+                "3": "ain"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Japan"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin",
+                    "Japanese kana"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "日本列島北部で話されてきた言語。現在の系統的位置づけは確立しておらず、独自の言語文化を持つ。",
+            "description": "日本列島北部で話されてきた言語。現在の系統的位置づけは確立しておらず、独自の言語文化を持つ。 主な分布地域はJapan。 現代の主要な表記にはLatinが用いられる。 系統分類では孤立語族に位置づけられる。 主な分布はJapanである。 主要な表記体系としてLatin、Japanese kanaが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Ainu",
+                "glottolog": "https://glottolog.org/glottolog?iso=ain"
             },
-            "nativeName": null,
-            "status": "uncertain"
+            "nativeName": "アイヌ・イタㇰ",
+            "status": "uncertain",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "burushaski": {
             "id": "burushaski",
@@ -9949,31 +14227,50 @@ const languageDatabase = {
                 ],
                 "status": "uncertain"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "bsk",
+                "3": "bsk"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Pakistan"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Arabic"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "パキスタン北部の山岳地帯で話される孤立言語。周辺のインド・ヨーロッパ語族やチベット・ビルマ系言語とは系統的に異なる。",
+            "description": "パキスタン北部の山岳地帯で話される孤立言語。周辺のインド・ヨーロッパ語族やチベット・ビルマ系言語とは系統的に異なる。 主な分布地域はPakistan。 現代の主要な表記にはLatinが用いられる。 系統分類では孤立語族に位置づけられる。 主な分布はPakistanである。 主要な表記体系としてArabicが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Burushaski",
+                "glottolog": "https://glottolog.org/glottolog?iso=bsk"
             },
-            "nativeName": null,
-            "status": "uncertain"
+            "nativeName": "Burushaski",
+            "status": "uncertain",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "zuni": {
             "id": "zuni",
@@ -9986,31 +14283,50 @@ const languageDatabase = {
                 ],
                 "status": "uncertain"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "zun",
+                "3": "zun"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "United States"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "北米南西部で話される先住民言語。一般に孤立言語として扱われる。",
+            "description": "北米南西部で話される先住民言語。一般に孤立言語として扱われる。 主な分布地域はUnited States。 現代の主要な表記にはLatinが用いられる。 系統分類では孤立語族に位置づけられる。 主な分布はUnited Statesである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Zuni",
+                "glottolog": "https://glottolog.org/glottolog?iso=zun"
             },
-            "nativeName": null,
-            "status": "uncertain"
+            "nativeName": "Shiwiʼma",
+            "status": "uncertain",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "sumerian": {
             "id": "sumerian",
@@ -10023,31 +14339,48 @@ const languageDatabase = {
                 ],
                 "status": "uncertain"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "sux",
+                "3": "sux"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
                 "regions": [],
-                "countries": []
+                "countries": [
+                    "Mesopotamia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cuneiform"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "古代メソポタミアで話された言語。楔形文字による最古級の大量の記録を残し、既知の他言語との系統関係は確立していない。",
+            "description": "古代メソポタミア南部で用いられた系統不明の言語。楔形文字による大量の行政・文学・宗教文書が残る。 系統分類では孤立語族に位置づけられる。 主な分布はMesopotamiaである。 主要な表記体系としてCuneiformが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Sumerian",
+                "glottolog": "https://glottolog.org/glottolog?iso=sux"
             },
-            "nativeName": null,
-            "status": "uncertain"
+            "nativeName": "𒅴𒂠",
+            "status": "uncertain",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "y_l_dnye": {
             "id": "y_l_dnye",
@@ -10060,31 +14393,50 @@ const languageDatabase = {
                 ],
                 "status": "uncertain"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "yle",
+                "3": "yle"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Papua New Guinea"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "孤立語族に分類される言語。より細かな分類は「」で表されます。",
+            "description": "孤立語族に分類される言語。分類上は孤立語族に位置づけられる。 主な分布地域はPapua New Guinea。 主な分布地域はPapua New Guinea。 系統分類では孤立語族に位置づけられる。 主な分布はPapua New Guineaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Y%C3%A9l%C3%AE_Dnye",
+                "glottolog": "https://glottolog.org/glottolog?iso=yle"
             },
-            "nativeName": null,
-            "status": "uncertain"
+            "nativeName": "Yélî Dnye",
+            "status": "uncertain",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "an_m": {
             "id": "an_m",
@@ -10097,31 +14449,50 @@ const languageDatabase = {
                 ],
                 "status": "uncertain"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "anz",
+                "3": "anz"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Papua New Guinea"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "孤立語族に分類される言語。より細かな分類は「」で表されます。",
+            "description": "孤立語族に分類される言語。分類上は孤立語族に位置づけられる。 主な分布地域はPapua New Guinea。 主な分布地域はPapua New Guinea。 系統分類では孤立語族に位置づけられる。 主な分布はPapua New Guineaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/An%C3%AAm",
+                "glottolog": "https://glottolog.org/glottolog?iso=anz"
             },
-            "nativeName": null,
-            "status": "uncertain"
+            "nativeName": "Anêm",
+            "status": "uncertain",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "haida": {
             "id": "haida",
@@ -10134,31 +14505,51 @@ const languageDatabase = {
                 ],
                 "status": "uncertain"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "hai",
+                "3": "hai"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Canada",
+                    "United States"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "北米太平洋岸北西部で話される言語。系統的位置づけについて議論がある。",
+            "description": "北米太平洋岸北西部で話される言語。系統的位置づけについて議論がある。 主な分布地域はCanada、United States。 現代の主要な表記にはLatinが用いられる。 系統分類では孤立語／系統不詳に位置づけられる。 主な分布はCanada、United Statesである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Haida",
+                "glottolog": "https://glottolog.org/glottolog?iso=hai"
             },
-            "nativeName": null,
-            "status": "uncertain"
+            "nativeName": "X̱aat Kíl",
+            "status": "uncertain",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "hadza": {
             "id": "hadza",
@@ -10171,31 +14562,50 @@ const languageDatabase = {
                 ],
                 "status": "uncertain"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "hts",
+                "3": "hts"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Tanzania"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "タンザニアで話される言語。クリック音を含む音韻体系を持ち、一般に孤立言語として扱われる。",
+            "description": "タンザニアで話される言語。クリック音を含む音韻体系を持ち、一般に孤立言語として扱われる。 主な分布地域はTanzania。 現代の主要な表記にはLatinが用いられる。 系統分類では孤立語／系統不詳に位置づけられる。 主な分布はTanzaniaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Hadza",
+                "glottolog": "https://glottolog.org/glottolog?iso=hts"
             },
-            "nativeName": null,
-            "status": "uncertain"
+            "nativeName": "Hadzane",
+            "status": "uncertain",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "sandawe": {
             "id": "sandawe",
@@ -10208,31 +14618,50 @@ const languageDatabase = {
                 ],
                 "status": "uncertain"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "sad",
+                "3": "sad"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Tanzania"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "タンザニアで話される言語。クリック音を持ち、系統的位置づけには議論がある。",
+            "description": "タンザニアで話される言語。クリック音を持ち、系統的位置づけには議論がある。 主な分布地域はTanzania。 現代の主要な表記にはLatinが用いられる。 系統分類では孤立語／系統不詳に位置づけられる。 主な分布はTanzaniaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Sandawe",
+                "glottolog": "https://glottolog.org/glottolog?iso=sad"
             },
-            "nativeName": null,
-            "status": "uncertain"
+            "nativeName": "Sandawe",
+            "status": "uncertain",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "kano": {
             "id": "kano",
@@ -10245,31 +14674,50 @@ const languageDatabase = {
                 ],
                 "status": "uncertain"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "kxo",
+                "3": "kxo"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Brazil"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "孤立語／系統不詳に分類される言語。より細かな分類は「」で表されます。",
+            "description": "孤立語／系統不詳に分類される言語。分類上は孤立語／系統不詳に位置づけられる。 主な分布地域はBrazil。 現代の主要な表記にはLatinが用いられる。 主な分布地域はBrazil。 系統分類では孤立語／系統不詳に位置づけられる。 主な分布はBrazilである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Kano%C3%AA",
+                "glottolog": "https://glottolog.org/glottolog?iso=kxo"
             },
-            "nativeName": null,
-            "status": "uncertain"
+            "nativeName": "Kanoê",
+            "status": "uncertain",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "trumai": {
             "id": "trumai",
@@ -10282,31 +14730,50 @@ const languageDatabase = {
                 ],
                 "status": "uncertain"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "trm",
+                "3": "trm"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Brazil"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "孤立語／系統不詳に分類される言語。より細かな分類は「」で表されます。",
+            "description": "孤立語／系統不詳に分類される言語。分類上は孤立語／系統不詳に位置づけられる。 主な分布地域はBrazil。 現代の主要な表記にはLatinが用いられる。 主な分布地域はBrazil。 系統分類では孤立語／系統不詳に位置づけられる。 主な分布はBrazilである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Trumai",
+                "glottolog": "https://glottolog.org/glottolog?iso=trm"
             },
-            "nativeName": null,
-            "status": "uncertain"
+            "nativeName": "Trumai",
+            "status": "uncertain",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "elamite": {
             "id": "elamite",
@@ -10319,31 +14786,48 @@ const languageDatabase = {
                 ],
                 "status": "uncertain"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "elx",
+                "3": "elx"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
                 "regions": [],
-                "countries": []
+                "countries": [
+                    "Elam / southwestern Iran"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Cuneiform"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "古代イラン南西部で用いられた言語。周辺の主要語族との系統関係は確立していない。",
+            "description": "古代イラン南西部を中心に用いられた系統不明の言語。エラム王国などの文書が楔形文字を中心に残されている。 系統分類では孤立語／系統不詳に位置づけられる。 主な分布はElam / southwestern Iranである。 主要な表記体系としてCuneiformが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Elamite",
+                "glottolog": "https://glottolog.org/glottolog?iso=elx"
             },
-            "nativeName": null,
-            "status": "uncertain"
+            "nativeName": "haltamti",
+            "status": "uncertain",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "mapudungun": {
             "id": "mapudungun",
@@ -10352,35 +14836,57 @@ const languageDatabase = {
             "type": "language",
             "classification": {
                 "path": [
-                    "孤立語／系統不詳"
+                    "アラウカニア語族"
                 ],
-                "status": "uncertain"
+                "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "arn",
+                "3": "arn"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Chile",
+                    "Argentina"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "孤立語／系統不詳に分類される言語。より細かな分類は「」で表されます。",
-            "notes": [],
+            "description": "チリ中南部とアルゼンチン西部で話される先住民言語。Glottolog 5.3ではAraucanian（アラウカニア）系統に分類され、孤立語ではない。マプチェの文化・歴史と深く結びつき、ラテン文字による表記が一般的である。 マプチェの文化・歴史と結びついた先住民言語で、チリとアルゼンチンに分布する。",
+            "notes": [
+                "Glottolog 5.3ではAraucanian語族に分類される。"
+            ],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Mapudungun",
+                "glottolog": "https://glottolog.org/glottolog?iso=arn"
             },
-            "nativeName": null,
-            "status": "uncertain"
+            "nativeName": "Mapudungun / Mapuzugun",
+            "status": "uncertain",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "tiwi": {
             "id": "tiwi",
@@ -10393,31 +14899,50 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "tiw",
+                "3": "tiw"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Australia"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "ティウィ語族に分類される言語。より細かな分類は「」で表されます。",
+            "description": "ティウィ語族に分類される言語。分類上はティウィ語族に位置づけられる。 主な分布地域はAustralia。 現代の主要な表記にはLatinが用いられる。 主な分布地域はAustralia。 系統分類ではティウィ語族に位置づけられる。 主な分布はAustraliaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Tiwi",
+                "glottolog": "https://glottolog.org/glottolog?iso=tiw"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Tiwi",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "tok_pisin": {
             "id": "tok_pisin",
@@ -10430,31 +14955,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "tpi",
+                "3": "tpi"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Papua New Guinea"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Papua New Guinea"
+                ]
             },
-            "description": "パプアニューギニアで広く用いられる英語を基盤とするクレオール。複数言語話者間の共通語として発達した。",
+            "description": "パプアニューギニアで広く用いられる英語を主要な語彙基盤とするクレオール／接触言語。国家レベルの共通語・公用語の一つとして機能する。 系統分類では英語系クレオール／ピジンに位置づけられる。 主な分布はPapua New Guineaである。 主要な表記体系としてLatinが用いられる。 英語を主要な語彙源とするクレオール言語で、パプアニューギニアの重要な共通語である。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Tok_Pisin",
+                "glottolog": "https://glottolog.org/glottolog?iso=tpi"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Tok Pisin",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "bislama": {
             "id": "bislama",
@@ -10467,31 +15013,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "bi",
+                "2": "bis",
+                "3": "bis"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Vanuatu"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Vanuatu"
+                ]
             },
-            "description": "バヌアツの公用語の一つ。英語を基盤として発達したクレオールである。",
+            "description": "バヌアツで広く用いられる英語系クレオール。英語を基盤とし、メラネシアの多言語社会における共通語として重要である。 系統分類では英語系クレオール／ピジンに位置づけられる。 主な分布はVanuatuである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Bislama",
+                "glottolog": "https://glottolog.org/glottolog?iso=bis"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Bislama",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "nigerian_pidgin": {
             "id": "nigerian_pidgin",
@@ -10504,31 +15071,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "pcm",
+                "3": "pcm"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Nigeria"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Nigeria"
+                ]
             },
-            "description": "ナイジェリアで広く使われる英語基盤のクレオール。地域・話者層によって多様な変種がある。",
+            "description": "ナイジェリアを中心に広く用いられる英語系の接触言語。地域・話者集団によって変種があり、都市部を中心に重要なコミュニケーション手段となっている。 系統分類では英語系クレオール／ピジンに位置づけられる。 主な分布はNigeriaである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Nigerian_Pidgin",
+                "glottolog": "https://glottolog.org/glottolog?iso=pcm"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Naijá",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "haitian_creole": {
             "id": "haitian_creole",
@@ -10541,31 +15129,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "ht",
+                "2": "hat",
+                "3": "hat"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Haiti"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Haiti"
+                ]
             },
-            "description": "ハイチの主要言語。フランス語を語彙的基盤の一つとし、西アフリカ諸語などとの接触の中で形成されたクレオールである。",
+            "description": "ハイチの主要言語の一つで、フランス語を主要な語彙基盤とするクレオール。ハイチではフランス語とともに公用語である。 系統分類ではフランス語系クレオールに位置づけられる。 主な分布はHaitiである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Haitian_Creole",
+                "glottolog": "https://glottolog.org/glottolog?iso=hat"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Kreyòl ayisyen",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "seychellois_creole": {
             "id": "seychellois_creole",
@@ -10578,31 +15187,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "crs",
+                "3": "crs"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Seychelles"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Seychelles"
+                ]
             },
-            "description": "フランス語系クレオールに分類される言語。より細かな分類は「」で表されます。",
+            "description": "セーシェルで広く用いられるフランス語系クレオール。セーシェルの主要言語の一つである。 系統分類ではフランス語系クレオールに位置づけられる。 主な分布はSeychellesである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Seychellois_Creole",
+                "glottolog": "https://glottolog.org/glottolog?iso=crs"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Kreol Seselwa",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "mauritian_creole": {
             "id": "mauritian_creole",
@@ -10615,31 +15245,52 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "mfe",
+                "3": "mfe"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Mauritius"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Mauritius"
+                ]
             },
-            "description": "フランス語系クレオールに分類される言語。より細かな分類は「」で表されます。",
+            "description": "モーリシャスで広く用いられるフランス語系クレオール。多言語社会の共通語として重要である。 系統分類ではフランス語系クレオールに位置づけられる。 主な分布はMauritiusである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Mauritian_Creole",
+                "glottolog": "https://glottolog.org/glottolog?iso=mfe"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Kreol Morisien",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "papiamento": {
             "id": "papiamento",
@@ -10652,31 +15303,56 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": null,
+                "2": "pap",
+                "3": "pap"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "Aruba",
+                    "Curaçao",
+                    "Bonaire"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
-                "countries": []
+                "countries": [
+                    "Aruba",
+                    "Curaçao",
+                    "Bonaire"
+                ]
             },
-            "description": "カリブ海のアルバ諸島・キュラソーなどで話されるクレオール。イベリア諸語を中心とする複数の言語の影響を受ける。",
+            "description": "アルバ、キュラソー、ボネールなどで用いられるイベリア語系クレオール。スペイン語・ポルトガル語を中心に、オランダ語やアフリカ諸語などの影響も受けている。 系統分類ではイベリア語系クレオールに位置づけられる。 主な分布はAruba、Curaçao、Bonaireである。 主要な表記体系としてLatinが用いられる。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Papiamento",
+                "glottolog": "https://glottolog.org/glottolog?iso=pap"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Papiamentu",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         },
         "esperanto": {
             "id": "esperanto",
@@ -10689,38 +15365,54 @@ const languageDatabase = {
                 ],
                 "status": "established"
             },
-            "iso639": {},
+            "iso639": {
+                "1": "eo",
+                "2": "epo",
+                "3": "epo"
+            },
             "speakers": {
                 "native": null,
                 "total": null,
                 "year": null,
-                "source": null
+                "source": null,
+                "note": "今回の採用資料から比較可能な最新値を確認できないため、推測値は記載していない。"
             },
             "geography": {
-                "regions": [],
-                "countries": []
+                "regions": [
+                    "Multiple regions"
+                ],
+                "countries": [
+                    "International"
+                ]
             },
             "writing": {
-                "scripts": []
+                "scripts": [
+                    "Latin"
+                ]
             },
             "official": {
                 "countries": []
             },
-            "description": "19世紀末に作られた国際補助語。自然言語ではなく計画言語として設計され、現在も学習者・使用者がいる。",
+            "description": "1887年にL. L. ザメンホフが公表した計画言語。国際補助語として設計され、母語話者を含む使用者・学習者の国際的コミュニティが存在する。 系統分類では人工言語に位置づけられる。 主な分布はInternationalである。 主要な表記体系としてLatinが用いられる。 1887年にL. L. ザメンホフが公表した計画言語で、国際補助語として設計された。",
             "notes": [],
             "links": {
-                "wikipedia": null,
-                "glottolog": null
+                "wikipedia": "https://en.wikipedia.org/wiki/Esperanto",
+                "glottolog": "https://glottolog.org/glottolog?iso=epo"
             },
-            "nativeName": null,
-            "status": "established"
+            "nativeName": "Esperanto",
+            "status": "established",
+            "dataSources": [
+                "Glottolog 5.3（系統分類・言語識別の参照）",
+                "Wikipedia（概説・使用地域・文字等の確認）",
+                "Glottolog 5.3",
+                "ISO 639-3",
+                "Wikipedia（個別言語情報）"
+            ],
+            "dataQuality": "partial"
         }
     }
 };
-
-// 既存UIが languageHierarchy を参照している場合の互換エイリアス
 const languageHierarchy = languageDatabase.tree;
-
 if (typeof window !== "undefined") {
     window.languageDatabase = languageDatabase;
     window.languageHierarchy = languageHierarchy;
